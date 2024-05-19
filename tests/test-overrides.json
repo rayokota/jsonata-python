@@ -1,0 +1,72 @@
+{
+  "override": [
+    {
+      "name": "function-formatInteger/formatInteger.json_43",
+      "ignoreError": true,
+      "reason": "Do not support number to word for numbers exceeding the 64-bit range"
+    },
+    {
+      "name": "function-formatNumber/case014.json",
+      "ignoreError": true,
+      "reason": "formatNumber exponent not implemented"
+    },
+    {
+      "name": "function-string/case006.json",
+      "alternateResult": "1e+20",
+      "reason": "toString precision should be 15, handled differently by Java Bigdecimal(..., new MathContext(15)"
+    },
+    {
+      "name": "function-sort/case009.json",
+      "alternateResult": [
+        "0406634348",
+        "040657863",
+        "0406654608",
+        "0406654603"
+      ],
+      "reason": "the sort expression is evaluated correctly - however the sort algorithm seems to behave slightly different for equality - jsonata expects the native order to be preserved"
+    },
+    {
+      "name": "function-sort/case010.json",
+      "alternateResult": [
+        "0406634348",
+        "0406654608",
+        "040657863",
+        "0406654603"
+      ],
+      "reason": "same as above, works if the condition is changed to >="
+    },
+    {
+      "name": "function-applications/case008.json",
+      "ignoreError": true,
+      "reason": "Exception instead null/empty result. OK because the path has no match so NULL_VALUE is used as argument for $substringAfter"
+    },
+    {
+      "name": "matchers/case000.json",
+      "ignoreError": true,
+      "reason": "Custom matcher function not supported in Java regexp lib. OK because not much value seen"
+    },
+    {
+      "name": "regex/case022.json",
+      "ignoreError": true,
+      "reason": "Java regexp OK with this case. Jsonata regexp throws error because the regexp matches 0 characters, which could cause an endless loop in the custom matcher."
+    },
+
+
+    {
+      "name": "function-length/case004.json",
+      "alternateResult": 2,
+      "reason": "Discrepancy in Python when handling UTF-16 surrogate pairs"
+    },
+    {
+      "name": "function-tomillis/case009.json",
+      "alternateResult": 1517656533000,
+      "ignoreError": true,
+      "reason": "Python datetime.fromisoformat is more lenient"
+    },
+    {
+      "name": "regex/case034.json",
+      "ignoreError": true,
+      "reason": "Test may be faulty, it should refer to 'groups[1]' instead of 'groups[0]'"
+    }
+  ]
+}

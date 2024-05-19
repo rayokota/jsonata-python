@@ -1,0 +1,4 @@
+asyncio
+jsonata
+pytest
+pytest-asyncio
