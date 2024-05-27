@@ -1192,89 +1192,78 @@ class Jsonata:
     #      * @param {Object} environment - Environment
     #      * @returns {*} tranformer function
     #      
+
     def evaluateTransformExpression(self, expr, input, environment):
         # create a Object to implement the transform definition
-# JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-        #        JFunctionCallable transformer = (_input, args) ->
-        #        {
-        #        // /* async */ Object (obj) { // signature <(oa):o>
-        #
-        #            var obj = ((List)args).get(0)
-        #
-        #            // undefined inputs always return undefined
-        #            if(obj == null)
-        #            {
-        #                return null
-        #            }
-        #
-        #            // this Object returns a copy of obj with changes specified by the pattern/operation
-        #            Object result = Functions.functionClone(obj)
-        #
-        #            var _matches = evaluate(expr.pattern, result, environment)
-        #            if(_matches != null)
-        #            {
-        #                if(!(_matches instanceof List))
-        #                {
-        #                    _matches = new ArrayList<>(List.of(_matches))
-        #                }
-        #                List matches = (List)_matches
-        #                for(var ii = 0; ii < matches.size(); ii++)
-        #                {
-        #                    var @match = matches.get(ii)
-        #                    // evaluate the update value for each match
-        #                    var update = evaluate(expr.update, @match, environment)
-        #                    // update must be an object
-        #                    //var updateType = typeof update
-        #                    //if(updateType != null) 
-        #
-        #                    if (update != null)
-        #                    {
-        #                    if(!(update instanceof Map))
-        #                    {
-        #                            // throw type error
-        #                            throw new JException("T2011", expr.update.position, update)
-        #                        }
-        #                        // merge the update
-        #                        for(var prop : ((Map)update).keySet())
-        #                        {
-        #                            ((Map)@match).put(prop, ((Map)update).get(prop))
-        #                        }
-        #                    }
-        #
-        #                    // delete, if specified, must be an array of strings (or single string)
-        #                    if(expr.delete != null)
-        #                    {
-        #                        var deletions = evaluate(expr.delete, @match, environment)
-        #                        if(deletions != null)
-        #                        {
-        #                            var val = deletions
-        #                            if (!(deletions instanceof List))
-        #                            {
-        #                                deletions = new ArrayList<>(List.of(deletions))
-        #                            }
-        #                            if (!Utils.isArrayOfStrings(deletions))
-        #                            {
-        #                                // throw type error
-        #                                throw new JException("T2012", expr.delete.position, val)
-        #                            }
-        #                            List _deletions = (List)deletions
-        #                            for (var jj = 0; jj < _deletions.size(); jj++)
-        #                            {
-        #                                if(@match instanceof Map)
-        #                                {
-        #                                ((Map)@match).remove(_deletions.get(jj))
-        #                                    //delete match[deletions[jj]]
-        #                                }
-        #                            }
-        #                        }
-        #                    }
-        #                }
-        #            }
-        #
-        #            return result
-        #        }
-
+        transformer = Transformer(self, expr, environment)
         return JFunction(transformer, "<(oa):o>")
+
+    class Transformer(JFunctionCallable):
+        def __init__(self, jsonata, expr, environment):
+            # instance fields found by Java to Python Converter:
+            self._jsonata = None
+            self._expr = None
+            self._environment = None
+
+            self._jsonata = jsonata
+            self._expr = expr
+            self._environment = environment
+
+# JAVA TO PYTHON CONVERTER WARNING: Method 'throws' clauses are not available in Python:
+# ORIGINAL LINE: public Object call(Object _input, java.util.List args) throws Throwable
+        def call(self, _input, args):
+            # /* async */ Object (obj) { // signature <(oa):o>
+
+            obj = (args)[0]
+
+            # undefined inputs always return undefined
+            if obj is None:
+                return None
+
+            # this Object returns a copy of obj with changes specified by the pattern/operation
+            result = Functions.functionClone(obj)
+
+            _matches = self._jsonata.evaluate(self._expr.pattern, result, self._environment)
+            if _matches is not None:
+                if not(isinstance(_matches, java.util.List)):
+                    _matches = list(java.util.List.of(_matches))
+                matches = _matches
+                for ii, _ in enumerate(matches):
+                    match_ = matches[ii]
+                    # evaluate the update value for each match
+                    update = self._jsonata.evaluate(self._expr.update, match_, self._environment)
+                    # update must be an object
+                    #var updateType = typeof update
+                    #if(updateType != null)
+
+                    if update is not None:
+                        if not(isinstance(update, java.util.Map)):
+                            # throw type error
+                            raise JException("T2011", self._expr.update.position, update)
+                        # merge the update
+# JAVA TO PYTHON CONVERTER TASK: The following line could not be converted:
+                        for(var prop : ((java.util.Map)update).keySet())
+# JAVA TO PYTHON CONVERTER TASK: The following line could not be converted:
+                            ((java.util.Map)match_).put(prop, ((java.util.Map)update).get(prop));
+
+                    # delete, if specified, must be an array of strings (or single string)
+                    if self._expr.delete is not None:
+                        deletions = self._jsonata.evaluate(self._expr.delete, match_, self._environment)
+                        if deletions is not None:
+                            val = deletions
+                            if not(isinstance(deletions, java.util.List)):
+                                deletions = list(java.util.List.of(deletions))
+                            if not Utils.isArrayOfStrings(deletions):
+                                # throw type error
+                                raise JException("T2012", self._expr.delete.position, val)
+                            _deletions = deletions
+                            for jj, _ in enumerate(_deletions):
+                                if isinstance(match_, java.util.Map):
+                                    (match_).pop(_deletions[jj])
+                                    #delete match[deletions[jj]]
+
+            return result
+
 
     chainAST = None # = new Parser().parse("function($f, $g) { function($x){ $g($f($x)) } }");
 
