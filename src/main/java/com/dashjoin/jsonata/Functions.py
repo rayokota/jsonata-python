@@ -1034,50 +1034,51 @@ class Functions:
             fieldName = fieldNames.next()
             valueNode = str(argOptions[fieldName])
             # String value = getFormattingCharacter(valueNode)
-            if fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_DECIMAL_SEPARATOR:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_DECIMAL_SEPARATOR, True)
-                    symbols.setDecimalSeparator(value[0])
+            match fieldName:
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_DECIMAL_SEPARATOR:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_DECIMAL_SEPARATOR, True)
+                        symbols.setDecimalSeparator(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_GROUPING_SEPARATOR:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_GROUPING_SEPARATOR, True)
-                    symbols.setGroupingSeparator(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_GROUPING_SEPARATOR:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_GROUPING_SEPARATOR, True)
+                        symbols.setGroupingSeparator(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_INFINITY:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_INFINITY, False)
-                    symbols.setInfinity(value)
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_INFINITY:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_INFINITY, False)
+                        symbols.setInfinity(value)
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_MINUS_SIGN:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_MINUS_SIGN, True)
-                    symbols.setMinusSign(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_MINUS_SIGN:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_MINUS_SIGN, True)
+                        symbols.setMinusSign(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_NAN:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_NAN, False)
-                    symbols.setNaN(value)
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_NAN:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_NAN, False)
+                        symbols.setNaN(value)
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_PERCENT:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_PERCENT, True)
-                    symbols.setPercent(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_PERCENT:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_PERCENT, True)
+                        symbols.setPercent(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_PER_MILLE:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_PER_MILLE, False)
-                    symbols.setPerMill(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_PER_MILLE:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_PER_MILLE, False)
+                        symbols.setPerMill(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_ZERO_DIGIT:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_ZERO_DIGIT, True)
-                    symbols.setZeroDigit(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_ZERO_DIGIT:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_ZERO_DIGIT, True)
+                        symbols.setZeroDigit(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_DIGIT:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_DIGIT, True)
-                    symbols.setDigit(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_DIGIT:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_DIGIT, True)
+                        symbols.setDigit(value[0])
 
-            elif fieldName is com.dashjoin.jsonata.utils.Constants.SYMBOL_PATTERN_SEPARATOR:
-                    value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_PATTERN_SEPARATOR, True)
-                    symbols.setPatternSeparator(value[0])
+                case com.dashjoin.jsonata.utils.Constants.SYMBOL_PATTERN_SEPARATOR:
+                        value = com.dashjoin.jsonata.Functions._getFormattingCharacter(valueNode, com.dashjoin.jsonata.utils.Constants.SYMBOL_PATTERN_SEPARATOR, True)
+                        symbols.setPatternSeparator(value[0])
 
-            else:
-                    #final String msg = String.format(Constants.ERR_MSG_INVALID_OPTIONS_UNKNOWN_PROPERTY,
-                    #    Constants.FUNCTION_FORMAT_NUMBER, fieldName)
-                    raise RuntimeException("Error parsing formatNumber format string") # SWITCH // WHILE
+                case other:
+                        #final String msg = String.format(Constants.ERR_MSG_INVALID_OPTIONS_UNKNOWN_PROPERTY,
+                        #    Constants.FUNCTION_FORMAT_NUMBER, fieldName)
+                        raise RuntimeException("Error parsing formatNumber format string") # SWITCH // WHILE
 
         return symbols
 

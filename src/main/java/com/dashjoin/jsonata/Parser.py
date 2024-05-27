@@ -291,20 +291,21 @@ class Parser:
         value = next_token.value
         type = next_token.type
         symbol = None
-        if type == "name" or type == "variable":
-            symbol = self.symbolTable["(name)"]
-        elif type == "operator":
-            symbol = self.symbolTable["" + value]
-            if symbol is None:
-                return self.handleError(JException("S0204", next_token.position, value))
-        elif type == "string" or type == "number" or type == "value":
-            symbol = self.symbolTable["(literal)"]
-        elif type == "regex":
-            type = "regex"
-            symbol = self.symbolTable["(regex)"]
-            # istanbul ignore next 
-        else:
-            return self.handleError(JException("S0205", next_token.position, value))
+        match type:
+            case type == "name" | "variable":
+                symbol = self.symbolTable["(name)"]
+            case "operator":
+                symbol = self.symbolTable["" + value]
+                if symbol is None:
+                    return self.handleError(JException("S0204", next_token.position, value))
+            case type == "string" | type == "number" | "value":
+                symbol = self.symbolTable["(literal)"]
+            case "regex":
+                type = "regex"
+                symbol = self.symbolTable["(regex)"]
+                # istanbul ignore next 
+            case other:
+                return self.handleError(JException("S0205", next_token.position, value))
 
         self.node = symbol.create()
         #Token node = new Token(); //Object.create(symbol)
@@ -911,40 +912,41 @@ class Parser:
 
 
     def seekParent(self, node, slot):
-        if node.type == "name" or node.type == "wildcard":
-            slot.level -= 1
-            if slot.level == 0:
-                if node.ancestor is None:
-                    node.ancestor = slot
-                else:
-                    # reuse the existing label
-                    self.ancestry[int(slot.index)].slot.label = node.ancestor.label
-                    node.ancestor = slot
+        match node.type:
+            case node.type == "name" | "wildcard":
+                slot.level -= 1
+                if slot.level == 0:
+                    if node.ancestor is None:
+                        node.ancestor = slot
+                    else:
+                        # reuse the existing label
+                        self.ancestry[int(slot.index)].slot.label = node.ancestor.label
+                        node.ancestor = slot
+                    node.tuple = True
+            case "parent":
+                slot.level += 1
+            case "block":
+                # look in last expression in the block
+                if len(node.expressions) > 0:
+                    node.tuple = True
+                    slot = self.seekParent(node.expressions[-1], slot)
+            case "path":
+                # last step in path
                 node.tuple = True
-        elif node.type == "parent":
-            slot.level += 1
-        elif node.type == "block":
-            # look in last expression in the block
-            if len(node.expressions) > 0:
-                node.tuple = True
-                slot = self.seekParent(node.expressions[-1], slot)
-        elif node.type == "path":
-            # last step in path
-            node.tuple = True
-            index = len(node.steps) - 1
-# JAVA TO PYTHON CONVERTER WARNING: An assignment within expression was extracted from the following statement:
-# ORIGINAL LINE: slot = seekParent(node.steps.get(index--), slot);
-            slot = self.seekParent(node.steps[index], slot)
-            index -= 1
-            while slot.level > 0 and index >= 0:
-                # check previous steps
+                index = len(node.steps) - 1
 # JAVA TO PYTHON CONVERTER WARNING: An assignment within expression was extracted from the following statement:
 # ORIGINAL LINE: slot = seekParent(node.steps.get(index--), slot);
                 slot = self.seekParent(node.steps[index], slot)
                 index -= 1
-        else:
-            # error - can't derive ancestor
-            raise JException("S0217", node.position, node.type)
+                while slot.level > 0 and index >= 0:
+                    # check previous steps
+# JAVA TO PYTHON CONVERTER WARNING: An assignment within expression was extracted from the following statement:
+# ORIGINAL LINE: slot = seekParent(node.steps.get(index--), slot);
+                    slot = self.seekParent(node.steps[index], slot)
+                    index -= 1
+            case other:
+                # error - can't derive ancestor
+                raise JException("S0217", node.position, node.type)
         return slot
 
 
@@ -1001,390 +1003,392 @@ class Parser:
             return None
         if self.dbg:
             print(" > processAST type=" + expr.type + " value='" + expr.value + "'")
-        if expr.type if expr.type is not None else "(null)" == "binary":
-                if "" + expr.value is ".":
-                    lstep = self.processAST((expr).lhs)
+        expr.type if match expr.type is not None else "(null)":
+            case "binary":
+                    match "" + expr.value:
+                        case ".":
+                            lstep = self.processAST((expr).lhs)
 
-                    if lstep.type == "path":
-                        result = lstep
-                    else:
-                        result = Infix(self, None)
-                        result.type = "path"
-                        result.steps = list(java.util.Arrays.asList(lstep))
-                        #result = {type: 'path', steps: [lstep]}
-                    if lstep.type == "parent":
-                        result.seekingParent = list(java.util.Arrays.asList(lstep.slot))
-                    rest = self.processAST((expr).rhs)
-                    if rest.type == "function" and rest.procedure.type == "path" and len(rest.procedure.steps) == 1 and rest.procedure.steps[0].type == "name" and result.steps[-1].type == "function":
-                        # next function in chain of functions - will override a thenable
-                        result.steps[-1].nextFunction = rest.procedure.steps[0].value
-                    if rest.type == "path":
-                        result.steps.extend(rest.steps)
-                    else:
-                        if rest.predicate is not None:
-                            rest.stages = rest.predicate
-                            rest.predicate = None
-                            #delete rest.predicate
-                        result.steps.append(rest)
-                    # any steps within a path that are string literals, should be changed to 'name'
-                    for step in result.steps:
-                        if step.type == "number" or step.type == "value":
-                            # don't allow steps to be numbers or the values true/false/null
-                            raise JException("S0213", step.position, step.value)
-                        #System.out.println("step "+step+" type="+step.type)
-                        if step.type == "string":
-                            step.type = "name"
-                        # for (var lit : step.steps) {
-                        #     System.out.println("step2 "+lit+" type="+lit.type)
-                        #     lit.type = "name"
-                        # }
+                            if lstep.type == "path":
+                                result = lstep
+                            else:
+                                result = Infix(self, None)
+                                result.type = "path"
+                                result.steps = list(java.util.Arrays.asList(lstep))
+                                #result = {type: 'path', steps: [lstep]}
+                            if lstep.type == "parent":
+                                result.seekingParent = list(java.util.Arrays.asList(lstep.slot))
+                            rest = self.processAST((expr).rhs)
+                            if rest.type == "function" and rest.procedure.type == "path" and len(rest.procedure.steps) == 1 and rest.procedure.steps[0].type == "name" and result.steps[-1].type == "function":
+                                # next function in chain of functions - will override a thenable
+                                result.steps[-1].nextFunction = rest.procedure.steps[0].value
+                            if rest.type == "path":
+                                result.steps.extend(rest.steps)
+                            else:
+                                if rest.predicate is not None:
+                                    rest.stages = rest.predicate
+                                    rest.predicate = None
+                                    #delete rest.predicate
+                                result.steps.append(rest)
+                            # any steps within a path that are string literals, should be changed to 'name'
+                            for step in result.steps:
+                                if step.type == "number" or step.type == "value":
+                                    # don't allow steps to be numbers or the values true/false/null
+                                    raise JException("S0213", step.position, step.value)
+                                #System.out.println("step "+step+" type="+step.type)
+                                if step.type == "string":
+                                    step.type = "name"
+                                # for (var lit : step.steps) {
+                                #     System.out.println("step2 "+lit+" type="+lit.type)
+                                #     lit.type = "name"
+                                # }
 
-                    # any step that signals keeping a singleton array, should be flagged on the path
-                    if result.steps.stream().filter(lambda step : step.keepArray == True).count() > 0:
-                        result.keepSingletonArray = True
-                    # if first step is a path constructor, flag it for special handling
-                    firststep = result.steps[0]
-                    if firststep.type == "unary" and ("" + firststep.value) == "[":
-                        firststep.consarray = True
-                    # if the last step is an array constructor, flag it so it doesn't flatten
-                    laststep = result.steps[-1]
-                    if laststep.type == "unary" and ("" + laststep.value) == "[":
-                        laststep.consarray = True
-                    self.resolveAncestry(result)
-                elif "" + expr.value is "[":
-                    if self.dbg:
-                        print("binary [")
-                    # predicated step
-                    # LHS is a step or a predicated step
-                    # RHS is the predicate expr
-                    result = self.processAST((expr).lhs)
-                    step = result
-                    type = "predicate"
-                    if result.type == "path":
-                        step = result.steps[-1]
-                        type = "stages"
-                    if step.group is not None:
-                        raise JException("S0209", expr.position)
-                    # if (typeof step[type] === 'undefined') {
-                    #     step[type] = []
-                    # }
-                    if type == "stages":
-                        if step.stages is None:
-                            step.stages = []
-                    else:
-                        if step.predicate is None:
-                            step.predicate = []
+                            # any step that signals keeping a singleton array, should be flagged on the path
+                            if result.steps.stream().filter(lambda step : step.keepArray == True).count() > 0:
+                                result.keepSingletonArray = True
+                            # if first step is a path constructor, flag it for special handling
+                            firststep = result.steps[0]
+                            if firststep.type == "unary" and ("" + firststep.value) == "[":
+                                firststep.consarray = True
+                            # if the last step is an array constructor, flag it so it doesn't flatten
+                            laststep = result.steps[-1]
+                            if laststep.type == "unary" and ("" + laststep.value) == "[":
+                                laststep.consarray = True
+                            self.resolveAncestry(result)
+                        case "[":
+                            if self.dbg:
+                                print("binary [")
+                            # predicated step
+                            # LHS is a step or a predicated step
+                            # RHS is the predicate expr
+                            result = self.processAST((expr).lhs)
+                            step = result
+                            type = "predicate"
+                            if result.type == "path":
+                                step = result.steps[-1]
+                                type = "stages"
+                            if step.group is not None:
+                                raise JException("S0209", expr.position)
+                            # if (typeof step[type] === 'undefined') {
+                            #     step[type] = []
+                            # }
+                            if type == "stages":
+                                if step.stages is None:
+                                    step.stages = []
+                            else:
+                                if step.predicate is None:
+                                    step.predicate = []
 
-                    predicate = self.processAST((expr).rhs)
-                    if predicate.seekingParent is not None:
+                            predicate = self.processAST((expr).rhs)
+                            if predicate.seekingParent is not None:
 # JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
 # ORIGINAL LINE: final var _step = step;
-                        _step = step
+                                _step = step
 # JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-                        #                                predicate.seekingParent.forEach(slot ->
-                        #                                {
-                        #                                    if(slot.level == 1)
-                        #                                    {
-                        #                                        seekParent(_step, slot)
-                        #                                    }
-                        #                                    else
-                        #                                    {
-                        #                                        slot.level--
-                        #                                    }
-                        #                                }
-                        #                                )
-                        self.pushAncestry(step, predicate)
-                    s = Symbol(self)
-                    s.type = "filter"
-                    s.expr = predicate
-                    s.position = expr.position
+                                #                                predicate.seekingParent.forEach(slot ->
+                                #                                {
+                                #                                    if(slot.level == 1)
+                                #                                    {
+                                #                                        seekParent(_step, slot)
+                                #                                    }
+                                #                                    else
+                                #                                    {
+                                #                                        slot.level--
+                                #                                    }
+                                #                                }
+                                #                                )
+                                self.pushAncestry(step, predicate)
+                            s = Symbol(self)
+                            s.type = "filter"
+                            s.expr = predicate
+                            s.position = expr.position
 
-                    # FIXED:
-                    # this logic is required in Java to fix
-                    # for example test: flattening case 045
-                    # otherwise we lose the keepArray flag
-                    if expr.keepArray:
-                        step.keepArray = True
+                            # FIXED:
+                            # this logic is required in Java to fix
+                            # for example test: flattening case 045
+                            # otherwise we lose the keepArray flag
+                            if expr.keepArray:
+                                step.keepArray = True
 
-                    if type == "stages":
-                        step.stages.append(s)
-                    else:
-                        step.predicate.append(s)
-                    #step[type].push({type: 'filter', expr: predicate, position: expr.position})
-                elif "" + expr.value is "{":
-                    # group-by
-                    # LHS is a step or a predicated step
-                    # RHS is the object constructor expr
-                    result = self.processAST(expr.lhs)
-                    if result.group is not None:
-                        raise JException("S0210", expr.position)
-                    # object constructor - process each pair
-                    result.group = Symbol(self)
-                    result.group.lhsObject = expr.rhsObject.stream().map(lambda pair : [self.processAST(pair[0]), self.processAST(pair[1])]).collect(java.util.stream.Collectors.toList())
-                    result.group.position = expr.position
+                            if type == "stages":
+                                step.stages.append(s)
+                            else:
+                                step.predicate.append(s)
+                            #step[type].push({type: 'filter', expr: predicate, position: expr.position})
+                        case "{":
+                            # group-by
+                            # LHS is a step or a predicated step
+                            # RHS is the object constructor expr
+                            result = self.processAST(expr.lhs)
+                            if result.group is not None:
+                                raise JException("S0210", expr.position)
+                            # object constructor - process each pair
+                            result.group = Symbol(self)
+                            result.group.lhsObject = expr.rhsObject.stream().map(lambda pair : [self.processAST(pair[0]), self.processAST(pair[1])]).collect(java.util.stream.Collectors.toList())
+                            result.group.position = expr.position
 
-                elif "" + expr.value is "^":
-                    # order-by
-                    # LHS is the array to be ordered
-                    # RHS defines the terms
-                    result = self.processAST(expr.lhs)
-                    if result.type != "path":
-                        _res = Symbol(self)
-                        _res.type = "path"
-                        _res.steps = []
-                        _res.steps.append(result)
-                        result = _res
-                    sortStep = Symbol(self)
-                    sortStep.type = "sort"
-                    sortStep.position = expr.position
+                        case "^":
+                            # order-by
+                            # LHS is the array to be ordered
+                            # RHS defines the terms
+                            result = self.processAST(expr.lhs)
+                            if result.type != "path":
+                                _res = Symbol(self)
+                                _res.type = "path"
+                                _res.steps = []
+                                _res.steps.append(result)
+                                result = _res
+                            sortStep = Symbol(self)
+                            sortStep.type = "sort"
+                            sortStep.position = expr.position
 # JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-                    #                        sortStep.terms = expr.rhsTerms.stream().map(terms ->
-                    #                        {
-                    #                            Symbol expression = processAST(terms.expression)
-                    #                            pushAncestry(sortStep, expression)
-                    #                            Symbol res = new Symbol()
-                    #                            res.descending = terms.descending
-                    #                            res.expression = expression
-                    #                            return res
-                    #                        }
-                    #                        ).collect(Collectors.toList())
-                    result.steps.append(sortStep)
-                    self.resolveAncestry(result)
-                elif "" + expr.value is ":=":
+                            #                        sortStep.terms = expr.rhsTerms.stream().map(terms ->
+                            #                        {
+                            #                            Symbol expression = processAST(terms.expression)
+                            #                            pushAncestry(sortStep, expression)
+                            #                            Symbol res = new Symbol()
+                            #                            res.descending = terms.descending
+                            #                            res.expression = expression
+                            #                            return res
+                            #                        }
+                            #                        ).collect(Collectors.toList())
+                            result.steps.append(sortStep)
+                            self.resolveAncestry(result)
+                        case ":=":
+                            result = Symbol(self)
+                            result.type = "bind"
+                            result.value = expr.value
+                            result.position = expr.position
+                            result.lhs = self.processAST(expr.lhs)
+                            result.rhs = self.processAST(expr.rhs)
+                            self.pushAncestry(result, result.rhs)
+                        case "@":
+                            result = self.processAST(expr.lhs)
+                            step = result
+                            if result.type == "path":
+                                step = result.steps[-1]
+                            # throw error if there are any predicates defined at this point
+                            # at this point the only type of stages can be predicates
+                            if step.stages is not None or step.predicate is not None:
+                                raise JException("S0215", expr.position)
+                            # also throw if this is applied after an 'order-by' clause
+                            if step.type == "sort":
+                                raise JException("S0216", expr.position)
+                            if expr.keepArray:
+                                step.keepArray = True
+                            step.focus = expr.rhs.value
+                            step.tuple = True
+                        case "#":
+                            result = self.processAST(expr.lhs)
+                            step = result
+                            if result.type == "path":
+                                step = result.steps[-1]
+                            else:
+                                _res = Symbol(self)
+                                _res.type = "path"
+                                _res.steps = []
+                                _res.steps.append(result)
+                                result = _res
+                                if step.predicate is not None:
+                                    step.stages = step.predicate
+                                    step.predicate = None
+                            if step.stages is None:
+                                step.index = expr.rhs.value # name of index variable = String
+                            else:
+                                _res = Symbol(self)
+                                _res.type = "index"
+                                _res.value = expr.rhs.value
+                                _res.position = expr.position
+                                step.stages.append(_res)
+                            step.tuple = True
+                        case "~>":
+                            result = Symbol(self)
+                            result.type = "apply"
+                            result.value = expr.value
+                            result.position = expr.position
+                            result.lhs = self.processAST(expr.lhs)
+                            result.rhs = self.processAST(expr.rhs)
+                        case other:
+                            _result = Infix(self, None)
+                            _result.type = expr.type
+                            _result.value = expr.value
+                            _result.position = expr.position
+                            _result.lhs = self.processAST((expr).lhs)
+                            _result.rhs = self.processAST((expr).rhs)
+                            self.pushAncestry(_result, _result.lhs)
+                            self.pushAncestry(_result, _result.rhs)
+                            result = _result
+
+            case "unary":
                     result = Symbol(self)
-                    result.type = "bind"
+                    result.type = expr.type
                     result.value = expr.value
                     result.position = expr.position
-                    result.lhs = self.processAST(expr.lhs)
-                    result.rhs = self.processAST(expr.rhs)
-                    self.pushAncestry(result, result.rhs)
-                elif "" + expr.value is "@":
-                    result = self.processAST(expr.lhs)
-                    step = result
-                    if result.type == "path":
-                        step = result.steps[-1]
-                    # throw error if there are any predicates defined at this point
-                    # at this point the only type of stages can be predicates
-                    if step.stages is not None or step.predicate is not None:
-                        raise JException("S0215", expr.position)
-                    # also throw if this is applied after an 'order-by' clause
-                    if step.type == "sort":
-                        raise JException("S0216", expr.position)
-                    if expr.keepArray:
-                        step.keepArray = True
-                    step.focus = expr.rhs.value
-                    step.tuple = True
-                elif "" + expr.value is "#":
-                    result = self.processAST(expr.lhs)
-                    step = result
-                    if result.type == "path":
-                        step = result.steps[-1]
+                    # expr.value might be Character!
+                    exprValue = "" + expr.value
+                    if exprValue == "[":
+                        if self.dbg:
+                            print("unary [ " + result)
+                        # array constructor - process each item
+# JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
+# ORIGINAL LINE: final Symbol _result = result;
+                        _result = result
+# JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
+                        #                    result.expressions = expr.expressions.stream().map(item ->
+                        #                    {
+                        #                        Symbol value = processAST(item)
+                        #                        pushAncestry(_result, value)
+                        #                        return value
+                        #                    }
+                        #                    ).collect(Collectors.toList())
+                    elif exprValue == "{":
+                        # object constructor - process each pair
+                        #throw new Error("processAST {} unimpl")
+# JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
+# ORIGINAL LINE: final Symbol _result = result;
+                        _result = result
+# JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
+                        #                    result.lhsObject = expr.lhsObject.stream().map(pair ->
+                        #                    {
+                        #                        Symbol key = processAST(pair[0])
+                        #                        pushAncestry(_result, key)
+                        #                        Symbol value = processAST(pair[1])
+                        #                        pushAncestry(_result, value)
+                        #                        return new Symbol[] {key, value}
+                        #                    }
+                        #                    ).collect(Collectors.toList())
                     else:
-                        _res = Symbol(self)
-                        _res.type = "path"
-                        _res.steps = []
-                        _res.steps.append(result)
-                        result = _res
-                        if step.predicate is not None:
-                            step.stages = step.predicate
-                            step.predicate = None
-                    if step.stages is None:
-                        step.index = expr.rhs.value # name of index variable = String
-                    else:
-                        _res = Symbol(self)
-                        _res.type = "index"
-                        _res.value = expr.rhs.value
-                        _res.position = expr.position
-                        step.stages.append(_res)
-                    step.tuple = True
-                elif "" + expr.value is "~>":
-                    result = Symbol(self)
-                    result.type = "apply"
-                    result.value = expr.value
-                    result.position = expr.position
-                    result.lhs = self.processAST(expr.lhs)
-                    result.rhs = self.processAST(expr.rhs)
-                else:
-                    _result = Infix(self, None)
-                    _result.type = expr.type
-                    _result.value = expr.value
-                    _result.position = expr.position
-                    _result.lhs = self.processAST((expr).lhs)
-                    _result.rhs = self.processAST((expr).rhs)
-                    self.pushAncestry(_result, _result.lhs)
-                    self.pushAncestry(_result, _result.rhs)
-                    result = _result
+                        # all other unary expressions - just process the expression
+                        result.expression = self.processAST(expr.expression)
+                        # if unary minus on a number, then pre-process
+                        if exprValue == "-" and result.expression.type == "number":
+                            result = result.expression
+                            result.value = Utils.convertNumber(-(result.value).doubleValue())
+                            if self.dbg:
+                                print("unary - value=" + result.value)
+                        else:
+                            self.pushAncestry(result, result.expression)
 
-        elif expr.type if expr.type is not None else "(null)" == "unary":
+            case (expr.type if expr.type is not None else "(null)" == "function") | "partial":
                 result = Symbol(self)
                 result.type = expr.type
+                result.name = expr.name
                 result.value = expr.value
                 result.position = expr.position
-                # expr.value might be Character!
-                exprValue = "" + expr.value
-                if exprValue == "[":
-                    if self.dbg:
-                        print("unary [ " + result)
-                    # array constructor - process each item
 # JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
 # ORIGINAL LINE: final Symbol _result = result;
-                    _result = result
+                _result = result
 # JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-                    #                    result.expressions = expr.expressions.stream().map(item ->
-                    #                    {
-                    #                        Symbol value = processAST(item)
-                    #                        pushAncestry(_result, value)
-                    #                        return value
-                    #                    }
-                    #                    ).collect(Collectors.toList())
-                elif exprValue == "{":
-                    # object constructor - process each pair
-                    #throw new Error("processAST {} unimpl")
-# JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
-# ORIGINAL LINE: final Symbol _result = result;
-                    _result = result
-# JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-                    #                    result.lhsObject = expr.lhsObject.stream().map(pair ->
-                    #                    {
-                    #                        Symbol key = processAST(pair[0])
-                    #                        pushAncestry(_result, key)
-                    #                        Symbol value = processAST(pair[1])
-                    #                        pushAncestry(_result, value)
-                    #                        return new Symbol[] {key, value}
-                    #                    }
-                    #                    ).collect(Collectors.toList())
-                else:
-                    # all other unary expressions - just process the expression
-                    result.expression = self.processAST(expr.expression)
-                    # if unary minus on a number, then pre-process
-                    if exprValue == "-" and result.expression.type == "number":
-                        result = result.expression
-                        result.value = Utils.convertNumber(-(result.value).doubleValue())
-                        if self.dbg:
-                            print("unary - value=" + result.value)
-                    else:
-                        self.pushAncestry(result, result.expression)
-
-        elif (expr.type if expr.type is not None else "(null)" == "function") or (expr.type if expr.type is not None else "(null)" == "partial"):
-            result = Symbol(self)
-            result.type = expr.type
-            result.name = expr.name
-            result.value = expr.value
-            result.position = expr.position
-# JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
-# ORIGINAL LINE: final Symbol _result = result;
-            _result = result
-# JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-            #                result.arguments = expr.arguments.stream().map(arg ->
-            #                {
-            #                    Symbol argAST = processAST(arg)
-            #                    pushAncestry(_result, argAST)
-            #                    return argAST
-            #                }
-            #                ).collect(Collectors.toList())
-            result.procedure = self.processAST(expr.procedure)
-        elif expr.type if expr.type is not None else "(null)" == "lambda":
-            result = Symbol(self)
-            result.type = expr.type
-            result.arguments = expr.arguments
-            result.signature = expr.signature
-            result.position = expr.position
-            body = self.processAST(expr.body)
-            result.body = self.tailCallOptimize(body)
-        elif expr.type if expr.type is not None else "(null)" == "condition":
-            result = Symbol(self)
-            result.type = expr.type
-            result.position = expr.position
-            result.condition = self.processAST(expr.condition)
-            self.pushAncestry(result, result.condition)
-            result.then = self.processAST(expr.then)
-            self.pushAncestry(result, result.then)
-            if expr._else is not None:
-                result._else = self.processAST(expr._else)
-                self.pushAncestry(result, result._else)
-        elif expr.type if expr.type is not None else "(null)" == "transform":
-            result = Symbol(self)
-            result.type = expr.type
-            result.position = expr.position
-            result.pattern = self.processAST(expr.pattern)
-            result.update = self.processAST(expr.update)
-            if expr.delete is not None:
-                result.delete = self.processAST(expr.delete)
-        elif expr.type if expr.type is not None else "(null)" == "block":
-            result = Symbol(self)
-            result.type = expr.type
-            result.position = expr.position
-            # array of expressions - process each one
+                #                result.arguments = expr.arguments.stream().map(arg ->
+                #                {
+                #                    Symbol argAST = processAST(arg)
+                #                    pushAncestry(_result, argAST)
+                #                    return argAST
+                #                }
+                #                ).collect(Collectors.toList())
+                result.procedure = self.processAST(expr.procedure)
+            case "lambda":
+                result = Symbol(self)
+                result.type = expr.type
+                result.arguments = expr.arguments
+                result.signature = expr.signature
+                result.position = expr.position
+                body = self.processAST(expr.body)
+                result.body = self.tailCallOptimize(body)
+            case "condition":
+                result = Symbol(self)
+                result.type = expr.type
+                result.position = expr.position
+                result.condition = self.processAST(expr.condition)
+                self.pushAncestry(result, result.condition)
+                result.then = self.processAST(expr.then)
+                self.pushAncestry(result, result.then)
+                if expr._else is not None:
+                    result._else = self.processAST(expr._else)
+                    self.pushAncestry(result, result._else)
+            case "transform":
+                result = Symbol(self)
+                result.type = expr.type
+                result.position = expr.position
+                result.pattern = self.processAST(expr.pattern)
+                result.update = self.processAST(expr.update)
+                if expr.delete is not None:
+                    result.delete = self.processAST(expr.delete)
+            case "block":
+                result = Symbol(self)
+                result.type = expr.type
+                result.position = expr.position
+                # array of expressions - process each one
 # JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
 # ORIGINAL LINE: final Symbol __result = result;
-            __result = result
+                __result = result
 # JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-            #                result.expressions = expr.expressions.stream().map(item ->
-            #                {
-            #                    Symbol part = processAST(item)
-            #                    pushAncestry(__result, part)
-            #                    if (part.consarray || (part.type.equals("path") && part.steps.get(0).consarray))
-            #                    {
-            #                        __result.consarray = true
-            #                    }
-            #                    return part
-            #                }
-            #                ).collect(Collectors.toList())
-            # TODO scan the array of expressions to see if any of them assign variables
-            # if so, need to mark the block as one that needs to create a new frame
-        elif expr.type if expr.type is not None else "(null)" == "name":
-            result = Symbol(self)
-            result.type = "path"
-            result.steps = []
-            result.steps.append(expr)
-            if expr.keepArray:
-                result.keepSingletonArray = True
-        elif expr.type if expr.type is not None else "(null)" == "parent":
-            result = Symbol(self)
-            result.type = "parent"
-            result.slot = Symbol(self)
+                #                result.expressions = expr.expressions.stream().map(item ->
+                #                {
+                #                    Symbol part = processAST(item)
+                #                    pushAncestry(__result, part)
+                #                    if (part.consarray || (part.type.equals("path") && part.steps.get(0).consarray))
+                #                    {
+                #                        __result.consarray = true
+                #                    }
+                #                    return part
+                #                }
+                #                ).collect(Collectors.toList())
+                # TODO scan the array of expressions to see if any of them assign variables
+                # if so, need to mark the block as one that needs to create a new frame
+            case "name":
+                result = Symbol(self)
+                result.type = "path"
+                result.steps = []
+                result.steps.append(expr)
+                if expr.keepArray:
+                    result.keepSingletonArray = True
+            case "parent":
+                result = Symbol(self)
+                result.type = "parent"
+                result.slot = Symbol(self)
 # JAVA TO PYTHON CONVERTER WARNING: An assignment within expression was extracted from the following statement:
 # ORIGINAL LINE: result.slot.label = "!"+ancestorLabel++;
-            result.slot.label = "!" + str(self.ancestorLabel)
-            self.ancestorLabel += 1
-            result.slot.level = 1
+                result.slot.label = "!" + str(self.ancestorLabel)
+                self.ancestorLabel += 1
+                result.slot.level = 1
 # JAVA TO PYTHON CONVERTER WARNING: An assignment within expression was extracted from the following statement:
 # ORIGINAL LINE: result.slot.index = ancestorIndex++;
-            result.slot.index = self.ancestorIndex
-            self.ancestorIndex += 1
-            #slot: { label: '!' + ancestorLabel++, level: 1, index: ancestorIndex++ } }
-            self.ancestry.append(result)
-        elif (expr.type if expr.type is not None else "(null)" == "string") or (expr.type if expr.type is not None else "(null)" == "number") or (expr.type if expr.type is not None else "(null)" == "value") or (expr.type if expr.type is not None else "(null)" == "wildcard") or (expr.type if expr.type is not None else "(null)" == "descendant") or (expr.type if expr.type is not None else "(null)" == "variable") or (expr.type if expr.type is not None else "(null)" == "regex"):
-            result = expr
-        elif expr.type if expr.type is not None else "(null)" == "operator":
-            # the tokens 'and' and 'or' might have been used as a name rather than an operator
-            if expr.value is "and" or expr.value is "or" or expr.value is "in":
-                expr.type = "name"
-                result = self.processAST(expr)
-            elif ("" + expr.value) == "?":
-                # partial application
+                result.slot.index = self.ancestorIndex
+                self.ancestorIndex += 1
+                #slot: { label: '!' + ancestorLabel++, level: 1, index: ancestorIndex++ } }
+                self.ancestry.append(result)
+            case (expr.type if expr.type is not None else "(null)" == "string") | (expr.type if expr.type is not None else "(null)" == "number") | (expr.type if expr.type is not None else "(null)" == "value") | (expr.type if expr.type is not None else "(null)" == "wildcard") | (expr.type if expr.type is not None else "(null)" == "descendant") | (expr.type if expr.type is not None else "(null)" == "variable") | "regex":
                 result = expr
-            else:
-                raise JException("S0201", expr.position, expr.value)
-        elif expr.type if expr.type is not None else "(null)" == "error":
-            result = expr
-            if expr.lhs is not None:
-                result = self.processAST(expr.lhs)
-        else:
-            code = "S0206"
-            # istanbul ignore else 
-            if expr.id == "(end)":
-                code = "S0207"
-            err = JException(code, expr.position, expr.value)
-            if self.recover:
-                self.errors.append(err)
-                ret = Symbol(self)
-                ret.type = "error"
-                ret.error = err
-                return ret
-            else:
-                #err.stack = (new Error()).stack
-                raise err
+            case "operator":
+                # the tokens 'and' and 'or' might have been used as a name rather than an operator
+                if expr.value is "and" or expr.value is "or" or expr.value is "in":
+                    expr.type = "name"
+                    result = self.processAST(expr)
+                elif ("" + expr.value) == "?":
+                    # partial application
+                    result = expr
+                else:
+                    raise JException("S0201", expr.position, expr.value)
+            case "error":
+                result = expr
+                if expr.lhs is not None:
+                    result = self.processAST(expr.lhs)
+            case other:
+                code = "S0206"
+                # istanbul ignore else 
+                if expr.id == "(end)":
+                    code = "S0207"
+                err = JException(code, expr.position, expr.value)
+                if self.recover:
+                    self.errors.append(err)
+                    ret = Symbol(self)
+                    ret.type = "error"
+                    ret.error = err
+                    return ret
+                else:
+                    #err.stack = (new Error()).stack
+                    raise err
         if expr.keepArray:
             result.keepArray = True
         return result

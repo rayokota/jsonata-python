@@ -234,32 +234,33 @@ class Utils:
         for i in range(0, len):
             b = c
             c = string[i]
-            if (c == '\\') or (c == '"'):
-                w.append('\\')
-                w.append(c)
-                #          
-                #          case '/':
-                #              if (b == '<') {
-                #                  w.append('\\')
-                #              }
-                #              w.append(c)
-                #              break
-                #          
-            elif c == '\b':
-                w.append("\\b")
-            elif c == '\t':
-                w.append("\\t")
-            elif c == '\n':
-                w.append("\\n")
-            elif c == '\f':
-                w.append("\\f")
-            elif c == '\r':
-                w.append("\\r")
-            else:
-                if c < ' ' or (c >= '\u0080' and c < '\u00a0') or (c >= '\u2000' and c < '\u2100'):
-                    w.append("\\u")
-                    hhhh = Integer.toHexString(c)
-                    w.append("0000", 0, 4 - len(hhhh))
-                    w.append(hhhh)
-                else:
+            match c:
+                case '\\' | '"':
+                    w.append('\\')
                     w.append(c)
+                    #          
+                    #          case '/':
+                    #              if (b == '<') {
+                    #                  w.append('\\')
+                    #              }
+                    #              w.append(c)
+                    #              break
+                    #          
+                case '\b':
+                    w.append("\\b")
+                case '\t':
+                    w.append("\\t")
+                case '\n':
+                    w.append("\\n")
+                case '\f':
+                    w.append("\\f")
+                case '\r':
+                    w.append("\\r")
+                case other:
+                    if c < ' ' or (c >= '\u0080' and c < '\u00a0') or (c >= '\u2000' and c < '\u2100'):
+                        w.append("\\u")
+                        hhhh = Integer.toHexString(c)
+                        w.append("0000", 0, 4 - len(hhhh))
+                        w.append(hhhh)
+                    else:
+                        w.append(c)
