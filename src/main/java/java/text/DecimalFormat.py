@@ -1,5 +1,4 @@
-﻿import copy
-import math
+﻿import math
 
 #
 # * Copyright (c) 1996, 2024, Oracle and/or its affiliates. All rights reserved.
@@ -2813,7 +2812,7 @@ class DecimalFormat(NumberFormat):
     def clone(self):
         other = super().clone()
         other._symbols = self._symbols.clone()
-        other._digitList = copy.copy(self._digitList)
+        other._digitList = self._digitList.clone()
 
         # Fast-path is almost stateless algorithm. The only logical state is the
         # isFastPath flag. In addition fastPathCheckNeeded is a sentinel flag
