@@ -347,50 +347,51 @@ class DateTimeUtils:
         formattedInteger = ""
         negative = value < 0
         value = abs(value)
-        if format.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.LETTERS:
-            formattedInteger = com.dashjoin.jsonata.utils.DateTimeUtils._decimalToLetters(int(value),"A" if format.case_type == tcase.UPPER else "a")
-        elif format.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.ROMAN:
-            formattedInteger = com.dashjoin.jsonata.utils.DateTimeUtils._decimalToRoman(int(value))
-            if format.case_type == tcase.UPPER:
-                formattedInteger = formattedInteger.upper()
-        elif format.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.WORDS:
-            formattedInteger = com.dashjoin.jsonata.utils.DateTimeUtils.numberToWords(value, format.ordinal)
-            if format.case_type == tcase.UPPER:
-                formattedInteger = formattedInteger.upper()
-            elif format.case_type == tcase.LOWER:
-                formattedInteger = formattedInteger.casefold()
-        elif format.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.DECIMAL:
-            formattedInteger = "" + str(value)
-            padLength = format.mandatoryDigits - len(formattedInteger)
-            if padLength > 0:
-                formattedInteger = com.dashjoin.jsonata.Functions.leftPad(formattedInteger, format.mandatoryDigits, "0")
-            if format.zeroCode != 0x30:
-                chars = formattedInteger.toCharArray()
-                i = 0
-                while i < len(chars):
-                    chars[i] = chr((chars[i] + format.zeroCode - 0x30))
-                    i += 1
-                formattedInteger = str(chars)
-            if format.regular:
+        match format.primary:
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.LETTERS:
+                formattedInteger = com.dashjoin.jsonata.utils.DateTimeUtils._decimalToLetters(int(value),"A" if format.case_type == tcase.UPPER else "a")
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.ROMAN:
+                formattedInteger = com.dashjoin.jsonata.utils.DateTimeUtils._decimalToRoman(int(value))
+                if format.case_type == tcase.UPPER:
+                    formattedInteger = formattedInteger.upper()
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.WORDS:
+                formattedInteger = com.dashjoin.jsonata.utils.DateTimeUtils.numberToWords(value, format.ordinal)
+                if format.case_type == tcase.UPPER:
+                    formattedInteger = formattedInteger.upper()
+                elif format.case_type == tcase.LOWER:
+                    formattedInteger = formattedInteger.casefold()
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.DECIMAL:
+                formattedInteger = "" + str(value)
+                padLength = format.mandatoryDigits - len(formattedInteger)
+                if padLength > 0:
+                    formattedInteger = com.dashjoin.jsonata.Functions.leftPad(formattedInteger, format.mandatoryDigits, "0")
+                if format.zeroCode != 0x30:
+                    chars = formattedInteger.toCharArray()
+                    i = 0
+                    while i < len(chars):
+                        chars[i] = chr((chars[i] + format.zeroCode - 0x30))
+                        i += 1
+                    formattedInteger = str(chars)
+                if format.regular:
 # JAVA TO PYTHON CONVERTER TASK: Java to Python Converter cannot determine whether both operands of this division are integer types - if they are then you should change 'lhs / rhs' to 'math.trunc(lhs / float(rhs))':
-                n = (len(formattedInteger) - 1) / format.groupingSeparators.elementAt(0).position
-                for i in range(n, 0, -1):
-                    pos = len(formattedInteger) - i * format.groupingSeparators.elementAt(0).position
-                    formattedInteger = formattedInteger[0:pos] + format.groupingSeparators.elementAt(0).character + formattedInteger[pos:]
-            else:
-                format.groupingSeparators.reverse()
-                for separator in format.groupingSeparators:
-                    pos = len(formattedInteger) - separator.position
-                    formattedInteger = formattedInteger[0:pos] + separator.character + formattedInteger[pos:]
+                    n = (len(formattedInteger) - 1) / format.groupingSeparators.elementAt(0).position
+                    for i in range(n, 0, -1):
+                        pos = len(formattedInteger) - i * format.groupingSeparators.elementAt(0).position
+                        formattedInteger = formattedInteger[0:pos] + format.groupingSeparators.elementAt(0).character + formattedInteger[pos:]
+                else:
+                    format.groupingSeparators.reverse()
+                    for separator in format.groupingSeparators:
+                        pos = len(formattedInteger) - separator.position
+                        formattedInteger = formattedInteger[0:pos] + separator.character + formattedInteger[pos:]
 
-            if format.ordinal:
-                lastDigit = formattedInteger[len(formattedInteger) - 1:]
-                suffix = com.dashjoin.jsonata.utils.DateTimeUtils._suffix123[lastDigit]
-                if suffix is None or (len(formattedInteger) > 1 and formattedInteger[len(formattedInteger) - 2] == '1'):
-                    suffix = "th"
-                formattedInteger += suffix
-        elif format.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.SEQUENCE:
-            raise RuntimeException(String.format(Constants.ERR_MSG_SEQUENCE_UNSUPPORTED, format.token))
+                if format.ordinal:
+                    lastDigit = formattedInteger[len(formattedInteger) - 1:]
+                    suffix = com.dashjoin.jsonata.utils.DateTimeUtils._suffix123[lastDigit]
+                    if suffix is None or (len(formattedInteger) > 1 and formattedInteger[len(formattedInteger) - 2] == '1'):
+                        suffix = "th"
+                    formattedInteger += suffix
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.SEQUENCE:
+                raise RuntimeException(String.format(Constants.ERR_MSG_SEQUENCE_UNSUPPORTED, format.token))
         if negative:
             formattedInteger = "-" + formattedInteger
 
@@ -773,49 +774,50 @@ class DateTimeUtils:
     @staticmethod
     def _getDateTimeFragment(date, component):
         componentValue = ""
-        if component == 'Y': # year
-            componentValue = "" + date.year
-        elif component == 'M': # month in year
-            componentValue = "" + date.month
-        elif component == 'D': # day in month
-            componentValue = "" + date.day
-        elif component == 'd': # day in year
-            componentValue = "" + date.getDayOfYear()
-        elif component == 'F': # day of week
-            componentValue = "" + date.getDayOfWeek().getValue()
-        elif component == 'W': # week in year
-            componentValue = "" + date.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-        elif component == 'w': # week in month
-            componentValue = "" + date.get(java.time.temporal.WeekFields.ISO.weekOfMonth())
-        elif component == 'X':
-            #TODO work these out once others verified
-            componentValue = "" + date.year
-        elif component == 'x':
-            componentValue = "" + date.month
-        elif component == 'H': # hour in day (24 hours)
-            componentValue = "" + date.hour
-        elif component == 'h': #hour in day (12 hours)
-            hour = date.hour
-            if hour > 12:
-                hour -= 12
-            elif hour == 0:
-                hour = 12
-            componentValue = "" + str(hour)
-        elif component == 'P':
-            componentValue = "am" if date.hour < 12 else "pm"
-        elif component == 'm':
-            componentValue = "" + date.minute
-        elif component == 's':
-            componentValue = "" + date.second
-        elif component == 'f':
+        match component:
+            case 'Y': # year
+                componentValue = "" + date.year
+            case 'M': # month in year
+                componentValue = "" + date.month
+            case 'D': # day in month
+                componentValue = "" + date.day
+            case 'd': # day in year
+                componentValue = "" + date.getDayOfYear()
+            case 'F': # day of week
+                componentValue = "" + date.getDayOfWeek().getValue()
+            case 'W': # week in year
+                componentValue = "" + date.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+            case 'w': # week in month
+                componentValue = "" + date.get(java.time.temporal.WeekFields.ISO.weekOfMonth())
+            case 'X':
+                #TODO work these out once others verified
+                componentValue = "" + date.year
+            case 'x':
+                componentValue = "" + date.month
+            case 'H': # hour in day (24 hours)
+                componentValue = "" + date.hour
+            case 'h': #hour in day (12 hours)
+                hour = date.hour
+                if hour > 12:
+                    hour -= 12
+                elif hour == 0:
+                    hour = 12
+                componentValue = "" + str(hour)
+            case 'P':
+                componentValue = "am" if date.hour < 12 else "pm"
+            case 'm':
+                componentValue = "" + date.minute
+            case 's':
+                componentValue = "" + date.second
+            case 'f':
 # JAVA TO PYTHON CONVERTER TASK: Java to Python Converter cannot determine whether both operands of this division are integer types - if they are then you should change 'lhs / rhs' to 'math.trunc(lhs / float(rhs))':
-            componentValue = "" + (date.getNano() / 1000000)
-        elif (component == 'Z') or (component == 'z'):
-            pass
-        elif component == 'C':
-            componentValue = "ISO"
-        elif component == 'E':
-            componentValue = "ISO"
+                componentValue = "" + (date.getNano() / 1000000)
+            case 'Z' | 'z':
+                pass
+            case 'C':
+                componentValue = "ISO"
+            case 'E':
+                componentValue = "ISO"
         return componentValue
 
     @staticmethod
@@ -1033,32 +1035,34 @@ class DateTimeUtils:
 # JAVA TO PYTHON CONVERTER WARNING: The original Java variable was marked 'final':
 # ORIGINAL LINE: final boolean isUpper = formatSpec.case_type == tcase.UPPER;
         isUpper = formatSpec.case_type == tcase.UPPER
-        if formatSpec.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.LETTERS:
-                regex = "[A-Z]+" if isUpper else "[a-z]+"
-                matcher = MatcherPartAnonymousInnerClass4(regex, isUpper)
-        elif formatSpec.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.ROMAN:
-                regex = "[MDCLXVI]+" if isUpper else "[mdclxvi]+"
-                matcher = MatcherPartAnonymousInnerClass5(regex, isUpper)
-        elif formatSpec.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.WORDS:
-                words = java.util.HashSet()
-                words.addAll(com.dashjoin.jsonata.utils.DateTimeUtils._wordValues.keys())
-                words.add("and")
-                words.add("[\\-, ]")
-                regex = "(?:" + String.join("|", words.toArray([None for _ in range(words.size())])) + ")+"
-                matcher = MatcherPartAnonymousInnerClass6(regex)
-        elif formatSpec.primary == com.dashjoin.jsonata.utils.DateTimeUtils.formats.DECIMAL:
-                regex = "[0-9]+"
-                if component == 'Y':
-                        regex = "[0-9]{2,4}"
-                elif (component == 'M') or (component == 'D') or (component == 'H') or (component == 'h') or (component == 'm') or (component == 's'):
-                        regex = "[0-9]{1,2}"
-                else:
+        match formatSpec.primary:
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.LETTERS:
+                    regex = "[A-Z]+" if isUpper else "[a-z]+"
+                    matcher = MatcherPartAnonymousInnerClass4(regex, isUpper)
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.ROMAN:
+                    regex = "[MDCLXVI]+" if isUpper else "[mdclxvi]+"
+                    matcher = MatcherPartAnonymousInnerClass5(regex, isUpper)
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.WORDS:
+                    words = java.util.HashSet()
+                    words.addAll(com.dashjoin.jsonata.utils.DateTimeUtils._wordValues.keys())
+                    words.add("and")
+                    words.add("[\\-, ]")
+                    regex = "(?:" + String.join("|", words.toArray([None for _ in range(words.size())])) + ")+"
+                    matcher = MatcherPartAnonymousInnerClass6(regex)
+            case com.dashjoin.jsonata.utils.DateTimeUtils.formats.DECIMAL:
+                    regex = "[0-9]+"
+                    match component:
+                        case 'Y':
+                                regex = "[0-9]{2,4}"
+                        case 'M' | 'D' | 'H' | 'h' | 'm' | 's':
+                                regex = "[0-9]{1,2}"
+                        case other:
 
-                if formatSpec.ordinal:
-                    regex += "(?:th|st|nd|rd)"
-                matcher = MatcherPartAnonymousInnerClass7(regex, formatSpec)
-        else:
-                raise RuntimeException(Constants.ERR_MSG_SEQUENCE_UNSUPPORTED)
+                    if formatSpec.ordinal:
+                        regex += "(?:th|st|nd|rd)"
+                    matcher = MatcherPartAnonymousInnerClass7(regex, formatSpec)
+            case other:
+                    raise RuntimeException(Constants.ERR_MSG_SEQUENCE_UNSUPPORTED)
         return matcher
 
     class MatcherPartAnonymousInnerClass4(MatcherPart):

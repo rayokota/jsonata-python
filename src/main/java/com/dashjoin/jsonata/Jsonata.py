@@ -146,44 +146,45 @@ class Jsonata:
             (entryCallback).callback(expr, input, environment)
 
         if expr.type is not None:
-            if expr.type == "path":
-                result = self.evaluatePath(expr, input, environment)
-            elif expr.type == "binary":
-                result = self.evaluateBinary(expr, input, environment)
-            elif expr.type == "unary":
-                result = self.evaluateUnary(expr, input, environment)
-            elif expr.type == "name":
-                result = self.evaluateName(expr, input, environment)
-                if self.parser.dbg:
-                    print("evalName " + result)
-            elif expr.type == "string" or expr.type == "number" or expr.type == "value":
-                result = self.evaluateLiteral(expr) #, input, environment);
-            elif expr.type == "wildcard":
-                result = self.evaluateWildcard(expr, input) #, environment);
-            elif expr.type == "descendant":
-                result = self.evaluateDescendants(expr, input) #, environment);
-            elif expr.type == "parent":
-                result = environment.lookup(expr.slot.label)
-            elif expr.type == "condition":
-                result = self.evaluateCondition(expr, input, environment)
-            elif expr.type == "block":
-                result = self.evaluateBlock(expr, input, environment)
-            elif expr.type == "bind":
-                result = self.evaluateBindExpression(expr, input, environment)
-            elif expr.type == "regex":
-                result = self.evaluateRegex(expr) #, input, environment);
-            elif expr.type == "function":
-                result = self.evaluateFunction(expr, input, environment, None)
-            elif expr.type == "variable":
-                result = self.evaluateVariable(expr, input, environment)
-            elif expr.type == "lambda":
-                result = self.evaluateLambda(expr, input, environment)
-            elif expr.type == "partial":
-                result = self.evaluatePartialApplication(expr, input, environment)
-            elif expr.type == "apply":
-                result = self.evaluateApplyExpression(expr, input, environment)
-            elif expr.type == "transform":
-                result = self.evaluateTransformExpression(expr, input, environment)
+            match expr.type:
+                case "path":
+                    result = self.evaluatePath(expr, input, environment)
+                case "binary":
+                    result = self.evaluateBinary(expr, input, environment)
+                case "unary":
+                    result = self.evaluateUnary(expr, input, environment)
+                case "name":
+                    result = self.evaluateName(expr, input, environment)
+                    if self.parser.dbg:
+                        print("evalName " + result)
+                case expr.type == "string" | expr.type == "number" | "value":
+                    result = self.evaluateLiteral(expr) #, input, environment);
+                case "wildcard":
+                    result = self.evaluateWildcard(expr, input) #, environment);
+                case "descendant":
+                    result = self.evaluateDescendants(expr, input) #, environment);
+                case "parent":
+                    result = environment.lookup(expr.slot.label)
+                case "condition":
+                    result = self.evaluateCondition(expr, input, environment)
+                case "block":
+                    result = self.evaluateBlock(expr, input, environment)
+                case "bind":
+                    result = self.evaluateBindExpression(expr, input, environment)
+                case "regex":
+                    result = self.evaluateRegex(expr) #, input, environment);
+                case "function":
+                    result = self.evaluateFunction(expr, input, environment, None)
+                case "variable":
+                    result = self.evaluateVariable(expr, input, environment)
+                case "lambda":
+                    result = self.evaluateLambda(expr, input, environment)
+                case "partial":
+                    result = self.evaluatePartialApplication(expr, input, environment)
+                case "apply":
+                    result = self.evaluateApplyExpression(expr, input, environment)
+                case "transform":
+                    result = self.evaluateTransformExpression(expr, input, environment)
 
         if expr.predicate is not None:
             for ii, _ in enumerate(expr.predicate):
@@ -333,12 +334,13 @@ class Jsonata:
         result = input
         for ss, _ in enumerate(stages):
             stage = stages[ss]
-            if stage.type == "filter":
-                result = self.evaluateFilter(stage.expr, result, environment)
-            elif stage.type == "index":
-                for ee, _ in enumerate((result)):
-                    tuple = (result)[ee]
-                    (tuple)["" + stage.value] = ee
+            match stage.type:
+                case "filter":
+                    result = self.evaluateFilter(stage.expr, result, environment)
+                case "index":
+                    for ee, _ in enumerate((result)):
+                        tuple = (result)[ee]
+                        (tuple)["" + stage.value] = ee
         return result
 
     #    *
@@ -486,20 +488,21 @@ class Jsonata:
 
         rhs = self.evaluate(expr.rhs, input, environment) #evalrhs();
         try:
-            if op == "+" or op == "-" or op == "*" or op == "/" or op == "%":
-                result = self.evaluateNumericExpression(lhs, rhs, op)
-            elif op == "=" or op == "!=":
-                result = self.evaluateEqualityExpression(lhs, rhs, op)
-            elif op == "<" or op == "<=" or op == ">" or op == ">=":
-                result = self.evaluateComparisonExpression(lhs, rhs, op)
-            elif op == "&":
-                result = self.evaluateStringConcat(lhs, rhs)
-            elif op == "..":
-                result = self.evaluateRangeExpression(lhs, rhs)
-            elif op == "in":
-                result = self.evaluateIncludesExpression(lhs, rhs)
-            else:
-                raise JException("Unexpected operator " + op, expr.position)
+            match op:
+                case op == "+" | op == "-" | op == "*" | op == "/" | "%":
+                    result = self.evaluateNumericExpression(lhs, rhs, op)
+                case op == "=" | "!=":
+                    result = self.evaluateEqualityExpression(lhs, rhs, op)
+                case op == "<" | op == "<=" | op == ">" | ">=":
+                    result = self.evaluateComparisonExpression(lhs, rhs, op)
+                case "&":
+                    result = self.evaluateStringConcat(lhs, rhs)
+                case "..":
+                    result = self.evaluateRangeExpression(lhs, rhs)
+                case "in":
+                    result = self.evaluateIncludesExpression(lhs, rhs)
+                case other:
+                    raise JException("Unexpected operator " + op, expr.position)
         except Exception as err:
             #err.position = expr.position
             #err.token = op
@@ -537,35 +540,36 @@ class Jsonata:
     def evaluateUnary(self, expr, input, environment):
         result = None
 
-        if str("") + expr.value is "-":
-            result = self.evaluate(expr.expression, input, environment)
-            if result is None:
-                result = None
-            elif Utils.isNumeric(result):
-                result = Utils.convertNumber(-(result).doubleValue())
-            else:
-                raise JException("D1002", expr.position, expr.value, result)
-        elif str("") + expr.value is "[":
-            # array constructor - evaluate each item
-            result = com.dashjoin.jsonata.Utils.JList() # [];
-            idx = 0
-            for item in expr.expressions:
-                environment.isParallelCall = idx > 0
-                value = self.evaluate(item, input, environment)
-                if value is not None:
-                    if ("" + item.value) == "[":
-                        (result).append(value)
-                    else:
-                        result = Functions.append(result, value)
-                idx += 1
-            if expr.consarray:
-                if not(isinstance(result, com.dashjoin.jsonata.Utils.JList)):
-                    result = com.dashjoin.jsonata.Utils.JList(result)
-                #System.out.println("const "+result)
-                (result).cons = True
-        elif str("") + expr.value is "{":
-            # object constructor - apply grouping
-            result = self.evaluateGroupExpression(expr, input, environment)
+        match str("") + expr.value:
+            case "-":
+                result = self.evaluate(expr.expression, input, environment)
+                if result is None:
+                    result = None
+                elif Utils.isNumeric(result):
+                    result = Utils.convertNumber(-(result).doubleValue())
+                else:
+                    raise JException("D1002", expr.position, expr.value, result)
+            case "[":
+                # array constructor - evaluate each item
+                result = com.dashjoin.jsonata.Utils.JList() # [];
+                idx = 0
+                for item in expr.expressions:
+                    environment.isParallelCall = idx > 0
+                    value = self.evaluate(item, input, environment)
+                    if value is not None:
+                        if ("" + item.value) == "[":
+                            (result).append(value)
+                        else:
+                            result = Functions.append(result, value)
+                    idx += 1
+                if expr.consarray:
+                    if not(isinstance(result, com.dashjoin.jsonata.Utils.JList)):
+                        result = com.dashjoin.jsonata.Utils.JList(result)
+                    #System.out.println("const "+result)
+                    (result).cons = True
+            case "{":
+                # object constructor - apply grouping
+                result = self.evaluateGroupExpression(expr, input, environment)
 
         return result
 
@@ -696,16 +700,17 @@ class Jsonata:
         lhs = (_lhs).doubleValue()
         rhs = (_rhs).doubleValue()
 
-        if op == "+":
-            result = lhs + rhs
-        elif op == "-":
-            result = lhs - rhs
-        elif op == "*":
-            result = lhs * rhs
-        elif op == "/":
-            result = lhs / rhs
-        elif op == "%":
-            result = int(math.fmod(lhs, rhs))
+        match op:
+            case "+":
+                result = lhs + rhs
+            case "-":
+                result = lhs - rhs
+            case "*":
+                result = lhs * rhs
+            case "/":
+                result = lhs / rhs
+            case "%":
+                result = int(math.fmod(lhs, rhs))
         return Utils.convertNumber(result)
 
     #     *
@@ -734,10 +739,11 @@ class Jsonata:
         if isinstance(rhs, Number):
             rhs = (rhs).doubleValue()
 
-        if op == "=":
-            result = lhs is rhs # isDeepEqual(lhs, rhs);
-        elif op == "!=":
-            result = lhs is not rhs # !isDeepEqual(lhs, rhs);
+        match op:
+            case "=":
+                result = lhs is rhs # isDeepEqual(lhs, rhs);
+            case "!=":
+                result = lhs is not rhs # !isDeepEqual(lhs, rhs);
         return result
 
     #     *
@@ -777,14 +783,15 @@ class Jsonata:
 
         _lhs = lhs
 
-        if op == "<":
-            result = _lhs.compareTo(rhs) < 0
-        elif op == "<=":
-            result = _lhs.compareTo(rhs) <= 0 #lhs <= rhs;
-        elif op == ">":
-            result = _lhs.compareTo(rhs) > 0 # lhs > rhs;
-        elif op == ">=":
-            result = _lhs.compareTo(rhs) >= 0 # lhs >= rhs;
+        match op:
+            case "<":
+                result = _lhs.compareTo(rhs) < 0
+            case "<=":
+                result = _lhs.compareTo(rhs) <= 0 #lhs <= rhs;
+            case ">":
+                result = _lhs.compareTo(rhs) > 0 # lhs > rhs;
+            case ">=":
+                result = _lhs.compareTo(rhs) >= 0 # lhs >= rhs;
         return result
 
     #     *
@@ -828,10 +835,11 @@ class Jsonata:
 
         lBool = com.dashjoin.jsonata.Jsonata.boolize(lhs)
 
-        if op == "and":
-            result = lBool and com.dashjoin.jsonata.Jsonata.boolize(evalrhs.call())
-        elif op == "or":
-            result = lBool or com.dashjoin.jsonata.Jsonata.boolize(evalrhs.call())
+        match op:
+            case "and":
+                result = lBool and com.dashjoin.jsonata.Jsonata.boolize(evalrhs.call())
+            case "or":
+                result = lBool or com.dashjoin.jsonata.Jsonata.boolize(evalrhs.call())
         return result
 
     @staticmethod
@@ -1192,89 +1200,78 @@ class Jsonata:
     #      * @param {Object} environment - Environment
     #      * @returns {*} tranformer function
     #      
+
     def evaluateTransformExpression(self, expr, input, environment):
         # create a Object to implement the transform definition
-# JAVA TO PYTHON CONVERTER TASK: Only expression lambdas are converted by Java to Python Converter:
-        #        JFunctionCallable transformer = (_input, args) ->
-        #        {
-        #        // /* async */ Object (obj) { // signature <(oa):o>
-        #
-        #            var obj = ((List)args).get(0)
-        #
-        #            // undefined inputs always return undefined
-        #            if(obj == null)
-        #            {
-        #                return null
-        #            }
-        #
-        #            // this Object returns a copy of obj with changes specified by the pattern/operation
-        #            Object result = Functions.functionClone(obj)
-        #
-        #            var _matches = evaluate(expr.pattern, result, environment)
-        #            if(_matches != null)
-        #            {
-        #                if(!(_matches instanceof List))
-        #                {
-        #                    _matches = new ArrayList<>(List.of(_matches))
-        #                }
-        #                List matches = (List)_matches
-        #                for(var ii = 0; ii < matches.size(); ii++)
-        #                {
-        #                    var @match = matches.get(ii)
-        #                    // evaluate the update value for each match
-        #                    var update = evaluate(expr.update, @match, environment)
-        #                    // update must be an object
-        #                    //var updateType = typeof update
-        #                    //if(updateType != null) 
-        #
-        #                    if (update != null)
-        #                    {
-        #                    if(!(update instanceof Map))
-        #                    {
-        #                            // throw type error
-        #                            throw new JException("T2011", expr.update.position, update)
-        #                        }
-        #                        // merge the update
-        #                        for(var prop : ((Map)update).keySet())
-        #                        {
-        #                            ((Map)@match).put(prop, ((Map)update).get(prop))
-        #                        }
-        #                    }
-        #
-        #                    // delete, if specified, must be an array of strings (or single string)
-        #                    if(expr.delete != null)
-        #                    {
-        #                        var deletions = evaluate(expr.delete, @match, environment)
-        #                        if(deletions != null)
-        #                        {
-        #                            var val = deletions
-        #                            if (!(deletions instanceof List))
-        #                            {
-        #                                deletions = new ArrayList<>(List.of(deletions))
-        #                            }
-        #                            if (!Utils.isArrayOfStrings(deletions))
-        #                            {
-        #                                // throw type error
-        #                                throw new JException("T2012", expr.delete.position, val)
-        #                            }
-        #                            List _deletions = (List)deletions
-        #                            for (var jj = 0; jj < _deletions.size(); jj++)
-        #                            {
-        #                                if(@match instanceof Map)
-        #                                {
-        #                                ((Map)@match).remove(_deletions.get(jj))
-        #                                    //delete match[deletions[jj]]
-        #                                }
-        #                            }
-        #                        }
-        #                    }
-        #                }
-        #            }
-        #
-        #            return result
-        #        }
-
+        transformer = Transformer(self, expr, environment)
         return JFunction(transformer, "<(oa):o>")
+
+    class Transformer(JFunctionCallable):
+        def __init__(self, jsonata, expr, environment):
+            # instance fields found by Java to Python Converter:
+            self._jsonata = None
+            self._expr = None
+            self._environment = None
+
+            self._jsonata = jsonata
+            self._expr = expr
+            self._environment = environment
+
+# JAVA TO PYTHON CONVERTER WARNING: Method 'throws' clauses are not available in Python:
+# ORIGINAL LINE: public Object call(Object _input, java.util.List args) throws Throwable
+        def call(self, _input, args):
+            # /* async */ Object (obj) { // signature <(oa):o>
+
+            obj = (args)[0]
+
+            # undefined inputs always return undefined
+            if obj is None:
+                return None
+
+            # this Object returns a copy of obj with changes specified by the pattern/operation
+            result = Functions.functionClone(obj)
+
+            _matches = self._jsonata.evaluate(self._expr.pattern, result, self._environment)
+            if _matches is not None:
+                if not(isinstance(_matches, java.util.List)):
+                    _matches = list(java.util.List.of(_matches))
+                matches = _matches
+                for ii, _ in enumerate(matches):
+                    match_ = matches[ii]
+                    # evaluate the update value for each match
+                    update = self._jsonata.evaluate(self._expr.update, match_, self._environment)
+                    # update must be an object
+                    #var updateType = typeof update
+                    #if(updateType != null)
+
+                    if update is not None:
+                        if not(isinstance(update, java.util.Map)):
+                            # throw type error
+                            raise JException("T2011", self._expr.update.position, update)
+                        # merge the update
+# JAVA TO PYTHON CONVERTER TASK: The following line could not be converted:
+                        for(var prop : ((java.util.Map)update).keySet())
+# JAVA TO PYTHON CONVERTER TASK: The following line could not be converted:
+                            ((java.util.Map)match_).put(prop, ((java.util.Map)update).get(prop));
+
+                    # delete, if specified, must be an array of strings (or single string)
+                    if self._expr.delete is not None:
+                        deletions = self._jsonata.evaluate(self._expr.delete, match_, self._environment)
+                        if deletions is not None:
+                            val = deletions
+                            if not(isinstance(deletions, java.util.List)):
+                                deletions = list(java.util.List.of(deletions))
+                            if not Utils.isArrayOfStrings(deletions):
+                                # throw type error
+                                raise JException("T2012", self._expr.delete.position, val)
+                            _deletions = deletions
+                            for jj, _ in enumerate(_deletions):
+                                if isinstance(match_, java.util.Map):
+                                    (match_).pop(_deletions[jj])
+                                    #delete match[deletions[jj]]
+
+            return result
+
 
     chainAST = None # = new Parser().parse("function($f, $g) { function($x){ $g($f($x)) } }");
 

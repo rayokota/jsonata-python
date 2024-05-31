@@ -156,22 +156,23 @@ class JsonParser:
 # JAVA TO PYTHON CONVERTER WARNING: Method 'throws' clauses are not available in Python:
 # ORIGINAL LINE: private void readValue() throws java.io.IOException
     def _readValue(self):
-        if self._current == 'n':
-            self._readNull()
-        elif self._current == 't':
-            self._readTrue()
-        elif self._current == 'f':
-            self._readFalse()
-        elif self._current == '"':
-            self._readString()
-        elif self._current == '[':
-            self._readArray()
-        elif self._current == '{':
-            self._readObject()
-        elif (self._current == '-') or (self._current == '0') or (self._current == '1') or (self._current == '2') or (self._current == '3') or (self._current == '4') or (self._current == '5') or (self._current == '6') or (self._current == '7') or (self._current == '8') or (self._current == '9'):
-            self._readNumber()
-        else:
-            raise self._expected("value")
+        match self._current:
+            case 'n':
+                self._readNull()
+            case 't':
+                self._readTrue()
+            case 'f':
+                self._readFalse()
+            case '"':
+                self._readString()
+            case '[':
+                self._readArray()
+            case '{':
+                self._readObject()
+            case '-' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9':
+                self._readNumber()
+            case other:
+                raise self._expected("value")
 
 # JAVA TO PYTHON CONVERTER WARNING: Method 'throws' clauses are not available in Python:
 # ORIGINAL LINE: private void readArray() throws java.io.IOException
@@ -308,28 +309,29 @@ class JsonParser:
 # ORIGINAL LINE: private void readEscape() throws java.io.IOException
     def _readEscape(self):
         self._read()
-        if (self._current == '"') or (self._current == '/') or (self._current == '\\'):
-            self._captureBuffer.append(chr(self._current))
-        elif self._current == 'b':
-            self._captureBuffer.append('\b')
-        elif self._current == 'f':
-            self._captureBuffer.append('\f')
-        elif self._current == 'n':
-            self._captureBuffer.append('\n')
-        elif self._current == 'r':
-            self._captureBuffer.append('\r')
-        elif self._current == 't':
-            self._captureBuffer.append('\t')
-        elif self._current == 'u':
-            hexChars = ['\0' for _ in range(4)]
-            for i in range(0, 4):
-                self._read()
-                if not self._isHexDigit():
-                    raise self._expected("hexadecimal digit")
-                hexChars[i] = chr(self._current)
-            self._captureBuffer.append(chr(Integer.parseInt(str(hexChars), 16)))
-        else:
-            raise self._expected("valid escape sequence")
+        match self._current:
+            case '"' | '/' | '\\':
+                self._captureBuffer.append(chr(self._current))
+            case 'b':
+                self._captureBuffer.append('\b')
+            case 'f':
+                self._captureBuffer.append('\f')
+            case 'n':
+                self._captureBuffer.append('\n')
+            case 'r':
+                self._captureBuffer.append('\r')
+            case 't':
+                self._captureBuffer.append('\t')
+            case 'u':
+                hexChars = ['\0' for _ in range(4)]
+                for i in range(0, 4):
+                    self._read()
+                    if not self._isHexDigit():
+                        raise self._expected("hexadecimal digit")
+                    hexChars[i] = chr(self._current)
+                self._captureBuffer.append(chr(Integer.parseInt(str(hexChars), 16)))
+            case other:
+                raise self._expected("valid escape sequence")
         self._read()
 
 # JAVA TO PYTHON CONVERTER WARNING: Method 'throws' clauses are not available in Python:

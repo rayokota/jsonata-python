@@ -157,59 +157,60 @@ class Signature:
                 # ignore it for now
                 break
 
-            if (symbol == 's') or (symbol == 'n') or (symbol == 'b') or (symbol == 'l') or (symbol == 'o'):
-                    self._param.regex = ("[" + symbol + "m]")
-                    self._param.type = ("" + symbol)
-                    self.next()
-            elif symbol == 'a':
-                    # normally treat any value as singleton array
-                    self._param.regex = ("[asnblfom]")
-                    self._param.type = ("" + symbol)
-                    self._param.array = (True)
-                    self.next()
-            elif symbol == 'f':
-                    self._param.regex = ("f")
-                    self._param.type = ("" + symbol)
-                    self.next()
-            elif symbol == 'j':
-                    self._param.regex = ("[asnblom]")
-                    self._param.type = ("" + symbol)
-                    self.next()
-            elif symbol == 'x':
-                    self._param.regex = ("[asnblfom]")
-                    self._param.type = ("" + symbol)
-                    self.next()
-            elif symbol == '-':
-                    self._prevParam.context = True
-                    self._prevParam.regex += "?"
-            elif (symbol == '?') or (symbol == '+'):
-                    self._prevParam.regex += symbol
-            elif symbol == '(':
-                    # search forward for matching ')'
-                    endParen = self.findClosingBracket(signature, position, '(', ')')
-                    choice = signature[position + 1:endParen]
-                    if choice.find("<") == -1:
-                        # no _parameterized types, simple regex
-                        self._param.regex = ("[" + choice + "m]")
-                    else:
-                        # TODO harder
-                        raise RuntimeException("Choice groups containing parameterized types are not supported")
-                    self._param.type = ("(" + choice + ")")
-                    position = endParen
-                    self.next()
-            elif symbol == '<':
-                    test = self._prevParam.type
-                    if test is not None:
-                        type = test #.asText();
-                        if type == "a" or type == "f":
-                            # search forward for matching '>'
-                            endPos = self.findClosingBracket(signature, position, '<', '>')
-                            self._prevParam.subtype = signature[position + 1:endPos]
-                            position = endPos
+            match symbol:
+                case 's' | 'n' | 'b' | 'l' | 'o':
+                        self._param.regex = ("[" + symbol + "m]")
+                        self._param.type = ("" + symbol)
+                        self.next()
+                case 'a':
+                        # normally treat any value as singleton array
+                        self._param.regex = ("[asnblfom]")
+                        self._param.type = ("" + symbol)
+                        self._param.array = (True)
+                        self.next()
+                case 'f':
+                        self._param.regex = ("f")
+                        self._param.type = ("" + symbol)
+                        self.next()
+                case 'j':
+                        self._param.regex = ("[asnblom]")
+                        self._param.type = ("" + symbol)
+                        self.next()
+                case 'x':
+                        self._param.regex = ("[asnblfom]")
+                        self._param.type = ("" + symbol)
+                        self.next()
+                case '-':
+                        self._prevParam.context = True
+                        self._prevParam.regex += "?"
+                case '?' | '+':
+                        self._prevParam.regex += symbol
+                case '(':
+                        # search forward for matching ')'
+                        endParen = self.findClosingBracket(signature, position, '(', ')')
+                        choice = signature[position + 1:endParen]
+                        if choice.find("<") == -1:
+                            # no _parameterized types, simple regex
+                            self._param.regex = ("[" + choice + "m]")
+                        else:
+                            # TODO harder
+                            raise RuntimeException("Choice groups containing parameterized types are not supported")
+                        self._param.type = ("(" + choice + ")")
+                        position = endParen
+                        self.next()
+                case '<':
+                        test = self._prevParam.type
+                        if test is not None:
+                            type = test #.asText();
+                            if type == "a" or type == "f":
+                                # search forward for matching '>'
+                                endPos = self.findClosingBracket(signature, position, '<', '>')
+                                self._prevParam.subtype = signature[position + 1:endPos]
+                                position = endPos
+                            else:
+                                raise RuntimeException("Type parameters can only be applied to functions and arrays")
                         else:
                             raise RuntimeException("Type parameters can only be applied to functions and arrays")
-                    else:
-                        raise RuntimeException("Type parameters can only be applied to functions and arrays")
             position += 1 # end while processing symbols in signature
 
         regexStr = "^"

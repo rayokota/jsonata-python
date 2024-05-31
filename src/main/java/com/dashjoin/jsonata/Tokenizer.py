@@ -302,18 +302,19 @@ class Tokenizer:
                 else:
                     _name = self.path[self.position:i]
                     self.position = i
-                    if _name == "or" or _name == "in" or _name == "and":
-                        return self.create("operator", _name)
-                    elif _name == "true":
-                        return self.create("value", True)
-                    elif _name == "false":
-                        return self.create("value", False)
-                    elif _name == "null":
-                        return self.create("value", None)
-                    else:
-                        if self.position == self.length and _name == "":
-                            # whitespace at end of input
-                            return None
-                        return self.create("name", _name)
+                    match _name:
+                        case _name == "or" | _name == "in" | "and":
+                            return self.create("operator", _name)
+                        case "true":
+                            return self.create("value", True)
+                        case "false":
+                            return self.create("value", False)
+                        case "null":
+                            return self.create("value", None)
+                        case other:
+                            if self.position == self.length and _name == "":
+                                # whitespace at end of input
+                                return None
+                            return self.create("name", _name)
             else:
                 i += 1
