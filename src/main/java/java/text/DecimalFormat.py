@@ -629,7 +629,7 @@ class DecimalFormat(NumberFormat):
                 return result
 
         # if fast-path could not work, we fallback to standard code.
-        return format(number, result, fieldPosition.getFieldDelegate())
+        return self.format(number, result, fieldPosition.getFieldDelegate())
 
     #    *
     #     * Formats a double to produce a string.
@@ -756,7 +756,7 @@ class DecimalFormat(NumberFormat):
         fieldPosition.setBeginIndex(0)
         fieldPosition.setEndIndex(0)
 
-        return format(number, result, fieldPosition.getFieldDelegate())
+        return self.format(number, result, fieldPosition.getFieldDelegate())
 
     #    *
     #     * Format a long to produce a string.
@@ -837,7 +837,7 @@ class DecimalFormat(NumberFormat):
     def _format(self, number, result, fieldPosition):
         fieldPosition.setBeginIndex(0)
         fieldPosition.setEndIndex(0)
-        return format(number, result, fieldPosition.getFieldDelegate())
+        return self.format(number, result, fieldPosition.getFieldDelegate())
 
     #    *
     #     * Formats a BigDecimal to produce a string.
