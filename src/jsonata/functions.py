@@ -29,7 +29,7 @@ import sys
 import unicodedata
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any, AnyStr, Mapping, NoReturn, Sequence, Callable, Type
+from typing import Any, AnyStr, Mapping, NoReturn, Optional, Sequence, Callable, Type, Union
 
 from jsonata import datetimeutils, jexception, parser, utils
 
@@ -42,7 +42,7 @@ class Functions:
     # @returns {number} Total value of arguments
     #     
     @staticmethod
-    def sum(args: Sequence[float] | None) -> float | None:
+    def sum(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
         if args is None:
             return None
@@ -55,7 +55,7 @@ class Functions:
     # @returns {number} Number of elements in the array
     #     
     @staticmethod
-    def count(args: Sequence[Any] | None) -> float:
+    def count(args: Optional[Sequence[Any]]) -> float:
         # undefined inputs always return undefined
         if args is None:
             return 0
@@ -68,7 +68,7 @@ class Functions:
     # @returns {number} Max element in the array
     #     
     @staticmethod
-    def max(args: Sequence[float] | None) -> float | None:
+    def max(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
         if args is None or len(args) == 0:
             return None
@@ -81,7 +81,7 @@ class Functions:
     # @returns {number} Min element in the array
     #     
     @staticmethod
-    def min(args: Sequence[float] | None) -> float | None:
+    def min(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
         if args is None or len(args) == 0:
             return None
@@ -94,7 +94,7 @@ class Functions:
     # @returns {number} Average element in the array
     #     
     @staticmethod
-    def average(args: Sequence[float] | None) -> float | None:
+    def average(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
         if args is None or len(args) == 0:
             return None
@@ -108,7 +108,7 @@ class Functions:
     # @returns {String} String from arguments
     #     
     @staticmethod
-    def string(arg: Any | None, prettify: bool | None) -> str | None:
+    def string(arg: Optional[Any], prettify: Optional[bool]) -> Optional[str]:
 
         if isinstance(arg, utils.Utils.JList):
             if arg.outer_wrapper:
@@ -173,7 +173,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def validate_input(arg: Any | None) -> None:
+    def validate_input(arg: Optional[Any]) -> None:
         from jsonata import jsonata
 
         if arg is None or arg is utils.Utils.NULL_VALUE:
@@ -214,7 +214,7 @@ class Functions:
     # @returns {string|*} Substring
     #     
     @staticmethod
-    def substring(string: str | None, _start: float | None, _length: float | None) -> str | None:
+    def substring(string: Optional[str], _start: Optional[float], _length: Optional[float]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -249,7 +249,7 @@ class Functions:
     #         length is 0 or a negative number, an empty string is returned.
     #     
     @staticmethod
-    def substr(string: str | None, start: int | None, length: int | None) -> str:
+    def substr(string: Optional[str], start: Optional[int], length: Optional[int]) -> str:
 
         # below has to convert start and length for emojis and unicode
         orig_len = len(string)
@@ -295,7 +295,7 @@ class Functions:
     # @returns {*} Substring
     #     
     @staticmethod
-    def substring_before(string: str | None, chars: str | None) -> str | None:
+    def substring_before(string: Optional[str], chars: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -316,7 +316,7 @@ class Functions:
     # @returns {*} Substring
     #     
     @staticmethod
-    def substring_after(string: str | None, chars: str | None) -> str | None:
+    def substring_after(string: Optional[str], chars: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -333,7 +333,7 @@ class Functions:
     # @returns {string} Lowercase string
     #     
     @staticmethod
-    def lowercase(string: str | None) -> str | None:
+    def lowercase(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -346,7 +346,7 @@ class Functions:
     # @returns {string} Uppercase string
     #     
     @staticmethod
-    def uppercase(string: str | None) -> str | None:
+    def uppercase(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -359,7 +359,7 @@ class Functions:
     # @returns {Number} The number of characters in the string
     #     
     @staticmethod
-    def length(string: str | None) -> int | None:
+    def length(string: Optional[str]) -> Optional[int]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -372,7 +372,7 @@ class Functions:
     # @returns {string} - trimmed string
     #     
     @staticmethod
-    def trim(string: str | None) -> str | None:
+    def trim(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -402,7 +402,7 @@ class Functions:
     # @returns {string} - padded string
     #     
     @staticmethod
-    def pad(string: str | None, width: int | None, _char: str | None) -> str | None:
+    def pad(string: Optional[str], width: Optional[int], _char: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -420,7 +420,7 @@ class Functions:
 
     # Source: Jsonata4Java PadFunction
     @staticmethod
-    def left_pad(string: str | None, size: int | None, pad_str: str | None) -> str | None:
+    def left_pad(string: Optional[str], size: Optional[int], pad_str: Optional[str]) -> Optional[str]:
         if string is None:
             return None
         if pad_str is None:
@@ -446,7 +446,7 @@ class Functions:
 
     # Source: Jsonata4Java PadFunction
     @staticmethod
-    def right_pad(string: str | None, size: int | None, pad_str: str | None) -> str | None:
+    def right_pad(string: Optional[str], size: Optional[int], pad_str: Optional[str]) -> Optional[str]:
         if string is None:
             return None
         if pad_str is None:
@@ -484,7 +484,7 @@ class Functions:
     # @returns {object} - structure that represents the match(es)
     #     
     @staticmethod
-    def evaluate_matcher(matcher: re.Pattern | None, string: str | None) -> list[RegexpMatch]:
+    def evaluate_matcher(matcher: Optional[re.Pattern], string: Optional[str]) -> list[RegexpMatch]:
         res = []
         matches = matcher.finditer(string)
         for m in matches:
@@ -507,7 +507,7 @@ class Functions:
     # @returns {Boolean} - true if str contains token
     #     
     @staticmethod
-    def contains(string: str | None, token: None | str | re.Pattern) -> bool | None:
+    def contains(string: Optional[str], token: Union[None, str, re.Pattern]) -> Optional[bool]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -535,7 +535,7 @@ class Functions:
     # @returns {Array} The array of match objects
     #     
     @staticmethod
-    def match_(string: str | None, regex: re.Pattern | None, limit: int | None) -> list[dict] | None:
+    def match_(string: Optional[str], regex: Optional[re.Pattern], limit: Optional[int]) -> Optional[list[dict]]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -565,7 +565,7 @@ class Functions:
     # @returns {String} The concatenated string
     #     
     @staticmethod
-    def join(strs: Sequence[str] | None, separator: str | None) -> str | None:
+    def join(strs: Optional[Sequence[str]], separator: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if strs is None:
             return None
@@ -600,7 +600,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all(s: str | None, pattern: re.Pattern, _replacement: Any | None) -> str | None:
+    def safe_replace_all(s: Optional[str], pattern: re.Pattern, _replacement: Optional[Any]) -> Optional[str]:
 
         if not (isinstance(_replacement, str)):
             return Functions.safe_replace_all_fn(s, pattern, _replacement)
@@ -660,7 +660,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all_fn(s: str | None, pattern: re.Pattern, fn: Any | None) -> str:
+    def safe_replace_all_fn(s: Optional[str], pattern: re.Pattern, fn: Optional[Any]) -> str:
         def replace_fn(t):
             res = Functions.func_apply(fn, [Functions.to_jsonata_match(t)])
             if isinstance(res, str):
@@ -680,7 +680,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_first(s: str | None, pattern: re.Pattern, replacement: str) -> str | None:
+    def safe_replace_first(s: Optional[str], pattern: re.Pattern, replacement: str) -> Optional[str]:
         replacement = Functions.safe_replacement(replacement)
         r = None
         for i in range(0, 10):
@@ -708,7 +708,7 @@ class Functions:
         return r
 
     @staticmethod
-    def replace(string: str | None, pattern: str | re.Pattern, replacement: Any | None, limit: int | None) -> str | None:
+    def replace(string: Optional[str], pattern: Union[str, re.Pattern], replacement: Optional[Any], limit: Optional[int]) -> Optional[str]:
         if string is None:
             return None
         if isinstance(pattern, str):
@@ -737,7 +737,7 @@ class Functions:
     # @returns {String} Base 64 encoding of the binary data
     #     
     @staticmethod
-    def base64encode(string: str | None) -> str | None:
+    def base64encode(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -752,7 +752,7 @@ class Functions:
     # @returns {String} Base 64 encoding of the binary data
     #     
     @staticmethod
-    def base64decode(string: str | None) -> str | None:
+    def base64decode(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -767,7 +767,7 @@ class Functions:
     # @returns {string} Encoded string
     #     
     @staticmethod
-    def encode_url_component(string: str | None) -> str | None:
+    def encode_url_component(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -781,7 +781,7 @@ class Functions:
     # @returns {string} Encoded string
     #     
     @staticmethod
-    def encode_url(string: str | None) -> str | None:
+    def encode_url(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -795,7 +795,7 @@ class Functions:
     # @returns {string} Decoded string
     #     
     @staticmethod
-    def decode_url_component(string: str | None) -> str | None:
+    def decode_url_component(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -809,7 +809,7 @@ class Functions:
     # @returns {string} Decoded string
     #     
     @staticmethod
-    def decode_url(string: str | None) -> str | None:
+    def decode_url(string: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -818,7 +818,7 @@ class Functions:
         return urllib.parse.unquote(string, errors="strict")
 
     @staticmethod
-    def split(string: str | None, pattern: str | re.Pattern | None, limit: float | None) -> list[str] | None:
+    def split(string: Optional[str], pattern: Union[str, Optional[re.Pattern]], limit: Optional[float]) -> Optional[list[str]]:
         if string is None:
             return None
 
@@ -858,7 +858,7 @@ class Functions:
     #     
     # Adapted from https://github.com/sissaschool/elementpath
     @staticmethod
-    def format_number(value: float | None, picture: str | None, decimal_format: Mapping[str, str] | None) -> str | None:
+    def format_number(value: Optional[float], picture: Optional[str], decimal_format: Optional[Mapping[str, str]]) -> Optional[str]:
         if decimal_format is None:
             decimal_format = {}
         pattern_separator = decimal_format.get('pattern-separator', ';')
@@ -1134,7 +1134,7 @@ class Functions:
                       fmt: str,
                       digits_family: str = '0123456789',
                       optional_digit: str = '#',
-                      grouping_separator: str | None = None) -> str:
+                      grouping_separator: Optional[str] = None) -> str:
         result = []
         iter_num_digits = reversed(digits)
         num_digit = next(iter_num_digits)
@@ -1193,7 +1193,7 @@ class Functions:
     # @returns {string} - the converted string
     #     
     @staticmethod
-    def format_base(value: float | None, _radix: float | None) -> str | None:
+    def format_base(value: Optional[float], _radix: Optional[float]) -> Optional[str]:
         # undefined inputs always return undefined
         if value is None:
             return None
@@ -1258,7 +1258,7 @@ class Functions:
     # @returns {Number} numeric value of argument
     #     
     @staticmethod
-    def number(arg: Any | None) -> float | None:
+    def number(arg: Optional[Any]) -> Optional[float]:
         result = None
 
         # undefined inputs always return undefined
@@ -1290,7 +1290,7 @@ class Functions:
     # @returns {Number} absolute value of argument
     #     
     @staticmethod
-    def abs(arg: float | None) -> float | None:
+    def abs(arg: Optional[float]) -> Optional[float]:
 
         # undefined inputs always return undefined
         if arg is None:
@@ -1304,7 +1304,7 @@ class Functions:
     # @returns {Number} rounded integer
     #     
     @staticmethod
-    def floor(arg: float | None) -> float | None:
+    def floor(arg: Optional[float]) -> Optional[float]:
 
         # undefined inputs always return undefined
         if arg is None:
@@ -1318,7 +1318,7 @@ class Functions:
     # @returns {Number} rounded integer
     #     
     @staticmethod
-    def ceil(arg: float | None) -> float | None:
+    def ceil(arg: Optional[float]) -> Optional[float]:
 
         # undefined inputs always return undefined
         if arg is None:
@@ -1333,7 +1333,7 @@ class Functions:
     # @returns {Number} rounded integer
     #     
     @staticmethod
-    def round(arg: float | None, precision: float | None) -> float | None:
+    def round(arg: Optional[float], precision: Optional[float]) -> Optional[float]:
 
         # undefined inputs always return undefined
         if arg is None:
@@ -1348,7 +1348,7 @@ class Functions:
     # @returns {Number} square root
     #     
     @staticmethod
-    def sqrt(arg: float | None) -> float | None:
+    def sqrt(arg: Optional[float]) -> Optional[float]:
 
         # undefined inputs always return undefined
         if arg is None:
@@ -1366,7 +1366,7 @@ class Functions:
     # @returns {Number} rounded integer
     #     
     @staticmethod
-    def power(arg: float | None, exp: float | None) -> float | None:
+    def power(arg: Optional[float], exp: Optional[float]) -> Optional[float]:
 
         # undefined inputs always return undefined
         if arg is None:
@@ -1393,7 +1393,7 @@ class Functions:
     # @returns {boolean} Boolean
     #     
     @staticmethod
-    def to_boolean(arg: Any | None) -> bool | None:
+    def to_boolean(arg: Optional[Any]) -> Optional[bool]:
         from jsonata import jsonata
         # cast arg to its effective boolean value
         # boolean: unchanged
@@ -1436,7 +1436,7 @@ class Functions:
     # @returns {boolean} - NOT arg
     #     
     @staticmethod
-    def not_(arg: Any | None) -> bool | None:
+    def not_(arg: Optional[Any]) -> Optional[bool]:
         # undefined inputs always return undefined
         if arg is None:
             return None
@@ -1444,7 +1444,7 @@ class Functions:
         return not Functions.to_boolean(arg)
 
     @staticmethod
-    def get_function_arity(func: Any | None) -> int:
+    def get_function_arity(func: Optional[Any]) -> int:
         from jsonata import jsonata
         if isinstance(func, jsonata.Jsonata.JFunction):
             return func.signature.get_min_number_of_args()
@@ -1462,7 +1462,7 @@ class Functions:
     # @returns {*[]} the argument list
     #     
     @staticmethod
-    def hof_func_args(func: Any | None, arg1: Any | None, arg2: Any | None, arg3: Any | None) -> list:
+    def hof_func_args(func: Optional[Any], arg1: Optional[Any], arg2: Optional[Any], arg3: Optional[Any]) -> list:
         func_args = [arg1]
         # the other two are optional - only supply it if the function can take it
         length = Functions.get_function_arity(func)
@@ -1481,7 +1481,7 @@ class Functions:
     # @throws Throwable
     #     
     @staticmethod
-    def func_apply(func: Any | None, func_args: Sequence | None) -> Any | None:
+    def func_apply(func: Optional[Any], func_args: Optional[Sequence]) -> Optional[Any]:
         from jsonata import jsonata
         res = None
         if Functions.is_lambda(func):
@@ -1498,7 +1498,7 @@ class Functions:
     # @returns {Array} Map array
     #     
     @staticmethod
-    def map(arr: Sequence | None, func: Any | None) -> list | None:
+    def map(arr: Optional[Sequence], func: Optional[Any]) -> Optional[list]:
 
         # undefined inputs always return undefined
         if arr is None:
@@ -1521,7 +1521,7 @@ class Functions:
     # @returns {Array} Map array
     #     
     @staticmethod
-    def filter(arr: Sequence | None, func: Any | None) -> list | None:
+    def filter(arr: Optional[Sequence], func: Optional[Any]) -> Optional[list]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1545,7 +1545,7 @@ class Functions:
     # @returns {*} Matching element
     #     
     @staticmethod
-    def single(arr: Sequence | None, func: Any | None) -> Any | None:
+    def single(arr: Optional[Sequence], func: Optional[Any]) -> Optional[Any]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1607,7 +1607,7 @@ class Functions:
     # @returns {*} Result
     #     
     @staticmethod
-    def fold_left(sequence: Sequence | None, func: Any | None, init: Any | None) -> Any | None:
+    def fold_left(sequence: Optional[Sequence], func: Optional[Any], init: Optional[Any]) -> Optional[Any]:
         # undefined inputs always return undefined
         if sequence is None:
             return None
@@ -1642,7 +1642,7 @@ class Functions:
     # @returns {Array} Array of keys
     #     
     @staticmethod
-    def keys(arg: Sequence | Mapping | None) -> list:
+    def keys(arg: Union[Sequence, Mapping, None]) -> list:
         result = utils.Utils.create_sequence()
 
         if isinstance(arg, list):
@@ -1663,7 +1663,7 @@ class Functions:
     # @returns {boolean} False if argument undefined, otherwise true
     #     
     @staticmethod
-    def exists(arg: Any | None) -> bool:
+    def exists(arg: Optional[Any]) -> bool:
         if arg is None:
             return False
         else:
@@ -1675,7 +1675,7 @@ class Functions:
     # @returns {*} - the array
     #     
     @staticmethod
-    def spread(arg: Any | None) -> Any | None:
+    def spread(arg: Optional[Any]) -> Optional[Any]:
         result = utils.Utils.create_sequence()
 
         if isinstance(arg, list):
@@ -1697,7 +1697,7 @@ class Functions:
     # @returns {*} - the object
     #     
     @staticmethod
-    def merge(arg: Sequence | None) -> dict | None:
+    def merge(arg: Optional[Sequence]) -> Optional[dict]:
         # undefined inputs always return undefined
         if arg is None:
             return None
@@ -1715,7 +1715,7 @@ class Functions:
     # @returns {Array} - the reversed array
     #     
     @staticmethod
-    def reverse(arr: Sequence | None) -> Sequence | None:
+    def reverse(arr: Optional[Sequence]) -> Optional[Sequence]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1735,7 +1735,7 @@ class Functions:
     # @returns {Array} - the resultant array
     #     
     @staticmethod
-    def each(obj: Mapping | None, func: Any | None) -> list | None:
+    def each(obj: Optional[Mapping], func: Optional[Any]) -> Optional[list]:
         if obj is None:
             return None
 
@@ -1756,7 +1756,7 @@ class Functions:
     # @throws custom error with code 'D3137'
     #     
     @staticmethod
-    def error(message: str | None) -> NoReturn:
+    def error(message: Optional[str]) -> NoReturn:
         raise jexception.JException("D3137", -1, message if message is not None else "$error() function evaluated")
 
     #
@@ -1767,7 +1767,7 @@ class Functions:
     # @returns {undefined}
     #     
     @staticmethod
-    def assert_fn(condition: bool | None, message: str | None) -> None:
+    def assert_fn(condition: Optional[bool], message: Optional[str]) -> None:
         if condition is utils.Utils.NULL_VALUE:
             raise jexception.JException("T0410", -1)
 
@@ -1781,7 +1781,7 @@ class Functions:
     # @returns {string} - the type of the input
     #     
     @staticmethod
-    def type(value: Any | None) -> str | None:
+    def type(value: Optional[Any]) -> Optional[str]:
         if value is None:
             return None
 
@@ -1813,7 +1813,7 @@ class Functions:
     # @returns {Array} - sorted array
     #     
     @staticmethod
-    def sort(arr: Sequence | None, comparator: Any | None) -> Sequence | None:
+    def sort(arr: Optional[Sequence], comparator: Optional[Any]) -> Optional[Sequence]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1832,7 +1832,7 @@ class Functions:
         return result
 
     class Comparator:
-        _comparator: Any | None
+        _comparator: Optional[Any]
 
         def __init__(self, comparator):
             from jsonata import jsonata
@@ -1853,7 +1853,7 @@ class Functions:
     # @returns {Array} the shuffled array
     #     
     @staticmethod
-    def shuffle(arr: Sequence | None) -> Sequence | None:
+    def shuffle(arr: Optional[Sequence]) -> Optional[Sequence]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1871,7 +1871,7 @@ class Functions:
     # @returns {Array} - sequence of distinct values
     #     
     @staticmethod
-    def distinct(_arr: Any | None) -> Any | None:
+    def distinct(_arr: Optional[Any]) -> Optional[Any]:
         # undefined inputs always return undefined
         if _arr is None:
             return None
@@ -1898,7 +1898,7 @@ class Functions:
     # @returns {object} - sifted object
     #     
     @staticmethod
-    def sift(arg: Mapping | None, func: Any | None) -> dict | None:
+    def sift(arg: Optional[Mapping], func: Optional[Any]) -> Optional[dict]:
         from jsonata import jsonata
         if arg is None:
             return None
@@ -1930,7 +1930,7 @@ class Functions:
     # @returns {*} Appended arguments
     #     
     @staticmethod
-    def append(arg1: Any | None, arg2: Any | None) -> Any | None:
+    def append(arg1: Optional[Any], arg2: Optional[Any]) -> Optional[Any]:
         # disregard undefined args
         if arg1 is None:
             return arg2
@@ -1954,7 +1954,7 @@ class Functions:
         return arg1
 
     @staticmethod
-    def is_lambda(result: Any | None) -> bool:
+    def is_lambda(result: Optional[Any]) -> bool:
         return isinstance(result, parser.Parser.Symbol) and result._jsonata_lambda
 
     #
@@ -1964,7 +1964,7 @@ class Functions:
     # @returns {*} Value of key in object
     #     
     @staticmethod
-    def lookup(input: Mapping | Sequence | None, key: str | None) -> Any | None:
+    def lookup(input: Union[Mapping, Optional[Sequence]], key: Optional[str]) -> Optional[Any]:
         # lookup the 'name' item in the input
         result = None
         if isinstance(input, list):
@@ -1985,21 +1985,21 @@ class Functions:
         return result
 
     @staticmethod
-    def test(a: str | None, b: str | None) -> str:
+    def test(a: Optional[str], b: Optional[str]) -> str:
         return a + b
 
     @staticmethod
-    def get_function(clz: Type | None, name: str | None) -> Any | None:
+    def get_function(clz: Optional[Type], name: Optional[str]) -> Optional[Any]:
         if name is None:
             return None
         return getattr(clz, name)
 
     @staticmethod
-    def call(clz: Type | None, name: str | None, args: Sequence | None) -> Any | None:
+    def call(clz: Optional[Type], name: Optional[str], args: Optional[Sequence]) -> Optional[Any]:
         return Functions._call(Functions.get_function(clz, name), args)
 
     @staticmethod
-    def _call(m: Callable, args: Sequence | None) -> Any | None:
+    def _call(m: Callable, args: Optional[Sequence]) -> Optional[Any]:
         nargs = len(inspect.signature(m).parameters)
 
         call_args = list(args)
@@ -2025,7 +2025,7 @@ class Functions:
     # @returns {Number} - milliseconds since the epoch
     #     
     @staticmethod
-    def datetime_to_millis(timestamp: str | None, picture: str | None) -> int | None:
+    def datetime_to_millis(timestamp: Optional[str], picture: Optional[str]) -> Optional[int]:
         # undefined inputs always return undefined
         if timestamp is None:
             return None
@@ -2053,7 +2053,7 @@ class Functions:
 
     # Adapted from: org.apache.commons.lang3.StringUtils
     @staticmethod
-    def is_numeric(cs: Sequence | None) -> bool:
+    def is_numeric(cs: Optional[Sequence]) -> bool:
         if cs is None or len(cs) == 0:
             return False
         sz = len(cs)
@@ -2070,7 +2070,7 @@ class Functions:
     # @returns {String} - the formatted timestamp
     #     
     @staticmethod
-    def datetime_from_millis(millis: float | None, picture: str | None, timezone: str | None) -> str | None:
+    def datetime_from_millis(millis: Optional[float], picture: Optional[str], timezone: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if millis is None:
             return None
@@ -2085,7 +2085,7 @@ class Functions:
     # @returns {string} - the formatted number
     #     
     @staticmethod
-    def format_integer(value: float | None, picture: str | None) -> str | None:
+    def format_integer(value: Optional[float], picture: Optional[str]) -> Optional[str]:
         if value is None:
             return None
         return datetimeutils.DateTimeUtils.format_integer(int(value), picture)
@@ -2098,7 +2098,7 @@ class Functions:
     # @returns {number} - the parsed number
     #     
     @staticmethod
-    def parse_integer(value: str | None, picture: str | None) -> int | None:
+    def parse_integer(value: Optional[str], picture: Optional[str]) -> Optional[int]:
         if value is None:
             return None
         return datetimeutils.DateTimeUtils.parse_integer(value, picture)
@@ -2109,7 +2109,7 @@ class Functions:
     # @returns {*} - the cloned object
     #     
     @staticmethod
-    def function_clone(arg: Any | None) -> Any | None:
+    def function_clone(arg: Optional[Any]) -> Optional[Any]:
         # undefined inputs always return undefined
         if arg is None:
             return None
@@ -2123,7 +2123,7 @@ class Functions:
     # @returns {*} - result of evaluating the expression
     #     
     @staticmethod
-    def function_eval(expr: str | None, focus: Any | None) -> Any | None:
+    def function_eval(expr: Optional[str], focus: Optional[Any]) -> Optional[Any]:
         from jsonata import jsonata
         # undefined inputs always return undefined
         if expr is None:
@@ -2157,7 +2157,7 @@ class Functions:
     #      return datetime.fromMillis(timestamp.getTime(), picture, timezone)
     #  }, "<s?s?:s>"))
     @staticmethod
-    def now(picture: str | None, timezone: str | None) -> str | None:
+    def now(picture: Optional[str], timezone: Optional[str]) -> Optional[str]:
         from jsonata import jsonata
         t = jsonata.Jsonata.CURRENT.jsonata.timestamp
         return Functions.datetime_from_millis(t, picture, timezone)

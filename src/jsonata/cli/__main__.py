@@ -20,12 +20,12 @@ import argparse
 import cmd
 import json
 import sys
-from typing import Any
+from typing import Any, Optional
 
 from jsonata import functions, jexception, jsonata, timebox
 
 
-def get_options(argv: list[str] | None = None) -> argparse.ArgumentParser:
+def get_options(argv: Optional[list[str]] = None) -> argparse.ArgumentParser:
     """Parses command-line arguments.
     """
     parser = argparse.ArgumentParser(prog="jsonata.cli", description="Pure Python JSONata CLI")
@@ -93,7 +93,7 @@ class JsonataREPL(cmd.Cmd):
         self.doc = doc
         self.bindings = bindings
 
-    def jsonata_eval(self, text: str) -> Any | None:
+    def jsonata_eval(self, text: str) -> Optional[Any]:
         try:
             j = jsonata.Jsonata.jsonata(text)
             frame = j.create_frame()
@@ -140,19 +140,18 @@ class JsonataREPL(cmd.Cmd):
 
 
 def read_input(inp: str, format: str) -> str:
-    match format:
-        case "auto":
-            try:
-                return json.loads(inp)
-            except json.JSONDecodeError:
-                return inp
-        case "json":
+    if format == "auto":
+        try:
             return json.loads(inp)
-        case "string":
+        except json.JSONDecodeError:
             return inp
+    elif format == "json":
+        return json.loads(inp)
+    elif format == "string":
+        return inp
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     parser = get_options(argv)
     options = parser.parse_args(argv)
 
@@ -160,11 +159,14 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 1
 
+    icharset = options.icharset
+    ocharset = options.icharset
+
     expr_file = options.expression
     if expr_file is None:
         expr = options.expr
     else:
-        with open(expr_file, 'r') as fd:
+        with open(expr_file, 'r', encoding=icharset) as fd:
             expr = fd.read()
 
     prettify = not options.compact
@@ -173,15 +175,12 @@ def main(argv: list[str] | None = None) -> int:
     if bindings_file is None:
         bindings_str = options.bindings
     else:
-        with open(bindings_file, 'r') as fd:
+        with open(bindings_file, 'r', encoding=icharset) as fd:
             bindings_str = fd.read()
     if bindings_str is None:
         bindings = {}
     else:
         bindings = json.loads(bindings_str)
-
-    icharset = options.icharset
-    ocharset = options.icharset
 
     if options.input == '-' or options.input is None:
         input = sys.stdin.read()

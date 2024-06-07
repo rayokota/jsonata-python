@@ -110,3 +110,7 @@ To build and run the unit tests:
 python3 -m pip install nox
 nox --sessions tests
 ```
+
+## Notes
+
+JSONata date/time functions that use ISO 8601 formats are only supported for Python 3.11+.

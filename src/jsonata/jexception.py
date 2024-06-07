@@ -18,16 +18,16 @@
 
 import re
 
-from typing import Any
+from typing import Any, Optional
 
 
 class JException(RuntimeError):
     error: str
     location: int
-    current: Any | None
-    expected: Any | None
+    current: Optional[Any]
+    expected: Optional[Any]
 
-    type: str | None
+    type: Optional[str]
 
     # remaining: Sequence[tokenizer.Tokenizer.Token] | None
 
@@ -59,14 +59,14 @@ class JException(RuntimeError):
     # Returns the current token
     # @return
     #     
-    def get_current(self) -> Any | None:
+    def get_current(self) -> Optional[Any]:
         return self.current
 
     #
     # Returns the expected token
     # @return
     #     
-    def get_expected(self) -> Any | None:
+    def get_expected(self) -> Optional[Any]:
         return self.expected
 
     #
@@ -91,7 +91,7 @@ class JException(RuntimeError):
     # @return
     #     
     @staticmethod
-    def msg(error: str, location: int, arg1: Any | None, arg2: Any | None, details: bool = False) -> str:
+    def msg(error: str, location: int, arg1: Optional[Any], arg2: Optional[Any], details: bool = False) -> str:
         message = JException.error_codes.get(error)
 
         if message is None:

@@ -1,5 +1,5 @@
 ﻿import copy
-from typing import Any, Self, MutableSequence, Sequence
+from typing import Any, MutableSequence, Optional, Sequence
 
 from jsonata import jexception, tokenizer, signature, utils
 
@@ -66,7 +66,7 @@ class Parser:
 
         # Ancestor attributes
 
-        def nud(self) -> Self:
+        def nud(self):
             # error - symbol has been invoked as a unary operator
             _err = jexception.JException("S0211", self.position, self.value)
 
@@ -81,77 +81,77 @@ class Parser:
             else:
                 raise _err
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             raise NotImplementedError("led not implemented")
 
         _outer_instance: 'Parser'
-        id: str | None
-        type: str | None
-        value: Any | None
+        id: Optional[str]
+        type: Optional[str]
+        value: Optional[Any]
         bp: int
         lbp: int
         position: int
         keep_array: bool
         descending: bool
-        expression: Self | None
-        seeking_parent: MutableSequence[Self] | None
-        errors: Sequence[Exception] | None
-        steps: MutableSequence[Self] | None
-        slot: Self | None
-        next_function: Self | None
+        #expression: Optional[Self]
+        #seeking_parent: Optional[MutableSequence[Self]]
+        errors: Optional[Sequence[Exception]]
+        #steps: Optional[MutableSequence[Self]]
+        #slot: Optional[Self]
+        #next_function: Optional[Self]
         keep_singleton_array: bool
         consarray: bool
         level: int
-        focus: Any | None
-        token: Any | None
+        focus: Optional[Any]
+        token: Optional[Any]
         thunk: bool
 
         # Procedure:
-        procedure: Self | None
-        arguments: MutableSequence[Self] | None
-        body: Self | None
-        predicate: MutableSequence[Self] | None
-        stages: MutableSequence[Self] | None
-        input: Any | None
-        # environment: jsonata.Jsonata.Frame | None # creates circular ref
-        tuple: Any | None
-        expr: Any | None
-        group: Self | None
-        name: Self | None
+        #procedure: Optional[Self]
+        #arguments: Optional[MutableSequence[Self]]
+        #body: Optional[Self]
+        #predicate: Optional[MutableSequence[Self]]
+        #stages: Optional[MutableSequence[Self]]
+        input: Optional[Any]
+        #environment: jsonata.Jsonata.Frame | None # creates circular ref
+        tuple: Optional[Any]
+        expr: Optional[Any]
+        #group: Optional[Self]
+        #name: Optional[Self]
 
         # Infix attributes
-        lhs: Self | None
-        rhs: Self | None
+        #lhs: Optional[Self]
+        #rhs: Optional[Self]
 
         # where rhs = list of Symbol pairs
-        lhs_object: Sequence[Sequence[Self]] | None
-        rhs_object: Sequence[Sequence[Self]] | None
+        #lhs_object: Optional[Sequence[Sequence[Self]]]
+        #rhs_object: Optional[Sequence[Sequence[Self]]]
 
         # where rhs = list of Symbols
-        rhs_terms: Sequence[Self] | None
-        terms: Sequence[Self] | None
+        #rhs_terms: Optional[Sequence[Self]]
+        #terms: Optional[Sequence[Self]]
 
         # Ternary operator:
-        condition: Self | None
-        then: Self | None
-        _else: Self | None
+        #condition: Optional[Self]
+        #then: Optional[Self]
+        #_else: Optional[Self]
 
-        expressions: MutableSequence[Self] | None
+        #expressions: Optional[MutableSequence[Self]]
 
         # processAST error handling
-        error: jexception.JException | None
-        signature: Any | None
+        error: Optional[jexception.JException]
+        signature: Optional[Any]
 
         # Prefix attributes
-        pattern: Self | None
-        update: Self | None
-        delete: Self | None
+        #pattern: Optional[Self]
+        #update: Optional[Self]
+        #delete: Optional[Self]
 
         # Ancestor attributes
-        label: str | None
-        index: Any | None
+        label: Optional[str]
+        index: Optional[Any]
         _jsonata_lambda: bool
-        ancestor: Self | None
+        #ancestor: Optional[Self]
 
         def __init__(self, outer_instance, id=None, bp=0):
             self._outer_instance = outer_instance
@@ -224,13 +224,13 @@ class Parser:
             self._jsonata_lambda = False
             self.ancestor = None
 
-        def create(self) -> Self:
+        def create(self):
             # We want a shallow clone (do not duplicate outer class!)
             cl = self.clone()
             # System.err.println("cloning "+this+" clone="+cl)
             return cl
 
-        def clone(self) -> Self:
+        def clone(self):
             return copy.copy(self)
 
         def __repr__(self):
@@ -269,7 +269,7 @@ class Parser:
 
     # }
 
-    def advance(self, id: str | None = None, infix: bool = False) -> Symbol:
+    def advance(self, id: Optional[str] = None, infix: bool = False) -> Symbol:
         if id is not None and self.node.id != id:
             code = None
             if self.node.id == "(end)":
@@ -289,21 +289,20 @@ class Parser:
         value = next_token.value
         type = next_token.type
         symbol = None
-        match type:
-            case "name" | "variable":
-                symbol = self.symbol_table["(name)"]
-            case "operator":
-                symbol = self.symbol_table[str(value)]
-                if symbol is None:
-                    return self.handle_error(jexception.JException("S0204", next_token.position, value))
-            case "string" | "number" | "value":
-                symbol = self.symbol_table["(literal)"]
-            case "regex":
-                type = "regex"
-                symbol = self.symbol_table["(regex)"]
-                # istanbul ignore next
-            case other:
-                return self.handle_error(jexception.JException("S0205", next_token.position, value))
+        if type == "name" or type == "variable":
+            symbol = self.symbol_table["(name)"]
+        elif type == "operator":
+            symbol = self.symbol_table[str(value)]
+            if symbol is None:
+                return self.handle_error(jexception.JException("S0204", next_token.position, value))
+        elif type == "string" or type == "number" or type == "value":
+            symbol = self.symbol_table["(literal)"]
+        elif type == "regex":
+            type = "regex"
+            symbol = self.symbol_table["(regex)"]
+            # istanbul ignore next
+        else:
+            return self.handle_error(jexception.JException("S0205", next_token.position, value))
 
         self.node = symbol.create()
         # Token node = new Token(); //Object.create(symbol)
@@ -335,7 +334,7 @@ class Parser:
             super().__init__(outer_instance, id, 0)
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     #        
@@ -358,7 +357,7 @@ class Parser:
                              bp if bp != 0 else (tokenizer.Tokenizer.operators[id] if id is not None else 0))
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.lhs = left
             self.rhs = self._outer_instance.expression(self.bp)
             self.type = "binary"
@@ -374,13 +373,13 @@ class Parser:
 
             self.prefix = Parser.Prefix(outer_instance, id)
 
-        def nud(self) -> Self:
+        def nud(self):
             return self.prefix.nud()
             # expression(70)
             # type="unary"
             # return this
 
-        def clone(self) -> Self:
+        def clone(self):
             c = super().clone()
             # IMPORTANT: make sure to allocate a new Prefix!!!
             c.prefix = Parser.Prefix(self._outer_instance, c.id)
@@ -411,16 +410,16 @@ class Parser:
 
         # Symbol _expression
 
-        def nud(self) -> Self:
+        def nud(self):
             self.expression = self._outer_instance.expression(70)
             self.type = "unary"
             return self
 
     dbg: bool
-    source: str | None
+    source: Optional[str]
     recover: bool
-    node: Symbol | None
-    lexer: tokenizer.Tokenizer | None
+    node: Optional[Symbol]
+    lexer: Optional[tokenizer.Tokenizer]
     symbol_table: dict[str, Symbol]
     errors: MutableSequence[Exception]
     ancestor_label: int
@@ -540,7 +539,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # field wildcard (single level)
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "wildcard"
             return self
 
@@ -552,7 +551,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # parent operator
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "parent"
             return self
 
@@ -564,7 +563,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # allow as terminal
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     class InfixOr(Infix):
@@ -575,7 +574,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # allow as terminal
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     class InfixIn(Infix):
@@ -586,7 +585,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # allow as terminal
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     class InfixRError(Infix):
@@ -596,7 +595,7 @@ class Parser:
             super().__init__(outer_instance, "(error)", 10)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             raise NotImplementedError("TODO", None)
 
     class PrefixDescendantWildcard(Prefix):
@@ -606,7 +605,7 @@ class Parser:
             super().__init__(outer_instance, "**")
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "descendant"
             return self
 
@@ -617,7 +616,7 @@ class Parser:
             super().__init__(outer_instance, "(", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             # left is is what we are trying to invoke
             self.procedure = left
             self.type = "function"
@@ -671,7 +670,7 @@ class Parser:
         # Note: in Java both nud and led are in same class!
         # register(new Prefix("(") {
 
-        def nud(self) -> Self:
+        def nud(self):
             if self._outer_instance.dbg:
                 print("Prefix (")
             expressions = []
@@ -692,7 +691,7 @@ class Parser:
             super().__init__(outer_instance, "[", get)
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             a = []
             if self._outer_instance.node.id != "]":
                 while True:
@@ -721,7 +720,7 @@ class Parser:
         # filter - predicate or array index
         # register(new Infix("[", tokenizer.Tokenizer.operators.get("[")) {
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             if self._outer_instance.node.id == "]":
                 # empty predicate means maintain singleton arrays in the output
                 step = left
@@ -744,7 +743,7 @@ class Parser:
             super().__init__(outer_instance, "^", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self._outer_instance.advance("(")
             terms = []
             while True:
@@ -781,14 +780,14 @@ class Parser:
 
         # merged register(new Prefix("{") {
 
-        def nud(self) -> Self:
+        def nud(self):
             return self._outer_instance.object_parser(None)
 
         # })
 
         # register(new Infix("{", tokenizer.Tokenizer.operators.get("{")) {
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             return self._outer_instance.object_parser(left)
 
     class InfixRBindVariable(InfixR):
@@ -798,7 +797,7 @@ class Parser:
             super().__init__(outer_instance, ":=", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             if left.type != "variable":
                 return self._outer_instance.handle_error(jexception.JException("S0212", left.position, left.value))
             self.lhs = left
@@ -814,7 +813,7 @@ class Parser:
             super().__init__(outer_instance, "@", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.lhs = left
             self.rhs = self._outer_instance.expression(tokenizer.Tokenizer.operators["@"])
             if self.rhs.type != "variable":
@@ -829,7 +828,7 @@ class Parser:
             super().__init__(outer_instance, "#", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.lhs = left
             self.rhs = self._outer_instance.expression(tokenizer.Tokenizer.operators["#"])
             if self.rhs.type != "variable":
@@ -844,7 +843,7 @@ class Parser:
             super().__init__(outer_instance, "?", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.type = "condition"
             self.condition = left
             self.then = self._outer_instance.expression(0)
@@ -861,7 +860,7 @@ class Parser:
             super().__init__(outer_instance, "|")
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "transform"
             self.pattern = self._outer_instance.expression(0)
             self._outer_instance.advance("|")
@@ -906,40 +905,39 @@ class Parser:
         return result
 
     def seek_parent(self, node: Symbol, slot: Symbol) -> Symbol:
-        match node.type:
-            case "name" | "wildcard":
-                slot.level -= 1
-                if slot.level == 0:
-                    if node.ancestor is None:
-                        node.ancestor = slot
-                    else:
-                        # reuse the existing label
-                        self.ancestry[int(slot.index)].slot.label = node.ancestor.label
-                        node.ancestor = slot
-                    node.tuple = True
-            case "parent":
-                slot.level += 1
-            case "block":
-                # look in last expression in the block
-                if len(node.expressions) > 0:
-                    node.tuple = True
-                    slot = self.seek_parent(node.expressions[-1], slot)
-            case "path":
-                # last step in path
+        if node.type == "name" or node.type == "wildcard":
+            slot.level -= 1
+            if slot.level == 0:
+                if node.ancestor is None:
+                    node.ancestor = slot
+                else:
+                    # reuse the existing label
+                    self.ancestry[int(slot.index)].slot.label = node.ancestor.label
+                    node.ancestor = slot
                 node.tuple = True
-                index = len(node.steps) - 1
+        elif node.type == "parent":
+            slot.level += 1
+        elif node.type == "block":
+            # look in last expression in the block
+            if len(node.expressions) > 0:
+                node.tuple = True
+                slot = self.seek_parent(node.expressions[-1], slot)
+        elif node.type == "path":
+            # last step in path
+            node.tuple = True
+            index = len(node.steps) - 1
+            slot = self.seek_parent(node.steps[index], slot)
+            index -= 1
+            while slot.level > 0 and index >= 0:
+                # check previous steps
                 slot = self.seek_parent(node.steps[index], slot)
                 index -= 1
-                while slot.level > 0 and index >= 0:
-                    # check previous steps
-                    slot = self.seek_parent(node.steps[index], slot)
-                    index -= 1
-            case other:
-                # error - can't derive ancestor
-                raise jexception.JException("S0217", node.position, node.type)
+        else:
+            # error - can't derive ancestor
+            raise jexception.JException("S0217", node.position, node.type)
         return slot
 
-    def push_ancestry(self, result: Symbol, value: Symbol | None) -> None:
+    def push_ancestry(self, result: Symbol, value: Optional[Symbol]) -> None:
         if value is None:
             return  # Added NPE check
         if value.seeking_parent is not None or value.type == "parent":
@@ -981,372 +979,373 @@ class Parser:
     # This includes flattening the parts of the AST representing location paths,
     # converting them to arrays of steps which in turn may contain arrays of predicates.
     # following this, nodes containing '.' and '[' should be eliminated from the AST.
-    def process_ast(self, expr: Symbol | None) -> Symbol | None:
+    def process_ast(self, expr: Optional[Symbol]) -> Optional[Symbol]:
         result = expr
         if expr is None:
             return None
         if self.dbg:
             print(" > processAST type=" + expr.type + " value='" + expr.value + "'")
-        match expr.type if expr.type is not None else "(null)":
-            case "binary":
-                match str(expr.value):
-                    case ".":
-                        lstep = self.process_ast(expr.lhs)
+        type = expr.type if expr.type is not None else "(null)"
+        if type == "binary":
+            value = str(expr.value)
+            if value == ".":
+                lstep = self.process_ast(expr.lhs)
 
-                        if lstep.type == "path":
-                            result = lstep
-                        else:
-                            result = Parser.Infix(self, None)
-                            result.type = "path"
-                            result.steps = [lstep]
-                            # result = {type: 'path', steps: [lstep]}
-                        if lstep.type == "parent":
-                            result.seeking_parent = [lstep.slot]
-                        rest = self.process_ast(expr.rhs)
-                        if (rest.type == "function" and rest.procedure.type == "path" and len(
-                                rest.procedure.steps) == 1 and rest.procedure.steps[0].type == "name" and
-                                result.steps[-1].type == "function"):
-                            # next function in chain of functions - will override a thenable
-                            result.steps[-1].next_function = rest.procedure.steps[0].value
-                        if rest.type == "path":
-                            result.steps.extend(rest.steps)
-                        else:
-                            if rest.predicate is not None:
-                                rest.stages = rest.predicate
-                                rest.predicate = None
-                                # delete rest.predicate
-                            result.steps.append(rest)
-                        # any steps within a path that are string literals, should be changed to 'name'
-                        for step in result.steps:
-                            if step.type == "number" or step.type == "value":
-                                # don't allow steps to be numbers or the values true/false/null
-                                raise jexception.JException("S0213", step.position, step.value)
-                            # System.out.println("step "+step+" type="+step.type)
-                            if step.type == "string":
-                                step.type = "name"
-                            # for (var lit : step.steps) {
-                            #     System.out.println("step2 "+lit+" type="+lit.type)
-                            #     lit.type = "name"
-                            # }
-
-                        # any step that signals keeping a singleton array, should be flagged on the path
-                        if len(list(filter(lambda step: step.keep_array, result.steps))) > 0:
-                            result.keep_singleton_array = True
-                        # if first step is a path constructor, flag it for special handling
-                        firststep = result.steps[0]
-                        if firststep.type == "unary" and str(firststep.value) == "[":
-                            firststep.consarray = True
-                        # if the last step is an array constructor, flag it so it doesn't flatten
-                        laststep = result.steps[-1]
-                        if laststep.type == "unary" and str(laststep.value) == "[":
-                            laststep.consarray = True
-                        self.resolve_ancestry(result)
-                    case "[":
-                        if self.dbg:
-                            print("binary [")
-                        # predicated step
-                        # LHS is a step or a predicated step
-                        # RHS is the predicate expr
-                        result = self.process_ast(expr.lhs)
-                        step = result
-                        type = "predicate"
-                        if result.type == "path":
-                            step = result.steps[-1]
-                            type = "stages"
-                        if step.group is not None:
-                            raise jexception.JException("S0209", expr.position)
-                        # if (typeof step[type] === 'undefined') {
-                        #     step[type] = []
-                        # }
-                        if type == "stages":
-                            if step.stages is None:
-                                step.stages = []
-                        else:
-                            if step.predicate is None:
-                                step.predicate = []
-
-                        predicate = self.process_ast(expr.rhs)
-                        if predicate.seeking_parent is not None:
-                            _step = step
-                            for slot in predicate.seeking_parent:
-                                if slot.level == 1:
-                                    self.seek_parent(_step, slot)
-                                else:
-                                    slot.level -= 1
-                            self.push_ancestry(step, predicate)
-                        s = Parser.Symbol(self)
-                        s.type = "filter"
-                        s.expr = predicate
-                        s.position = expr.position
-
-                        # FIXED:
-                        # this logic is required in Java to fix
-                        # for example test: flattening case 045
-                        # otherwise we lose the keepArray flag
-                        if expr.keep_array:
-                            step.keep_array = True
-
-                        if type == "stages":
-                            step.stages.append(s)
-                        else:
-                            step.predicate.append(s)
-                        # step[type].push({type: 'filter', expr: predicate, position: expr.position})
-                    case "{":
-                        # group-by
-                        # LHS is a step or a predicated step
-                        # RHS is the object constructor expr
-                        result = self.process_ast(expr.lhs)
-                        if result.group is not None:
-                            raise jexception.JException("S0210", expr.position)
-                        # object constructor - process each pair
-                        result.group = Parser.Symbol(self)
-                        result.group.lhs_object = list(
-                            map(lambda pair: [self.process_ast(pair[0]), self.process_ast(pair[1])], expr.rhs_object))
-                        result.group.position = expr.position
-
-                    case "^":
-                        # order-by
-                        # LHS is the array to be ordered
-                        # RHS defines the terms
-                        result = self.process_ast(expr.lhs)
-                        if result.type != "path":
-                            _res = Parser.Symbol(self)
-                            _res.type = "path"
-                            _res.steps = []
-                            _res.steps.append(result)
-                            result = _res
-                        sort_step = Parser.Symbol(self)
-                        sort_step.type = "sort"
-                        sort_step.position = expr.position
-
-                        def lambda1(terms):
-                            expression = self.process_ast(terms.expression)
-                            self.push_ancestry(sort_step, expression)
-                            res = Parser.Symbol(self)
-                            res.descending = terms.descending
-                            res.expression = expression
-                            return res
-
-                        sort_step.terms = list(map(lambda1, expr.rhs_terms))
-                        result.steps.append(sort_step)
-                        self.resolve_ancestry(result)
-                    case ":=":
-                        result = Parser.Symbol(self)
-                        result.type = "bind"
-                        result.value = expr.value
-                        result.position = expr.position
-                        result.lhs = self.process_ast(expr.lhs)
-                        result.rhs = self.process_ast(expr.rhs)
-                        self.push_ancestry(result, result.rhs)
-                    case "@":
-                        result = self.process_ast(expr.lhs)
-                        step = result
-                        if result.type == "path":
-                            step = result.steps[-1]
-                        # throw error if there are any predicates defined at this point
-                        # at this point the only type of stages can be predicates
-                        if step.stages is not None or step.predicate is not None:
-                            raise jexception.JException("S0215", expr.position)
-                        # also throw if this is applied after an 'order-by' clause
-                        if step.type == "sort":
-                            raise jexception.JException("S0216", expr.position)
-                        if expr.keep_array:
-                            step.keep_array = True
-                        step.focus = expr.rhs.value
-                        step.tuple = True
-                    case "#":
-                        result = self.process_ast(expr.lhs)
-                        step = result
-                        if result.type == "path":
-                            step = result.steps[-1]
-                        else:
-                            _res = Parser.Symbol(self)
-                            _res.type = "path"
-                            _res.steps = []
-                            _res.steps.append(result)
-                            result = _res
-                            if step.predicate is not None:
-                                step.stages = step.predicate
-                                step.predicate = None
-                        if step.stages is None:
-                            step.index = expr.rhs.value  # name of index variable = String
-                        else:
-                            _res = Parser.Symbol(self)
-                            _res.type = "index"
-                            _res.value = expr.rhs.value
-                            _res.position = expr.position
-                            step.stages.append(_res)
-                        step.tuple = True
-                    case "~>":
-                        result = Parser.Symbol(self)
-                        result.type = "apply"
-                        result.value = expr.value
-                        result.position = expr.position
-                        result.lhs = self.process_ast(expr.lhs)
-                        result.rhs = self.process_ast(expr.rhs)
-                    case other:
-                        _result = Parser.Infix(self, None)
-                        _result.type = expr.type
-                        _result.value = expr.value
-                        _result.position = expr.position
-                        _result.lhs = self.process_ast(expr.lhs)
-                        _result.rhs = self.process_ast(expr.rhs)
-                        self.push_ancestry(_result, _result.lhs)
-                        self.push_ancestry(_result, _result.rhs)
-                        result = _result
-
-            case "unary":
-                result = Parser.Symbol(self)
-                result.type = expr.type
-                result.value = expr.value
-                result.position = expr.position
-                # expr.value might be Character!
-                expr_value = str(expr.value)
-                if expr_value == "[":
-                    if self.dbg:
-                        print("unary [ " + str(result))
-
-                    # array constructor - process each item
-                    def lambda2(item):
-                        value = self.process_ast(item)
-                        self.push_ancestry(result, value)
-                        return value
-
-                    result.expressions = list(map(lambda2, expr.expressions))
-                elif expr_value == "{":
-                    # object constructor - process each pair
-                    # throw new Error("processAST {} unimpl")
-                    def lambda3(pair):
-                        key = self.process_ast(pair[0])
-                        self.push_ancestry(result, key)
-                        value = self.process_ast(pair[1])
-                        self.push_ancestry(result, value)
-                        return [key, value]
-
-                    result.lhs_object = list(map(lambda3, expr.lhs_object))
+                if lstep.type == "path":
+                    result = lstep
                 else:
-                    # all other unary expressions - just process the expression
-                    result.expression = self.process_ast(expr.expression)
-                    # if unary minus on a number, then pre-process
-                    if expr_value == "-" and result.expression.type == "number":
-                        result = result.expression
-                        result.value = utils.Utils.convert_number(-float(result.value))
-                        if self.dbg:
-                            print("unary - value=" + str(result.value))
-                    else:
-                        self.push_ancestry(result, result.expression)
+                    result = Parser.Infix(self, None)
+                    result.type = "path"
+                    result.steps = [lstep]
+                    # result = {type: 'path', steps: [lstep]}
+                if lstep.type == "parent":
+                    result.seeking_parent = [lstep.slot]
+                rest = self.process_ast(expr.rhs)
+                if (rest.type == "function" and rest.procedure.type == "path" and len(
+                        rest.procedure.steps) == 1 and rest.procedure.steps[0].type == "name" and
+                        result.steps[-1].type == "function"):
+                    # next function in chain of functions - will override a thenable
+                    result.steps[-1].next_function = rest.procedure.steps[0].value
+                if rest.type == "path":
+                    result.steps.extend(rest.steps)
+                else:
+                    if rest.predicate is not None:
+                        rest.stages = rest.predicate
+                        rest.predicate = None
+                        # delete rest.predicate
+                    result.steps.append(rest)
+                # any steps within a path that are string literals, should be changed to 'name'
+                for step in result.steps:
+                    if step.type == "number" or step.type == "value":
+                        # don't allow steps to be numbers or the values true/false/null
+                        raise jexception.JException("S0213", step.position, step.value)
+                    # System.out.println("step "+step+" type="+step.type)
+                    if step.type == "string":
+                        step.type = "name"
+                    # for (var lit : step.steps) {
+                    #     System.out.println("step2 "+lit+" type="+lit.type)
+                    #     lit.type = "name"
+                    # }
 
-            case "function" | "partial":
-                result = Parser.Symbol(self)
-                result.type = expr.type
-                result.name = expr.name
-                result.value = expr.value
-                result.position = expr.position
-
-                def lambda4(arg):
-                    arg_ast = self.process_ast(arg)
-                    self.push_ancestry(result, arg_ast)
-                    return arg_ast
-
-                result.arguments = list(map(lambda4, expr.arguments))
-                result.procedure = self.process_ast(expr.procedure)
-            case "lambda":
-                result = Parser.Symbol(self)
-                result.type = expr.type
-                result.arguments = expr.arguments
-                result.signature = expr.signature
-                result.position = expr.position
-                body = self.process_ast(expr.body)
-                result.body = self.tail_call_optimize(body)
-            case "condition":
-                result = Parser.Symbol(self)
-                result.type = expr.type
-                result.position = expr.position
-                result.condition = self.process_ast(expr.condition)
-                self.push_ancestry(result, result.condition)
-                result.then = self.process_ast(expr.then)
-                self.push_ancestry(result, result.then)
-                if expr._else is not None:
-                    result._else = self.process_ast(expr._else)
-                    self.push_ancestry(result, result._else)
-            case "transform":
-                result = Parser.Symbol(self)
-                result.type = expr.type
-                result.position = expr.position
-                result.pattern = self.process_ast(expr.pattern)
-                result.update = self.process_ast(expr.update)
-                if expr.delete is not None:
-                    result.delete = self.process_ast(expr.delete)
-            case "block":
-                result = Parser.Symbol(self)
-                result.type = expr.type
-                result.position = expr.position
-
-                # array of expressions - process each one
-                def lambda5(item):
-                    part = self.process_ast(item)
-                    self.push_ancestry(result, part)
-                    if part.consarray or (part.type == "path" and part.steps[0].consarray):
-                        result.consarray = True
-                    return part
-
-                result.expressions = list(map(lambda5, expr.expressions))
-                # TODO scan the array of expressions to see if any of them assign variables
-                # if so, need to mark the block as one that needs to create a new frame
-            case "name":
-                result = Parser.Symbol(self)
-                result.type = "path"
-                result.steps = []
-                result.steps.append(expr)
-                if expr.keep_array:
+                # any step that signals keeping a singleton array, should be flagged on the path
+                if len(list(filter(lambda step: step.keep_array, result.steps))) > 0:
                     result.keep_singleton_array = True
-            case "parent":
+                # if first step is a path constructor, flag it for special handling
+                firststep = result.steps[0]
+                if firststep.type == "unary" and str(firststep.value) == "[":
+                    firststep.consarray = True
+                # if the last step is an array constructor, flag it so it doesn't flatten
+                laststep = result.steps[-1]
+                if laststep.type == "unary" and str(laststep.value) == "[":
+                    laststep.consarray = True
+                self.resolve_ancestry(result)
+            elif value == "[":
+                if self.dbg:
+                    print("binary [")
+                # predicated step
+                # LHS is a step or a predicated step
+                # RHS is the predicate expr
+                result = self.process_ast(expr.lhs)
+                step = result
+                type = "predicate"
+                if result.type == "path":
+                    step = result.steps[-1]
+                    type = "stages"
+                if step.group is not None:
+                    raise jexception.JException("S0209", expr.position)
+                # if (typeof step[type] === 'undefined') {
+                #     step[type] = []
+                # }
+                if type == "stages":
+                    if step.stages is None:
+                        step.stages = []
+                else:
+                    if step.predicate is None:
+                        step.predicate = []
+
+                predicate = self.process_ast(expr.rhs)
+                if predicate.seeking_parent is not None:
+                    _step = step
+                    for slot in predicate.seeking_parent:
+                        if slot.level == 1:
+                            self.seek_parent(_step, slot)
+                        else:
+                            slot.level -= 1
+                    self.push_ancestry(step, predicate)
+                s = Parser.Symbol(self)
+                s.type = "filter"
+                s.expr = predicate
+                s.position = expr.position
+
+                # FIXED:
+                # this logic is required in Java to fix
+                # for example test: flattening case 045
+                # otherwise we lose the keepArray flag
+                if expr.keep_array:
+                    step.keep_array = True
+
+                if type == "stages":
+                    step.stages.append(s)
+                else:
+                    step.predicate.append(s)
+                # step[type].push({type: 'filter', expr: predicate, position: expr.position})
+            elif value == "{":
+                # group-by
+                # LHS is a step or a predicated step
+                # RHS is the object constructor expr
+                result = self.process_ast(expr.lhs)
+                if result.group is not None:
+                    raise jexception.JException("S0210", expr.position)
+                # object constructor - process each pair
+                result.group = Parser.Symbol(self)
+                result.group.lhs_object = list(
+                    map(lambda pair: [self.process_ast(pair[0]), self.process_ast(pair[1])], expr.rhs_object))
+                result.group.position = expr.position
+
+            elif value == "^":
+                # order-by
+                # LHS is the array to be ordered
+                # RHS defines the terms
+                result = self.process_ast(expr.lhs)
+                if result.type != "path":
+                    _res = Parser.Symbol(self)
+                    _res.type = "path"
+                    _res.steps = []
+                    _res.steps.append(result)
+                    result = _res
+                sort_step = Parser.Symbol(self)
+                sort_step.type = "sort"
+                sort_step.position = expr.position
+
+                def lambda1(terms):
+                    expression = self.process_ast(terms.expression)
+                    self.push_ancestry(sort_step, expression)
+                    res = Parser.Symbol(self)
+                    res.descending = terms.descending
+                    res.expression = expression
+                    return res
+
+                sort_step.terms = list(map(lambda1, expr.rhs_terms))
+                result.steps.append(sort_step)
+                self.resolve_ancestry(result)
+            elif value == ":=":
                 result = Parser.Symbol(self)
-                result.type = "parent"
-                result.slot = Parser.Symbol(self)
-                result.slot.label = "!" + str(self.ancestor_label)
-                self.ancestor_label += 1
-                result.slot.level = 1
-                result.slot.index = self.ancestor_index
-                self.ancestor_index += 1
-                # slot: { label: '!' + ancestorLabel++, level: 1, index: ancestorIndex++ } }
-                self.ancestry.append(result)
-            case "string" | "number" | "value" | "wildcard" | "descendant" | "variable" | "regex":
-                result = expr
-            case "operator":
-                # the tokens 'and' and 'or' might have been used as a name rather than an operator
-                if expr.value == "and" or expr.value == "or" or expr.value == "in":
-                    expr.type = "name"
-                    result = self.process_ast(expr)
-                elif str(expr.value) == "?":
-                    # partial application
-                    result = expr
+                result.type = "bind"
+                result.value = expr.value
+                result.position = expr.position
+                result.lhs = self.process_ast(expr.lhs)
+                result.rhs = self.process_ast(expr.rhs)
+                self.push_ancestry(result, result.rhs)
+            elif value == "@":
+                result = self.process_ast(expr.lhs)
+                step = result
+                if result.type == "path":
+                    step = result.steps[-1]
+                # throw error if there are any predicates defined at this point
+                # at this point the only type of stages can be predicates
+                if step.stages is not None or step.predicate is not None:
+                    raise jexception.JException("S0215", expr.position)
+                # also throw if this is applied after an 'order-by' clause
+                if step.type == "sort":
+                    raise jexception.JException("S0216", expr.position)
+                if expr.keep_array:
+                    step.keep_array = True
+                step.focus = expr.rhs.value
+                step.tuple = True
+            elif value == "#":
+                result = self.process_ast(expr.lhs)
+                step = result
+                if result.type == "path":
+                    step = result.steps[-1]
                 else:
-                    raise jexception.JException("S0201", expr.position, expr.value)
-            case "error":
-                result = expr
-                if expr.lhs is not None:
-                    result = self.process_ast(expr.lhs)
-            case other:
-                code = "S0206"
-                # istanbul ignore else
-                if expr.id == "(end)":
-                    code = "S0207"
-                err = jexception.JException(code, expr.position, expr.value)
-                if self.recover:
-                    self.errors.append(err)
-                    ret = Parser.Symbol(self)
-                    ret.type = "error"
-                    ret.error = err
-                    return ret
+                    _res = Parser.Symbol(self)
+                    _res.type = "path"
+                    _res.steps = []
+                    _res.steps.append(result)
+                    result = _res
+                    if step.predicate is not None:
+                        step.stages = step.predicate
+                        step.predicate = None
+                if step.stages is None:
+                    step.index = expr.rhs.value  # name of index variable = String
                 else:
-                    # err.stack = (new Error()).stack
-                    raise err
+                    _res = Parser.Symbol(self)
+                    _res.type = "index"
+                    _res.value = expr.rhs.value
+                    _res.position = expr.position
+                    step.stages.append(_res)
+                step.tuple = True
+            elif value == "~>":
+                result = Parser.Symbol(self)
+                result.type = "apply"
+                result.value = expr.value
+                result.position = expr.position
+                result.lhs = self.process_ast(expr.lhs)
+                result.rhs = self.process_ast(expr.rhs)
+            else:
+                _result = Parser.Infix(self, None)
+                _result.type = expr.type
+                _result.value = expr.value
+                _result.position = expr.position
+                _result.lhs = self.process_ast(expr.lhs)
+                _result.rhs = self.process_ast(expr.rhs)
+                self.push_ancestry(_result, _result.lhs)
+                self.push_ancestry(_result, _result.rhs)
+                result = _result
+
+        elif type == "unary":
+            result = Parser.Symbol(self)
+            result.type = expr.type
+            result.value = expr.value
+            result.position = expr.position
+            # expr.value might be Character!
+            expr_value = str(expr.value)
+            if expr_value == "[":
+                if self.dbg:
+                    print("unary [ " + str(result))
+
+                # array constructor - process each item
+                def lambda2(item):
+                    value = self.process_ast(item)
+                    self.push_ancestry(result, value)
+                    return value
+
+                result.expressions = list(map(lambda2, expr.expressions))
+            elif expr_value == "{":
+                # object constructor - process each pair
+                # throw new Error("processAST {} unimpl")
+                def lambda3(pair):
+                    key = self.process_ast(pair[0])
+                    self.push_ancestry(result, key)
+                    value = self.process_ast(pair[1])
+                    self.push_ancestry(result, value)
+                    return [key, value]
+
+                result.lhs_object = list(map(lambda3, expr.lhs_object))
+            else:
+                # all other unary expressions - just process the expression
+                result.expression = self.process_ast(expr.expression)
+                # if unary minus on a number, then pre-process
+                if expr_value == "-" and result.expression.type == "number":
+                    result = result.expression
+                    result.value = utils.Utils.convert_number(-float(result.value))
+                    if self.dbg:
+                        print("unary - value=" + str(result.value))
+                else:
+                    self.push_ancestry(result, result.expression)
+
+        elif type == "function" or type == "partial":
+            result = Parser.Symbol(self)
+            result.type = expr.type
+            result.name = expr.name
+            result.value = expr.value
+            result.position = expr.position
+
+            def lambda4(arg):
+                arg_ast = self.process_ast(arg)
+                self.push_ancestry(result, arg_ast)
+                return arg_ast
+
+            result.arguments = list(map(lambda4, expr.arguments))
+            result.procedure = self.process_ast(expr.procedure)
+        elif type == "lambda":
+            result = Parser.Symbol(self)
+            result.type = expr.type
+            result.arguments = expr.arguments
+            result.signature = expr.signature
+            result.position = expr.position
+            body = self.process_ast(expr.body)
+            result.body = self.tail_call_optimize(body)
+        elif type == "condition":
+            result = Parser.Symbol(self)
+            result.type = expr.type
+            result.position = expr.position
+            result.condition = self.process_ast(expr.condition)
+            self.push_ancestry(result, result.condition)
+            result.then = self.process_ast(expr.then)
+            self.push_ancestry(result, result.then)
+            if expr._else is not None:
+                result._else = self.process_ast(expr._else)
+                self.push_ancestry(result, result._else)
+        elif type == "transform":
+            result = Parser.Symbol(self)
+            result.type = expr.type
+            result.position = expr.position
+            result.pattern = self.process_ast(expr.pattern)
+            result.update = self.process_ast(expr.update)
+            if expr.delete is not None:
+                result.delete = self.process_ast(expr.delete)
+        elif type == "block":
+            result = Parser.Symbol(self)
+            result.type = expr.type
+            result.position = expr.position
+
+            # array of expressions - process each one
+            def lambda5(item):
+                part = self.process_ast(item)
+                self.push_ancestry(result, part)
+                if part.consarray or (part.type == "path" and part.steps[0].consarray):
+                    result.consarray = True
+                return part
+
+            result.expressions = list(map(lambda5, expr.expressions))
+            # TODO scan the array of expressions to see if any of them assign variables
+            # if so, need to mark the block as one that needs to create a new frame
+        elif type == "name":
+            result = Parser.Symbol(self)
+            result.type = "path"
+            result.steps = []
+            result.steps.append(expr)
+            if expr.keep_array:
+                result.keep_singleton_array = True
+        elif type == "parent":
+            result = Parser.Symbol(self)
+            result.type = "parent"
+            result.slot = Parser.Symbol(self)
+            result.slot.label = "!" + str(self.ancestor_label)
+            self.ancestor_label += 1
+            result.slot.level = 1
+            result.slot.index = self.ancestor_index
+            self.ancestor_index += 1
+            # slot: { label: '!' + ancestorLabel++, level: 1, index: ancestorIndex++ } }
+            self.ancestry.append(result)
+        elif (type == "string" or type == "number" or type == "value" or type == "wildcard" or type == "descendant" or
+              type == "variable" or type == "regex"):
+            result = expr
+        elif type == "operator":
+            # the tokens 'and' and 'or' might have been used as a name rather than an operator
+            if expr.value == "and" or expr.value == "or" or expr.value == "in":
+                expr.type = "name"
+                result = self.process_ast(expr)
+            elif str(expr.value) == "?":
+                # partial application
+                result = expr
+            else:
+                raise jexception.JException("S0201", expr.position, expr.value)
+        elif type == "error":
+            result = expr
+            if expr.lhs is not None:
+                result = self.process_ast(expr.lhs)
+        else:
+            code = "S0206"
+            # istanbul ignore else
+            if expr.id == "(end)":
+                code = "S0207"
+            err = jexception.JException(code, expr.position, expr.value)
+            if self.recover:
+                self.errors.append(err)
+                ret = Parser.Symbol(self)
+                ret.type = "error"
+                ret.error = err
+                return ret
+            else:
+                # err.stack = (new Error()).stack
+                raise err
         if expr.keep_array:
             result.keep_array = True
         return result
 
-    def object_parser(self, left: Symbol | None) -> Symbol:
+    def object_parser(self, left: Optional[Symbol]) -> Symbol:
 
         res = Parser.Infix(self, "{") if left is not None else Parser.Prefix(self, "{")
 
@@ -1373,7 +1372,7 @@ class Parser:
             res.type = "binary"
         return res
 
-    def parse(self, jsonata: str | None) -> Symbol:
+    def parse(self, jsonata: Optional[str]) -> Symbol:
         self.source = jsonata
 
         # now invoke the tokenizer and the parser and return the syntax tree
