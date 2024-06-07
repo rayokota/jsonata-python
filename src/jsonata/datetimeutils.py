@@ -338,8 +338,8 @@ class DateTimeUtils:
         negative = value < 0
         value = abs(value)
         if format.primary == DateTimeUtils.Formats.LETTERS:
-                formatted_integer = DateTimeUtils._decimal_to_letters(int(value),
-                                                                      "A" if format.case_type == DateTimeUtils.TCase.UPPER else "a")
+            formatted_integer = DateTimeUtils._decimal_to_letters(int(value),
+                                                                  "A" if format.case_type == DateTimeUtils.TCase.UPPER else "a")
         elif format.primary == DateTimeUtils.Formats.ROMAN:
             formatted_integer = DateTimeUtils._decimal_to_roman(int(value))
             if format.case_type == DateTimeUtils.TCase.UPPER:
