@@ -48,4 +48,5 @@ def tests(session):
 
     session.install(generated_sdist)
 
+    session.run("python", "tests/generate.py")
     session.run("py.test", "tests/", *session.posargs)
