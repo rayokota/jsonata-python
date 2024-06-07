@@ -6,6 +6,13 @@ import re
 
 class Generate:
 
+    requires_3_11 = {
+        ("FunctionFrommillis", "format_date_time", 66),
+        ("FunctionTomillis", "case001", 0),
+        ("FunctionTomillis", "case002", 0),
+        ("FunctionTomillis", "case004", 0),
+    }
+
     @staticmethod
     def main(args):
 
@@ -23,10 +30,11 @@ class Generate:
         for suite in list_suites:
 
             b = io.StringIO()
+            b.write("import pytest, sys\n")
             b.write("from tests import jsonata_test\n\n\n")
             # Pascal case
-            name = ''.join(word.title() for word in suite.name.split('-'))
-            b.write("class Test" + name + ":\n")
+            cname = ''.join(word.title() for word in suite.name.split('-'))
+            b.write("class Test" + cname + ":\n")
 
             cases = [f for f in suite.iterdir()]
             cases = sorted(cases, key=lambda x: x.name)
@@ -48,6 +56,8 @@ class Generate:
                 if isinstance(json_case, list):
                     for i, c in enumerate(json_case):
                         b.write("    # " + Generate.s(c.get("expr")) + "\n")
+                        if (cname, jname, i) in Generate.requires_3_11:
+                            b.write("    @pytest.mark.skipif(sys.version_info < (3, 11), reason='requires Python 3.11+')\n")
                         b.write("    def test_" + jname + "_case_" + str(i) + "(self):\n")
                         b.write(
                             "        jsonata_test.TestJsonata().run_sub_case(\"jsonata/test/test-suite/groups/" +
@@ -57,6 +67,8 @@ class Generate:
                         total += 1
                 else:
                     b.write("    # " + Generate.s(json_case.get("expr")) + "\n")
+                    if (cname, jname, 0) in Generate.requires_3_11:
+                        b.write("    @pytest.mark.skipif(sys.version_info < (3, 11), reason='requires Python 3.11+')\n")
                     b.write("    def test_" + jname + "(self):\n")
                     b.write(
                         "        jsonata_test.TestJsonata().run_case(\"jsonata/test/test-suite/groups/" +
