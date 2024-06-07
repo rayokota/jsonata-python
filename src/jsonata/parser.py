@@ -93,12 +93,12 @@ class Parser:
         position: int
         keep_array: bool
         descending: bool
-        # expression: Optional[Self]
-        # seeking_parent: Optional[MutableSequence[Self]]
+        expression: 'Optional[Parser.Symbol]'
+        seeking_parent: 'Optional[MutableSequence[Parser.Symbol]]'
         errors: Optional[Sequence[Exception]]
-        # steps: Optional[MutableSequence[Self]]
-        # slot: Optional[Self]
-        # next_function: Optional[Self]
+        steps: 'Optional[MutableSequence[Parser.Symbol]]'
+        slot: 'Optional[Parser.Symbol]'
+        next_function: 'Optional[Parser.Symbol]'
         keep_singleton_array: bool
         consarray: bool
         level: int
@@ -107,51 +107,51 @@ class Parser:
         thunk: bool
 
         # Procedure:
-        # procedure: Optional[Self]
-        # arguments: Optional[MutableSequence[Self]]
-        # body: Optional[Self]
-        # predicate: Optional[MutableSequence[Self]]
-        # stages: Optional[MutableSequence[Self]]
+        procedure: 'Optional[Parser.Symbol]'
+        arguments: 'Optional[MutableSequence[Parser.Symbol]]'
+        body: 'Optional[Parser.Symbol]'
+        predicate: 'Optional[MutableSequence[Parser.Symbol]]'
+        stages: 'Optional[MutableSequence[Parser.Symbol]]'
         input: Optional[Any]
         # environment: jsonata.Jsonata.Frame | None # creates circular ref
         tuple: Optional[Any]
         expr: Optional[Any]
-        # group: Optional[Self]
-        # name: Optional[Self]
+        group: 'Optional[Parser.Symbol]'
+        name: 'Optional[Parser.Symbol]'
 
         # Infix attributes
-        # lhs: Optional[Self]
-        # rhs: Optional[Self]
+        lhs: 'Optional[Parser.Symbol]'
+        rhs: 'Optional[Parser.Symbol]'
 
         # where rhs = list of Symbol pairs
-        # lhs_object: Optional[Sequence[Sequence[Self]]]
-        # rhs_object: Optional[Sequence[Sequence[Self]]]
+        lhs_object: 'Optional[Sequence[Sequence[Parser.Symbol]]]'
+        rhs_object: 'Optional[Sequence[Sequence[Parser.Symbol]]]'
 
         # where rhs = list of Symbols
-        # rhs_terms: Optional[Sequence[Self]]
-        # terms: Optional[Sequence[Self]]
+        rhs_terms: 'Optional[Sequence[Parser.Symbol]]'
+        terms: 'Optional[Sequence[Parser.Symbol]]'
 
         # Ternary operator:
-        # condition: Optional[Self]
-        # then: Optional[Self]
-        # _else: Optional[Self]
+        condition: 'Optional[Parser.Symbol]'
+        then: 'Optional[Parser.Symbol]'
+        _else: 'Optional[Parser.Symbol]'
 
-        # expressions: Optional[MutableSequence[Self]]
+        expressions: 'Optional[MutableSequence[Parser.Symbol]]'
 
         # processAST error handling
-        error: Optional[jexception.JException]
-        signature: Optional[Any]
+        error: 'Optional[jexception.JException]'
+        signature: 'Optional[Any]'
 
         # Prefix attributes
-        # pattern: Optional[Self]
-        # update: Optional[Self]
-        # delete: Optional[Self]
+        pattern: 'Optional[Parser.Symbol]'
+        update: 'Optional[Parser.Symbol]'
+        delete: 'Optional[Parser.Symbol]'
 
         # Ancestor attributes
         label: Optional[str]
         index: Optional[Any]
         _jsonata_lambda: bool
-        # ancestor: Optional[Self]
+        ancestor: 'Optional[Parser.Symbol]'
 
         def __init__(self, outer_instance, id=None, bp=0):
             self._outer_instance = outer_instance
