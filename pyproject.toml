@@ -10,7 +10,7 @@ description = "Pure Python implementation of JSONata"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
-keywords = ["jsonata"]
+keywords = ["jsonata", "json"]
 authors = [
   {name = "Robert Yokota"}
 ]
