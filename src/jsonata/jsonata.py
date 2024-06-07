@@ -1,19 +1,5 @@
-﻿import copy
-import inspect
-import math
-import re
-import sys
-import threading
-from dataclasses import dataclass
-from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping
-
-from jsonata import functions, jexception, parser, signature as sig, timebox, utils
-
-
-#
-# jsonata-java is the JSONata Java reference port
-#
-# Copyright Dashjoin GmbH. https://dashjoin.com
+﻿#
+# Copyright Robert Yokota
 #
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
@@ -27,12 +13,27 @@ from jsonata import functions, jexception, parser, signature as sig, timebox, ut
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Derived from Javascript code under this license:
+# Derived from the following code:
 #
-# © Copyright IBM Corp. 2016, 2017 All Rights Reserved
+#   Project name: jsonata-java
+#   Copyright Dashjoin GmbH. https://dashjoin.com
+#   Licensed under the Apache License, Version 2.0 (the "License")
+#
 #   Project name: JSONata
+# © Copyright IBM Corp. 2016, 2017 All Rights Reserved
 #   This project is licensed under the MIT License, see LICENSE
 #
+
+import copy
+import inspect
+import math
+import re
+import sys
+import threading
+from dataclasses import dataclass
+from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping
+
+from jsonata import functions, jexception, parser, signature as sig, timebox, utils
 
 
 #
