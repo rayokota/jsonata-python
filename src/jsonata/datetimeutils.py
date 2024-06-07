@@ -230,7 +230,7 @@ class DateTimeUtils:
                        RomanNumeral(10, "x"), RomanNumeral(9, "ix"), RomanNumeral(5, "v"), RomanNumeral(4, "iv"),
                        RomanNumeral(1, "i")]
 
-    _roman_values = _create_roman_values()
+    _roman_values = _create_roman_values.__func__()
 
     @staticmethod
     def _decimal_to_roman(value: int) -> str:
@@ -329,7 +329,7 @@ class DateTimeUtils:
         suffix = {"1": "st", "2": "nd", "3": "rd"}
         return suffix
 
-    _suffix123 = _create_suffix_map()
+    _suffix123 = _create_suffix_map.__func__()
 
     @staticmethod
     def _format_integer(value: int, format: Optional[Format]) -> str:
@@ -498,7 +498,7 @@ class DateTimeUtils:
                'h': "1", 'P': "n", 'm': "01", 's': "01", 'f': "1", 'Z': "01:01", 'z': "01:01", 'C': "n", 'E': "n"}
         return map
 
-    _default_presentation_modifiers = _create_default_presentation_modifiers()
+    _default_presentation_modifiers = _create_default_presentation_modifiers.__func__()
 
     class PictureFormat:
         type: str
@@ -765,7 +765,7 @@ class DateTimeUtils:
             component_value = str(date.second)
         elif component == 'f':
             component_value = str(date.microsecond / 1000.0)
-        elif component == 'Z' | 'z':
+        elif component == 'Z' or component == 'z':
             pass
         elif component == 'C':
             component_value = "ISO"
