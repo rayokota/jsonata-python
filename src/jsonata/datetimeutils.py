@@ -53,7 +53,7 @@ import re
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import Sequence
+from typing import Optional, Sequence
 
 from jsonata import constants
 
@@ -266,12 +266,12 @@ class DateTimeUtils:
         return functools.reduce(lambda a, b: a + b, letters, "")
 
     @staticmethod
-    def format_integer(value: int, picture: str | None) -> str:
+    def format_integer(value: int, picture: Optional[str]) -> str:
         format = DateTimeUtils._analyse_integer_picture(picture)
         return DateTimeUtils._format_integer(value, format)
 
     @staticmethod
-    def parse_integer(value: str | None, picture: str | None) -> int | None:
+    def parse_integer(value: Optional[str], picture: Optional[str]) -> Optional[int]:
         format_spec = DateTimeUtils._analyse_integer_picture(picture)
         match_spec = DateTimeUtils._generate_regex_with_component(None, format_spec)
         # //const fullRegex = '^' + matchSpec.regex + '$'
@@ -302,7 +302,7 @@ class DateTimeUtils:
         optionalDigits: int
         regular: bool
         groupingSeparators: list['DateTimeUtils.GroupingSeparator']
-        token: str | None
+        token: Optional[str]
 
         def __init__(self):
             self.type = "integer"
@@ -332,58 +332,57 @@ class DateTimeUtils:
     _suffix123 = _create_suffix_map()
 
     @staticmethod
-    def _format_integer(value: int, format: Format | None) -> str:
+    def _format_integer(value: int, format: Optional[Format]) -> str:
         from jsonata import functions
         formatted_integer = ""
         negative = value < 0
         value = abs(value)
-        match format.primary:
-            case DateTimeUtils.Formats.LETTERS:
+        if format.primary == DateTimeUtils.Formats.LETTERS:
                 formatted_integer = DateTimeUtils._decimal_to_letters(int(value),
                                                                       "A" if format.case_type == DateTimeUtils.TCase.UPPER else "a")
-            case DateTimeUtils.Formats.ROMAN:
-                formatted_integer = DateTimeUtils._decimal_to_roman(int(value))
-                if format.case_type == DateTimeUtils.TCase.UPPER:
-                    formatted_integer = formatted_integer.upper()
-            case DateTimeUtils.Formats.WORDS:
-                formatted_integer = DateTimeUtils.number_to_words(value, format.ordinal)
-                if format.case_type == DateTimeUtils.TCase.UPPER:
-                    formatted_integer = formatted_integer.upper()
-                elif format.case_type == DateTimeUtils.TCase.LOWER:
-                    formatted_integer = formatted_integer.casefold()
-            case DateTimeUtils.Formats.DECIMAL:
-                formatted_integer = str(value)
-                pad_length = format.mandatoryDigits - len(formatted_integer)
-                if pad_length > 0:
-                    formatted_integer = functions.Functions.left_pad(formatted_integer, format.mandatoryDigits, "0")
-                if format.zeroCode != 0x30:
-                    chars = list(formatted_integer)
-                    i = 0
-                    while i < len(chars):
-                        chars[i] = chr(ord(chars[i]) + format.zeroCode - 0x30)
-                        i += 1
-                    formatted_integer = ''.join(chars)
-                if format.regular:
-                    n = int((len(formatted_integer) - 1) / format.groupingSeparators[0].position)
-                    for i in range(n, 0, -1):
-                        pos = len(formatted_integer) - i * format.groupingSeparators[0].position
-                        formatted_integer = formatted_integer[0:pos] + format.groupingSeparators[
-                            0].character + formatted_integer[pos:]
-                else:
-                    format.groupingSeparators.reverse()
-                    for separator in format.groupingSeparators:
-                        pos = len(formatted_integer) - separator.position
-                        formatted_integer = formatted_integer[0:pos] + separator.character + formatted_integer[pos:]
+        elif format.primary == DateTimeUtils.Formats.ROMAN:
+            formatted_integer = DateTimeUtils._decimal_to_roman(int(value))
+            if format.case_type == DateTimeUtils.TCase.UPPER:
+                formatted_integer = formatted_integer.upper()
+        elif format.primary == DateTimeUtils.Formats.WORDS:
+            formatted_integer = DateTimeUtils.number_to_words(value, format.ordinal)
+            if format.case_type == DateTimeUtils.TCase.UPPER:
+                formatted_integer = formatted_integer.upper()
+            elif format.case_type == DateTimeUtils.TCase.LOWER:
+                formatted_integer = formatted_integer.casefold()
+        elif format.primary == DateTimeUtils.Formats.DECIMAL:
+            formatted_integer = str(value)
+            pad_length = format.mandatoryDigits - len(formatted_integer)
+            if pad_length > 0:
+                formatted_integer = functions.Functions.left_pad(formatted_integer, format.mandatoryDigits, "0")
+            if format.zeroCode != 0x30:
+                chars = list(formatted_integer)
+                i = 0
+                while i < len(chars):
+                    chars[i] = chr(ord(chars[i]) + format.zeroCode - 0x30)
+                    i += 1
+                formatted_integer = ''.join(chars)
+            if format.regular:
+                n = int((len(formatted_integer) - 1) / format.groupingSeparators[0].position)
+                for i in range(n, 0, -1):
+                    pos = len(formatted_integer) - i * format.groupingSeparators[0].position
+                    formatted_integer = formatted_integer[0:pos] + format.groupingSeparators[
+                        0].character + formatted_integer[pos:]
+            else:
+                format.groupingSeparators.reverse()
+                for separator in format.groupingSeparators:
+                    pos = len(formatted_integer) - separator.position
+                    formatted_integer = formatted_integer[0:pos] + separator.character + formatted_integer[pos:]
 
-                if format.ordinal:
-                    last_digit = formatted_integer[len(formatted_integer) - 1:]
-                    suffix = DateTimeUtils._suffix123.get(last_digit)
-                    if suffix is None or (
-                            len(formatted_integer) > 1 and formatted_integer[len(formatted_integer) - 2] == '1'):
-                        suffix = "th"
-                    formatted_integer += suffix
-            case DateTimeUtils.Formats.SEQUENCE:
-                raise RuntimeError(constants.Constants.ERR_MSG_SEQUENCE_UNSUPPORTED.format(format.token))
+            if format.ordinal:
+                last_digit = formatted_integer[len(formatted_integer) - 1:]
+                suffix = DateTimeUtils._suffix123.get(last_digit)
+                if suffix is None or (
+                        len(formatted_integer) > 1 and formatted_integer[len(formatted_integer) - 2] == '1'):
+                    suffix = "th"
+                formatted_integer += suffix
+        elif format.primary == DateTimeUtils.Formats.SEQUENCE:
+            raise RuntimeError(constants.Constants.ERR_MSG_SEQUENCE_UNSUPPORTED.format(format.token))
         if negative:
             formatted_integer = "-" + formatted_integer
 
@@ -395,7 +394,7 @@ class DateTimeUtils:
                        0xFF10]
 
     @staticmethod
-    def _analyse_integer_picture(picture: str | None) -> Format:
+    def _analyse_integer_picture(picture: Optional[str]) -> Format:
         format = DateTimeUtils.Format()
         primary_format = None
         format_modifier = None
@@ -408,72 +407,71 @@ class DateTimeUtils:
             if format_modifier[0] == 'o':
                 format.ordinal = True
 
-        match primary_format:
-            case "A":
-                format.case_type = DateTimeUtils.TCase.UPPER
-                format.primary = DateTimeUtils.Formats.LETTERS
-            case "a":
-                format.primary = DateTimeUtils.Formats.LETTERS
-            case "I":
-                format.case_type = DateTimeUtils.TCase.UPPER
-                format.primary = DateTimeUtils.Formats.ROMAN
-            case "i":
-                format.primary = DateTimeUtils.Formats.ROMAN
-            case "W":
-                format.case_type = DateTimeUtils.TCase.UPPER
-                format.primary = DateTimeUtils.Formats.WORDS
-            case "Ww":
-                format.case_type = DateTimeUtils.TCase.TITLE
-                format.primary = DateTimeUtils.Formats.WORDS
-            case "w":
-                format.primary = DateTimeUtils.Formats.WORDS
-            case other:
-                zero_code = None
-                mandatory_digits = 0
-                optional_digits = 0
-                grouping_separators = []
-                separator_position = 0
-                format_codepoints = list(primary_format)
-                # ArrayUtils.reverse(format_codepoints)
-                for ix in range(len(format_codepoints) - 1, -1, -1):
-                    code_point = format_codepoints[ix]
-                    digit = False
-                    i = 0
-                    while i < len(DateTimeUtils._decimal_groups):
-                        group = DateTimeUtils._decimal_groups[i]
-                        if chr(group) <= code_point <= chr(group + 9):
-                            digit = True
-                            mandatory_digits += 1
-                            separator_position += 1
-                            if zero_code is None:
-                                zero_code = group
-                            elif group != zero_code:
-                                raise RuntimeError(constants.Constants.ERR_MSG_DIFF_DECIMAL_GROUP)
-                            break
-                        i += 1
-                    if not digit:
-                        if code_point == chr(0x23):
-                            separator_position += 1
-                            optional_digits += 1
-                        else:
-                            grouping_separators.append(DateTimeUtils.GroupingSeparator(separator_position, code_point))
-                if mandatory_digits > 0:
-                    format.primary = DateTimeUtils.Formats.DECIMAL
-                    format.zeroCode = zero_code
-                    format.mandatoryDigits = mandatory_digits
-                    format.optionalDigits = optional_digits
-
-                    regular = DateTimeUtils._get_regular_repeat(grouping_separators)
-                    if regular > 0:
-                        format.regular = True
-                        format.groupingSeparators.append(
-                            DateTimeUtils.GroupingSeparator(regular, grouping_separators[0].character))
+        if primary_format == "A":
+            format.case_type = DateTimeUtils.TCase.UPPER
+            format.primary = DateTimeUtils.Formats.LETTERS
+        elif primary_format == "a":
+            format.primary = DateTimeUtils.Formats.LETTERS
+        elif primary_format == "I":
+            format.case_type = DateTimeUtils.TCase.UPPER
+            format.primary = DateTimeUtils.Formats.ROMAN
+        elif primary_format == "i":
+            format.primary = DateTimeUtils.Formats.ROMAN
+        elif primary_format == "W":
+            format.case_type = DateTimeUtils.TCase.UPPER
+            format.primary = DateTimeUtils.Formats.WORDS
+        elif primary_format == "Ww":
+            format.case_type = DateTimeUtils.TCase.TITLE
+            format.primary = DateTimeUtils.Formats.WORDS
+        elif primary_format == "w":
+            format.primary = DateTimeUtils.Formats.WORDS
+        else:
+            zero_code = None
+            mandatory_digits = 0
+            optional_digits = 0
+            grouping_separators = []
+            separator_position = 0
+            format_codepoints = list(primary_format)
+            # ArrayUtils.reverse(format_codepoints)
+            for ix in range(len(format_codepoints) - 1, -1, -1):
+                code_point = format_codepoints[ix]
+                digit = False
+                i = 0
+                while i < len(DateTimeUtils._decimal_groups):
+                    group = DateTimeUtils._decimal_groups[i]
+                    if chr(group) <= code_point <= chr(group + 9):
+                        digit = True
+                        mandatory_digits += 1
+                        separator_position += 1
+                        if zero_code is None:
+                            zero_code = group
+                        elif group != zero_code:
+                            raise RuntimeError(constants.Constants.ERR_MSG_DIFF_DECIMAL_GROUP)
+                        break
+                    i += 1
+                if not digit:
+                    if code_point == chr(0x23):
+                        separator_position += 1
+                        optional_digits += 1
                     else:
-                        format.regular = False
-                        format.groupingSeparators = grouping_separators
+                        grouping_separators.append(DateTimeUtils.GroupingSeparator(separator_position, code_point))
+            if mandatory_digits > 0:
+                format.primary = DateTimeUtils.Formats.DECIMAL
+                format.zeroCode = zero_code
+                format.mandatoryDigits = mandatory_digits
+                format.optionalDigits = optional_digits
+
+                regular = DateTimeUtils._get_regular_repeat(grouping_separators)
+                if regular > 0:
+                    format.regular = True
+                    format.groupingSeparators.append(
+                        DateTimeUtils.GroupingSeparator(regular, grouping_separators[0].character))
                 else:
-                    format.primary = DateTimeUtils.Formats.SEQUENCE
-                    format.token = primary_format
+                    format.regular = False
+                    format.groupingSeparators = grouping_separators
+            else:
+                format.primary = DateTimeUtils.Formats.SEQUENCE
+                format.token = primary_format
 
         return format
 
@@ -522,14 +520,14 @@ class DateTimeUtils:
 
     class SpecPart:
         type: str
-        value: str | None
+        value: Optional[str]
         component: str
         width: (int, int)
-        presentation1: str | None
-        presentation2: str | None
+        presentation1: Optional[str]
+        presentation2: Optional[str]
         ordinal: bool
-        names: 'DateTimeUtils.TCase | None'
-        integerFormat: 'DateTimeUtils.Format | None'
+        names: 'Optional[DateTimeUtils.TCase]'
+        integerFormat: 'Optional[DateTimeUtils.Format]'
         n: int
 
         def __init__(self, type, component=None, value=None):
@@ -634,7 +632,7 @@ class DateTimeUtils:
         return format
 
     @staticmethod
-    def _parse_width(wm: str | None) -> int | None:
+    def _parse_width(wm: Optional[str]) -> Optional[int]:
         if wm is None or wm == "*":
             return None
         else:
@@ -647,7 +645,7 @@ class DateTimeUtils:
     _iso8601_spec = None
 
     @staticmethod
-    def format_datetime(millis: int, picture: str | None, timezone: str | None) -> str:
+    def format_datetime(millis: int, picture: Optional[str], timezone: Optional[str]) -> str:
         offset_hours = 0
         offset_minutes = 0
 
@@ -732,48 +730,47 @@ class DateTimeUtils:
     @staticmethod
     def _get_datetime_fragment(date: datetime.datetime, component: str) -> str:
         component_value = ""
-        match component:
-            case 'Y':  # year
-                component_value = str(date.year)
-            case 'M':  # month in year
-                component_value = str(date.month)
-            case 'D':  # day in month
-                component_value = str(date.day)
-            case 'd':  # day in year
-                component_value = str(date.timetuple().tm_yday)
-            case 'F':  # day of week
-                component_value = str(date.isoweekday())
-            case 'W':  # week in year
-                component_value = str(date.isocalendar().week)
-            case 'w':  # week in month
-                component_value = str(DateTimeUtils.week_in_month(date))
-            case 'X':
-                component_value = str(DateTimeUtils.iso_week_numbering_year(date))
-            case 'x':
-                component_value = str(DateTimeUtils.iso_week_numbering_month(date))
-            case 'H':  # hour in day (24 hours)
-                component_value = str(date.hour)
-            case 'h':  # hour in day (12 hours)
-                hour = date.hour
-                if hour > 12:
-                    hour -= 12
-                elif hour == 0:
-                    hour = 12
-                component_value = str(hour)
-            case 'P':
-                component_value = "am" if date.hour < 12 else "pm"
-            case 'm':
-                component_value = str(date.minute)
-            case 's':
-                component_value = str(date.second)
-            case 'f':
-                component_value = str(date.microsecond / 1000.0)
-            case 'Z' | 'z':
-                pass
-            case 'C':
-                component_value = "ISO"
-            case 'E':
-                component_value = "ISO"
+        if component == 'Y':  # year
+            component_value = str(date.year)
+        elif component == 'M':  # month in year
+            component_value = str(date.month)
+        elif component == 'D':  # day in month
+            component_value = str(date.day)
+        elif component == 'd':  # day in year
+            component_value = str(date.timetuple().tm_yday)
+        elif component == 'F':  # day of week
+            component_value = str(date.isoweekday())
+        elif component == 'W':  # week in year
+            component_value = str(date.isocalendar().week)
+        elif component == 'w':  # week in month
+            component_value = str(DateTimeUtils.week_in_month(date))
+        elif component == 'X':
+            component_value = str(DateTimeUtils.iso_week_numbering_year(date))
+        elif component == 'x':
+            component_value = str(DateTimeUtils.iso_week_numbering_month(date))
+        elif component == 'H':  # hour in day (24 hours)
+            component_value = str(date.hour)
+        elif component == 'h':  # hour in day (12 hours)
+            hour = date.hour
+            if hour > 12:
+                hour -= 12
+            elif hour == 0:
+                hour = 12
+            component_value = str(hour)
+        elif component == 'P':
+            component_value = "am" if date.hour < 12 else "pm"
+        elif component == 'm':
+            component_value = str(date.minute)
+        elif component == 's':
+            component_value = str(date.second)
+        elif component == 'f':
+            component_value = str(date.microsecond / 1000.0)
+        elif component == 'Z' | 'z':
+            pass
+        elif component == 'C':
+            component_value = "ISO"
+        elif component == 'E':
+            component_value = "ISO"
         return component_value
 
     @staticmethod
@@ -854,7 +851,7 @@ class DateTimeUtils:
         return int((end - start).total_seconds() / (7 * 24 * 60 * 60) + 1)
 
     @staticmethod
-    def parse_datetime(timestamp: str | None, picture: str) -> int | None:
+    def parse_datetime(timestamp: Optional[str], picture: str) -> Optional[int]:
         format_spec = DateTimeUtils._analyse_datetime_picture(picture)
         match_spec = DateTimeUtils._generate_regex(format_spec)
         full_regex = "^"
@@ -1015,7 +1012,7 @@ class DateTimeUtils:
 
     class MatcherPart:
         regex: str
-        component: str | None
+        component: Optional[str]
 
         def __init__(self, regex):
             self.regex = regex
@@ -1061,35 +1058,34 @@ class DateTimeUtils:
             return self._lookup[value]
 
     @staticmethod
-    def _generate_regex_with_component(component: str | None, format_spec: Format | None) -> MatcherPart:
+    def _generate_regex_with_component(component: Optional[str], format_spec: Optional[Format]) -> MatcherPart:
         is_upper = format_spec.case_type == DateTimeUtils.TCase.UPPER
-        match format_spec.primary:
-            case DateTimeUtils.Formats.LETTERS:
-                regex = "[A-Z]+" if is_upper else "[a-z]+"
-                matcher = DateTimeUtils.MatcherPartLetters(regex, is_upper)
-            case DateTimeUtils.Formats.ROMAN:
-                regex = "[MDCLXVI]+" if is_upper else "[mdclxvi]+"
-                matcher = DateTimeUtils.MatcherPartRoman(regex, is_upper)
-            case DateTimeUtils.Formats.WORDS:
-                words = set()
-                words.update(DateTimeUtils._word_values.keys())
-                words.add("and")
-                words.add("[\\-, ]")
-                regex = "(?:" + "|".join(words) + ")+"
-                matcher = DateTimeUtils.MatcherPartWords(regex)
-            case DateTimeUtils.Formats.DECIMAL:
-                regex = "[0-9]+"
-                if component == 'Y':
-                    regex = "[0-9]{2,4}"
-                elif (component == 'M') or (component == 'D') or (component == 'H') or (component == 'h') or (
-                        component == 'm') or (component == 's'):
-                    regex = "[0-9]{1,2}"
+        if format_spec.primary == DateTimeUtils.Formats.LETTERS:
+            regex = "[A-Z]+" if is_upper else "[a-z]+"
+            matcher = DateTimeUtils.MatcherPartLetters(regex, is_upper)
+        elif format_spec.primary == DateTimeUtils.Formats.ROMAN:
+            regex = "[MDCLXVI]+" if is_upper else "[mdclxvi]+"
+            matcher = DateTimeUtils.MatcherPartRoman(regex, is_upper)
+        elif format_spec.primary == DateTimeUtils.Formats.WORDS:
+            words = set()
+            words.update(DateTimeUtils._word_values.keys())
+            words.add("and")
+            words.add("[\\-, ]")
+            regex = "(?:" + "|".join(words) + ")+"
+            matcher = DateTimeUtils.MatcherPartWords(regex)
+        elif format_spec.primary == DateTimeUtils.Formats.DECIMAL:
+            regex = "[0-9]+"
+            if component == 'Y':
+                regex = "[0-9]{2,4}"
+            elif (component == 'M') or (component == 'D') or (component == 'H') or (component == 'h') or (
+                    component == 'm') or (component == 's'):
+                regex = "[0-9]{1,2}"
 
-                if format_spec.ordinal:
-                    regex += "(?:th|st|nd|rd)"
-                matcher = DateTimeUtils.MatcherPartDecimal(regex, format_spec)
-            case other:
-                raise RuntimeError(constants.Constants.ERR_MSG_SEQUENCE_UNSUPPORTED)
+            if format_spec.ordinal:
+                regex += "(?:th|st|nd|rd)"
+            matcher = DateTimeUtils.MatcherPartDecimal(regex, format_spec)
+        else:
+            raise RuntimeError(constants.Constants.ERR_MSG_SEQUENCE_UNSUPPORTED)
         return matcher
 
     class MatcherPartLetters(MatcherPart):

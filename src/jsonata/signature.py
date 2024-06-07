@@ -41,7 +41,7 @@
 
 
 import re
-from typing import MutableSequence, Sequence, NoReturn, Any
+from typing import MutableSequence, Optional, Sequence, NoReturn, Any
 
 from jsonata import jexception, utils
 
@@ -54,12 +54,12 @@ class Signature:
 
     class Param:
 
-        type: str | None
-        regex: str | None
+        type: Optional[str]
+        regex: Optional[str]
         context: bool
         array: bool
-        subtype: str | None
-        context_regex: str | None
+        subtype: Optional[str]
+        context_regex: Optional[str]
 
         def __init__(self):
             self.type = None
@@ -79,7 +79,7 @@ class Signature:
     _param: 'Signature.Param'
     _params: MutableSequence['Signature.Param']
     _prev_param: 'Signature.Param'
-    _regex: re.Pattern | None
+    _regex: Optional[re.Pattern]
     _signature: str
 
     def __init__(self, signature, function):
@@ -117,7 +117,7 @@ class Signature:
                 depth += 1
         return position
 
-    def get_symbol(self, value: Any | None) -> str:
+    def get_symbol(self, value: Optional[Any]) -> str:
         from jsonata import functions
         symbol = None
         if value is None:
@@ -155,7 +155,7 @@ class Signature:
     #                 signature - the signature between the <angle brackets>
     # @returns validation pattern
     #     
-    def parse_signature(self, signature: str) -> re.Pattern | None:
+    def parse_signature(self, signature: str) -> Optional[re.Pattern]:
         # create a Regex that represents this signature and return a function that when
         # invoked,
         # returns the validated (possibly fixed-up) arguments, or throws a validation
@@ -169,60 +169,59 @@ class Signature:
                 # ignore it for now
                 break
 
-            match symbol:
-                case 's' | 'n' | 'b' | 'l' | 'o':
-                    self._param.regex = ("[" + symbol + "m]")
-                    self._param.type = str(symbol)
-                    self.next()
-                case 'a':
-                    # normally treat any value as singleton array
-                    self._param.regex = "[asnblfom]"
-                    self._param.type = str(symbol)
-                    self._param.array = True
-                    self.next()
-                case 'f':
-                    self._param.regex = "f"
-                    self._param.type = str(symbol)
-                    self.next()
-                case 'j':
-                    self._param.regex = "[asnblom]"
-                    self._param.type = str(symbol)
-                    self.next()
-                case 'x':
-                    self._param.regex = "[asnblfom]"
-                    self._param.type = str(symbol)
-                    self.next()
-                case '-':
-                    self._prev_param.context = True
-                    self._prev_param.regex += "?"
-                case '?' | '+':
-                    self._prev_param.regex += symbol
-                case '(':
-                    # search forward for matching ')'
-                    end_paren = self.find_closing_bracket(signature, position, '(', ')')
-                    choice = signature[position + 1:end_paren]
-                    if choice.find("<") == -1:
-                        # no _parameterized types, simple regex
-                        self._param.regex = ("[" + choice + "m]")
-                    else:
-                        # TODO harder
-                        raise RuntimeError("Choice groups containing parameterized types are not supported")
-                    self._param.type = ("(" + choice + ")")
-                    position = end_paren
-                    self.next()
-                case '<':
-                    test = self._prev_param.type
-                    if test is not None:
-                        type = test  # .asText();
-                        if type == "a" or type == "f":
-                            # search forward for matching '>'
-                            end_pos = self.find_closing_bracket(signature, position, '<', '>')
-                            self._prev_param.subtype = signature[position + 1:end_pos]
-                            position = end_pos
-                        else:
-                            raise RuntimeError("Type parameters can only be applied to functions and arrays")
+            if symbol == 's' or symbol == 'n' or symbol == 'b' or symbol == 'l' or symbol == 'o':
+                self._param.regex = ("[" + symbol + "m]")
+                self._param.type = str(symbol)
+                self.next()
+            elif symbol == 'a':
+                # normally treat any value as singleton array
+                self._param.regex = "[asnblfom]"
+                self._param.type = str(symbol)
+                self._param.array = True
+                self.next()
+            elif symbol == 'f':
+                self._param.regex = "f"
+                self._param.type = str(symbol)
+                self.next()
+            elif symbol == 'j':
+                self._param.regex = "[asnblom]"
+                self._param.type = str(symbol)
+                self.next()
+            elif symbol == 'x':
+                self._param.regex = "[asnblfom]"
+                self._param.type = str(symbol)
+                self.next()
+            elif symbol == '-':
+                self._prev_param.context = True
+                self._prev_param.regex += "?"
+            elif symbol == '?' or symbol == '+':
+                self._prev_param.regex += symbol
+            elif symbol == '(':
+                # search forward for matching ')'
+                end_paren = self.find_closing_bracket(signature, position, '(', ')')
+                choice = signature[position + 1:end_paren]
+                if choice.find("<") == -1:
+                    # no _parameterized types, simple regex
+                    self._param.regex = ("[" + choice + "m]")
+                else:
+                    # TODO harder
+                    raise RuntimeError("Choice groups containing parameterized types are not supported")
+                self._param.type = ("(" + choice + ")")
+                position = end_paren
+                self.next()
+            elif symbol == '<':
+                test = self._prev_param.type
+                if test is not None:
+                    type = test  # .asText();
+                    if type == "a" or type == "f":
+                        # search forward for matching '>'
+                        end_pos = self.find_closing_bracket(signature, position, '<', '>')
+                        self._prev_param.subtype = signature[position + 1:end_pos]
+                        position = end_pos
                     else:
                         raise RuntimeError("Type parameters can only be applied to functions and arrays")
+                else:
+                    raise RuntimeError("Type parameters can only be applied to functions and arrays")
             position += 1  # end while processing symbols in signature
 
         regex_str = "^"
@@ -234,8 +233,8 @@ class Signature:
         self._signature = regex_str
         return self._regex
 
-    def throw_validation_error(self, bad_args: Sequence | None, bad_sig: str | None,
-                               function_name: str | None) -> NoReturn:
+    def throw_validation_error(self, bad_args: Optional[Sequence], bad_sig: Optional[str],
+                               function_name: Optional[str]) -> NoReturn:
         # to figure out where this went wrong we need apply each component of the
         # regex to each argument until we get to the one that fails to match
         partial_pattern = "^"
@@ -253,7 +252,7 @@ class Signature:
         # haven't added the trailing '$' in the regex yet.
         raise jexception.JException("T0410", -1, (good_to + 1), function_name)
 
-    def validate(self, _args: Any, context: Any | None) -> Any | None:
+    def validate(self, _args: Any, context: Optional[Any]) -> Optional[Any]:
 
         result = []
 

@@ -17,7 +17,7 @@
 #
 
 import math
-from typing import Any, MutableMapping, MutableSequence
+from typing import Any, MutableMapping, MutableSequence, Optional
 
 from jsonata import jexception
 
@@ -30,7 +30,7 @@ class Utils:
     NULL_VALUE = NullValue()
 
     @staticmethod
-    def is_numeric(v: Any | None) -> bool:
+    def is_numeric(v: Optional[Any]) -> bool:
         if isinstance(v, bool):
             return False
         if isinstance(v, int):
@@ -43,7 +43,7 @@ class Utils:
         return is_num
 
     @staticmethod
-    def is_array_of_strings(v: Any | None) -> bool:
+    def is_array_of_strings(v: Optional[Any]) -> bool:
         if isinstance(v, list):
             for o in v:
                 if not isinstance(o, str):
@@ -52,7 +52,7 @@ class Utils:
         return False
 
     @staticmethod
-    def is_array_of_numbers(v: Any | None) -> bool:
+    def is_array_of_numbers(v: Optional[Any]) -> bool:
         if isinstance(v, list):
             for o in v:
                 if not Utils.is_numeric(o):
@@ -61,14 +61,14 @@ class Utils:
         return False
 
     @staticmethod
-    def is_function(o: Any | None) -> bool:
+    def is_function(o: Optional[Any]) -> bool:
         from jsonata import jsonata
         return isinstance(o, (jsonata.Jsonata.JFunction, jsonata.Jsonata.JFunctionCallable))
 
     NONE = object()
 
     @staticmethod
-    def create_sequence(el: Any | None = NONE) -> list:
+    def create_sequence(el: Optional[Any] = NONE) -> list:
         sequence = Utils.JList()
         sequence.sequence = True
         if el is not Utils.NONE:
@@ -97,11 +97,11 @@ class Utils:
         # Jsonata specific flags
 
     @staticmethod
-    def is_sequence(result: Any | None) -> bool:
+    def is_sequence(result: Optional[Any]) -> bool:
         return isinstance(result, Utils.JList) and result.sequence
 
     @staticmethod
-    def convert_number(n: float) -> float | None:
+    def convert_number(n: float) -> Optional[float]:
         # Use long if the number is not fractional
         if not Utils.is_numeric(n):
             return None
@@ -114,7 +114,7 @@ class Utils:
         return float(n)
 
     @staticmethod
-    def convert_value(val: Any | None) -> Any | None:
+    def convert_value(val: Optional[Any]) -> Optional[Any]:
         return val if val is not Utils.NULL_VALUE else None
 
     @staticmethod
@@ -134,13 +134,13 @@ class Utils:
             Utils.recurse(val)
 
     @staticmethod
-    def recurse(val: Any | None) -> None:
+    def recurse(val: Optional[Any]) -> None:
         if isinstance(val, dict):
             Utils.convert_dict_nulls(val)
         if isinstance(val, list):
             Utils.convert_list_nulls(val)
 
     @staticmethod
-    def convert_nulls(res: Any | None) -> Any | None:
+    def convert_nulls(res: Optional[Any]) -> Optional[Any]:
         Utils.recurse(res)
         return Utils.convert_value(res)

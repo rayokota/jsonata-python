@@ -103,7 +103,7 @@ class Tokenizer:
         position: int
         id: Optional[Any] = None
 
-    def create(self, type: str | None, value: Any | None) -> Token:
+    def create(self, type: Optional[str], value: Optional[Any]) -> Token:
         return Tokenizer.Token(type, value, self.position)
 
     def is_closing_slash(self, position: int) -> bool:
@@ -153,7 +153,7 @@ class Tokenizer:
             self.position += 1
         raise jexception.JException("S0302", self.position)
 
-    def next(self, prefix: bool) -> Token | None:
+    def next(self, prefix: bool) -> Optional[Token]:
         if self.position >= self.length:
             return None
         current_char = self.path[self.position]
@@ -287,19 +287,18 @@ class Tokenizer:
                 else:
                     _name = self.path[self.position:i]
                     self.position = i
-                    match _name:
-                        case "or" | "in" | "and":
-                            return self.create("operator", _name)
-                        case "true":
-                            return self.create("value", True)
-                        case "false":
-                            return self.create("value", False)
-                        case "null":
-                            return self.create("value", None)
-                        case other:
-                            if self.position == self.length and _name == "":
-                                # whitespace at end of input
-                                return None
-                            return self.create("name", _name)
+                    if _name == "or" or name == "in" or name == "and":
+                        return self.create("operator", _name)
+                    elif name == "true":
+                        return self.create("value", True)
+                    elif name == "false":
+                        return self.create("value", False)
+                    elif name == "null":
+                        return self.create("value", None)
+                    else:
+                        if self.position == self.length and _name == "":
+                            # whitespace at end of input
+                            return None
+                        return self.create("name", _name)
             else:
                 i += 1
