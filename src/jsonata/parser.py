@@ -93,12 +93,12 @@ class Parser:
         position: int
         keep_array: bool
         descending: bool
-        #expression: Optional[Self]
-        #seeking_parent: Optional[MutableSequence[Self]]
+        # expression: Optional[Self]
+        # seeking_parent: Optional[MutableSequence[Self]]
         errors: Optional[Sequence[Exception]]
-        #steps: Optional[MutableSequence[Self]]
-        #slot: Optional[Self]
-        #next_function: Optional[Self]
+        # steps: Optional[MutableSequence[Self]]
+        # slot: Optional[Self]
+        # next_function: Optional[Self]
         keep_singleton_array: bool
         consarray: bool
         level: int
@@ -107,51 +107,51 @@ class Parser:
         thunk: bool
 
         # Procedure:
-        #procedure: Optional[Self]
-        #arguments: Optional[MutableSequence[Self]]
-        #body: Optional[Self]
-        #predicate: Optional[MutableSequence[Self]]
-        #stages: Optional[MutableSequence[Self]]
+        # procedure: Optional[Self]
+        # arguments: Optional[MutableSequence[Self]]
+        # body: Optional[Self]
+        # predicate: Optional[MutableSequence[Self]]
+        # stages: Optional[MutableSequence[Self]]
         input: Optional[Any]
-        #environment: jsonata.Jsonata.Frame | None # creates circular ref
+        # environment: jsonata.Jsonata.Frame | None # creates circular ref
         tuple: Optional[Any]
         expr: Optional[Any]
-        #group: Optional[Self]
-        #name: Optional[Self]
+        # group: Optional[Self]
+        # name: Optional[Self]
 
         # Infix attributes
-        #lhs: Optional[Self]
-        #rhs: Optional[Self]
+        # lhs: Optional[Self]
+        # rhs: Optional[Self]
 
         # where rhs = list of Symbol pairs
-        #lhs_object: Optional[Sequence[Sequence[Self]]]
-        #rhs_object: Optional[Sequence[Sequence[Self]]]
+        # lhs_object: Optional[Sequence[Sequence[Self]]]
+        # rhs_object: Optional[Sequence[Sequence[Self]]]
 
         # where rhs = list of Symbols
-        #rhs_terms: Optional[Sequence[Self]]
-        #terms: Optional[Sequence[Self]]
+        # rhs_terms: Optional[Sequence[Self]]
+        # terms: Optional[Sequence[Self]]
 
         # Ternary operator:
-        #condition: Optional[Self]
-        #then: Optional[Self]
-        #_else: Optional[Self]
+        # condition: Optional[Self]
+        # then: Optional[Self]
+        # _else: Optional[Self]
 
-        #expressions: Optional[MutableSequence[Self]]
+        # expressions: Optional[MutableSequence[Self]]
 
         # processAST error handling
         error: Optional[jexception.JException]
         signature: Optional[Any]
 
         # Prefix attributes
-        #pattern: Optional[Self]
-        #update: Optional[Self]
-        #delete: Optional[Self]
+        # pattern: Optional[Self]
+        # update: Optional[Self]
+        # delete: Optional[Self]
 
         # Ancestor attributes
         label: Optional[str]
         index: Optional[Any]
         _jsonata_lambda: bool
-        #ancestor: Optional[Self]
+        # ancestor: Optional[Self]
 
         def __init__(self, outer_instance, id=None, bp=0):
             self._outer_instance = outer_instance

@@ -204,7 +204,7 @@ class Tokenizer:
             self.position += 2
             return self.create("operator", "<=")
         if current_char == '*' and have_more and self.path[self.position + 1] == '*':
-            #*  descendant wildcard
+            # **  descendant wildcard
             self.position += 2
             return self.create("operator", "**")
         if current_char == '~' and have_more and self.path[self.position + 1] == '>':
