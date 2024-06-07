@@ -3,11 +3,9 @@
 Pure Python implementation of JSONata.
 
 This is a Python port of the  [JSONata reference implementation](https://github.com/jsonata-js/jsonata), 
-and also borrows from the [DashJoin Java port](https://github.com/dashjoin/jsonata-java).
+and also borrows from the [Dashjoin Java port](https://github.com/dashjoin/jsonata-java).
 
 This implementation supports 100% of the language features of JSONata.  The JSONata documentation can be found [here](https://jsonata.org).
-
-
 
 
 ## Installation
@@ -68,13 +66,11 @@ options:
   -bf <file>, --bindings-file <file>
                         JSONata variable bindings file
   -it, --interactive    Interactive REPL
-
 ```
 
 ### Examples
 
 ```
-
 % echo '{"a":"hello", "b":" world"}' | python3 -m jsonata.cli '(a & b)'
 hello world
 
@@ -114,5 +110,4 @@ To build and run the unit tests:
 ```
 python3 tests/generate.py
 pytest tests
-
 ```
