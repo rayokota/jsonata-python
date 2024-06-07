@@ -32,7 +32,7 @@ def lint(session):
 def build_and_check_dists(session):
     session.install("build", "check-manifest >= 0.42", "twine")
 
-    session.run("check-manifest", "--ignore", "noxfile.py,tests/**")
+    session.run("check-manifest", "--ignore", "jsonata/*,noxfile.py,tests/*")
     session.run("python", "-m", "build")
     session.run("python", "-m", "twine", "check", "dist/*")
 
