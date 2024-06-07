@@ -23,7 +23,7 @@ class Generate:
         for suite in list_suites:
 
             b = io.StringIO()
-            b.write("import jsonata_test\n\n\n")
+            b.write("from tests import jsonata_test\n\n\n")
             # Pascal case
             name = ''.join(word.title() for word in suite.name.split('-'))
             b.write("class Test" + name + ":\n")

@@ -92,14 +92,6 @@ class TestJsonata:
         print(str(data))
         self.eval_expr("foo.bar", data, None, 42, None)
 
-    class TestDef:
-
-        def __init__(self):
-            self.expr = None
-            self.dataset = None
-            self.bindings = None
-            self.result = None
-
     def run_case(self, name):
         if not self.run_test_suite(name):
             raise Exception()
@@ -142,20 +134,6 @@ class TestJsonata:
                     o[k] = jsonata.Utils.NULL_VALUE
                 else:
                     self.replace_nulls(v)
-
-    class TestOverride:
-
-        def __init__(self):
-            self.name = None
-            self.ignoreError = False
-            self.alternateResult = None
-            self.alternateCode = None
-            self.reason = None
-
-    class TestOverrides:
-
-        def __init__(self):
-            self.override = None
 
     testOverrides = None
 

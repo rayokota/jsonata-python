@@ -24,3 +24,6 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/rayokota/jsonata-python"
 "Bug Reports" = "https://github.com/rayokota/jsonata-python/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jsonata"]

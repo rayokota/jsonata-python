@@ -108,6 +108,6 @@ git clone --recurse-submodules https://github.com/rayokota/jsonata-python
 To build and run the unit tests:
 
 ```
-python3 tests/generate.py
-pytest tests
+python3 -m pip install nox
+nox --sessions tests
 ```
