@@ -49,7 +49,7 @@ def get_options(argv: Optional[list[str]] = None) -> argparse.ArgumentParser:
         help="Input character set (default=utf-8)"
     )
     parser.add_argument(
-        "-f", "--format", choices=['auto', 'json', 'string'], default="auto", metavar="<arg>",
+        "-f", "--format", choices=['auto', 'json', 'string'], default="auto",
         help="Input format (default=auto)"
     )
     parser.add_argument(
