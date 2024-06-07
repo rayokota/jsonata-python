@@ -50,7 +50,7 @@ class Jsonata:
             self.parent = parent
             self.is_parallel_call = False
 
-        def bind(self, name: str, val: Optional[str]) -> None:
+        def bind(self, name: str, val: Optional[Any]) -> None:
             self.bindings[name] = val
             if getattr(val, "signature", None) is not None:
                 val.signature.set_function_name(name)
@@ -112,7 +112,7 @@ class Jsonata:
     #
     class JFunction(JFunctionCallable, JFunctionSignatureValidation):
         function: 'Jsonata.JFunctionCallable'
-        signature: Optional[str]
+        signature: Optional[sig.Signature]
         function_name: Optional[str]
 
         def __init__(self, function, signature):

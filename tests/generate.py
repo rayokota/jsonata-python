@@ -30,7 +30,8 @@ class Generate:
         for suite in list_suites:
 
             b = io.StringIO()
-            b.write("import pytest, sys\n")
+            b.write("import pytest\n")
+            b.write("import sys\n")
             b.write("from tests import jsonata_test\n\n\n")
             # Pascal case
             cname = ''.join(word.title() for word in suite.name.split('-'))
