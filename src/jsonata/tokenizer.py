@@ -287,13 +287,13 @@ class Tokenizer:
                 else:
                     _name = self.path[self.position:i]
                     self.position = i
-                    if _name == "or" or name == "in" or name == "and":
+                    if _name == "or" or _name == "in" or _name == "and":
                         return self.create("operator", _name)
-                    elif name == "true":
+                    elif _name == "true":
                         return self.create("value", True)
-                    elif name == "false":
+                    elif _name == "false":
                         return self.create("value", False)
-                    elif name == "null":
+                    elif _name == "null":
                         return self.create("value", None)
                     else:
                         if self.position == self.length and _name == "":

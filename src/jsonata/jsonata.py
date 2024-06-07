@@ -5,7 +5,7 @@ import re
 import sys
 import threading
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping, Self
+from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping
 
 from jsonata import functions, jexception, parser, signature as sig, timebox, utils
 
@@ -1336,7 +1336,7 @@ class Jsonata:
     # 
     # @return
     #     
-    def get_per_thread_instance(self) -> Self:
+    def get_per_thread_instance(self):
         if hasattr(Jsonata.CURRENT, "jsonata"):
             return Jsonata.CURRENT.jsonata
 

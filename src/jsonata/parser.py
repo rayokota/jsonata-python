@@ -1,5 +1,5 @@
 ﻿import copy
-from typing import Any, Self, MutableSequence, Optional, Sequence
+from typing import Any, MutableSequence, Optional, Sequence
 
 from jsonata import jexception, tokenizer, signature, utils
 
@@ -66,7 +66,7 @@ class Parser:
 
         # Ancestor attributes
 
-        def nud(self) -> Self:
+        def nud(self):
             # error - symbol has been invoked as a unary operator
             _err = jexception.JException("S0211", self.position, self.value)
 
@@ -81,7 +81,7 @@ class Parser:
             else:
                 raise _err
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             raise NotImplementedError("led not implemented")
 
         _outer_instance: 'Parser'
@@ -93,12 +93,12 @@ class Parser:
         position: int
         keep_array: bool
         descending: bool
-        expression: Optional[Self]
-        seeking_parent: Optional[MutableSequence[Self]]
+        #expression: Optional[Self]
+        #seeking_parent: Optional[MutableSequence[Self]]
         errors: Optional[Sequence[Exception]]
-        steps: Optional[MutableSequence[Self]]
-        slot: Optional[Self]
-        next_function: Optional[Self]
+        #steps: Optional[MutableSequence[Self]]
+        #slot: Optional[Self]
+        #next_function: Optional[Self]
         keep_singleton_array: bool
         consarray: bool
         level: int
@@ -107,51 +107,51 @@ class Parser:
         thunk: bool
 
         # Procedure:
-        procedure: Optional[Self]
-        arguments: Optional[MutableSequence[Self]]
-        body: Optional[Self]
-        predicate: Optional[MutableSequence[Self]]
-        stages: Optional[MutableSequence[Self]]
+        #procedure: Optional[Self]
+        #arguments: Optional[MutableSequence[Self]]
+        #body: Optional[Self]
+        #predicate: Optional[MutableSequence[Self]]
+        #stages: Optional[MutableSequence[Self]]
         input: Optional[Any]
-        # environment: jsonata.Jsonata.Frame | None # creates circular ref
+        #environment: jsonata.Jsonata.Frame | None # creates circular ref
         tuple: Optional[Any]
         expr: Optional[Any]
-        group: Optional[Self]
-        name: Optional[Self]
+        #group: Optional[Self]
+        #name: Optional[Self]
 
         # Infix attributes
-        lhs: Optional[Self]
-        rhs: Optional[Self]
+        #lhs: Optional[Self]
+        #rhs: Optional[Self]
 
         # where rhs = list of Symbol pairs
-        lhs_object: Optional[Sequence[Sequence[Self]]]
-        rhs_object: Optional[Sequence[Sequence[Self]]]
+        #lhs_object: Optional[Sequence[Sequence[Self]]]
+        #rhs_object: Optional[Sequence[Sequence[Self]]]
 
         # where rhs = list of Symbols
-        rhs_terms: Optional[Sequence[Self]]
-        terms: Optional[Sequence[Self]]
+        #rhs_terms: Optional[Sequence[Self]]
+        #terms: Optional[Sequence[Self]]
 
         # Ternary operator:
-        condition: Optional[Self]
-        then: Optional[Self]
-        _else: Optional[Self]
+        #condition: Optional[Self]
+        #then: Optional[Self]
+        #_else: Optional[Self]
 
-        expressions: Optional[MutableSequence[Self]]
+        #expressions: Optional[MutableSequence[Self]]
 
         # processAST error handling
         error: Optional[jexception.JException]
         signature: Optional[Any]
 
         # Prefix attributes
-        pattern: Optional[Self]
-        update: Optional[Self]
-        delete: Optional[Self]
+        #pattern: Optional[Self]
+        #update: Optional[Self]
+        #delete: Optional[Self]
 
         # Ancestor attributes
         label: Optional[str]
         index: Optional[Any]
         _jsonata_lambda: bool
-        ancestor: Optional[Self]
+        #ancestor: Optional[Self]
 
         def __init__(self, outer_instance, id=None, bp=0):
             self._outer_instance = outer_instance
@@ -224,13 +224,13 @@ class Parser:
             self._jsonata_lambda = False
             self.ancestor = None
 
-        def create(self) -> Self:
+        def create(self):
             # We want a shallow clone (do not duplicate outer class!)
             cl = self.clone()
             # System.err.println("cloning "+this+" clone="+cl)
             return cl
 
-        def clone(self) -> Self:
+        def clone(self):
             return copy.copy(self)
 
         def __repr__(self):
@@ -334,7 +334,7 @@ class Parser:
             super().__init__(outer_instance, id, 0)
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     #        
@@ -357,7 +357,7 @@ class Parser:
                              bp if bp != 0 else (tokenizer.Tokenizer.operators[id] if id is not None else 0))
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.lhs = left
             self.rhs = self._outer_instance.expression(self.bp)
             self.type = "binary"
@@ -373,13 +373,13 @@ class Parser:
 
             self.prefix = Parser.Prefix(outer_instance, id)
 
-        def nud(self) -> Self:
+        def nud(self):
             return self.prefix.nud()
             # expression(70)
             # type="unary"
             # return this
 
-        def clone(self) -> Self:
+        def clone(self):
             c = super().clone()
             # IMPORTANT: make sure to allocate a new Prefix!!!
             c.prefix = Parser.Prefix(self._outer_instance, c.id)
@@ -410,7 +410,7 @@ class Parser:
 
         # Symbol _expression
 
-        def nud(self) -> Self:
+        def nud(self):
             self.expression = self._outer_instance.expression(70)
             self.type = "unary"
             return self
@@ -539,7 +539,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # field wildcard (single level)
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "wildcard"
             return self
 
@@ -551,7 +551,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # parent operator
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "parent"
             return self
 
@@ -563,7 +563,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # allow as terminal
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     class InfixOr(Infix):
@@ -574,7 +574,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # allow as terminal
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     class InfixIn(Infix):
@@ -585,7 +585,7 @@ class Parser:
             self._outer_instance = outer_instance
 
         # allow as terminal
-        def nud(self) -> Self:
+        def nud(self):
             return self
 
     class InfixRError(Infix):
@@ -595,7 +595,7 @@ class Parser:
             super().__init__(outer_instance, "(error)", 10)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             raise NotImplementedError("TODO", None)
 
     class PrefixDescendantWildcard(Prefix):
@@ -605,7 +605,7 @@ class Parser:
             super().__init__(outer_instance, "**")
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "descendant"
             return self
 
@@ -616,7 +616,7 @@ class Parser:
             super().__init__(outer_instance, "(", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             # left is is what we are trying to invoke
             self.procedure = left
             self.type = "function"
@@ -670,7 +670,7 @@ class Parser:
         # Note: in Java both nud and led are in same class!
         # register(new Prefix("(") {
 
-        def nud(self) -> Self:
+        def nud(self):
             if self._outer_instance.dbg:
                 print("Prefix (")
             expressions = []
@@ -691,7 +691,7 @@ class Parser:
             super().__init__(outer_instance, "[", get)
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             a = []
             if self._outer_instance.node.id != "]":
                 while True:
@@ -720,7 +720,7 @@ class Parser:
         # filter - predicate or array index
         # register(new Infix("[", tokenizer.Tokenizer.operators.get("[")) {
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             if self._outer_instance.node.id == "]":
                 # empty predicate means maintain singleton arrays in the output
                 step = left
@@ -743,7 +743,7 @@ class Parser:
             super().__init__(outer_instance, "^", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self._outer_instance.advance("(")
             terms = []
             while True:
@@ -780,14 +780,14 @@ class Parser:
 
         # merged register(new Prefix("{") {
 
-        def nud(self) -> Self:
+        def nud(self):
             return self._outer_instance.object_parser(None)
 
         # })
 
         # register(new Infix("{", tokenizer.Tokenizer.operators.get("{")) {
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             return self._outer_instance.object_parser(left)
 
     class InfixRBindVariable(InfixR):
@@ -797,7 +797,7 @@ class Parser:
             super().__init__(outer_instance, ":=", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             if left.type != "variable":
                 return self._outer_instance.handle_error(jexception.JException("S0212", left.position, left.value))
             self.lhs = left
@@ -813,7 +813,7 @@ class Parser:
             super().__init__(outer_instance, "@", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.lhs = left
             self.rhs = self._outer_instance.expression(tokenizer.Tokenizer.operators["@"])
             if self.rhs.type != "variable":
@@ -828,7 +828,7 @@ class Parser:
             super().__init__(outer_instance, "#", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.lhs = left
             self.rhs = self._outer_instance.expression(tokenizer.Tokenizer.operators["#"])
             if self.rhs.type != "variable":
@@ -843,7 +843,7 @@ class Parser:
             super().__init__(outer_instance, "?", get)
             self._outer_instance = outer_instance
 
-        def led(self, left: Self) -> Self:
+        def led(self, left):
             self.type = "condition"
             self.condition = left
             self.then = self._outer_instance.expression(0)
@@ -860,7 +860,7 @@ class Parser:
             super().__init__(outer_instance, "|")
             self._outer_instance = outer_instance
 
-        def nud(self) -> Self:
+        def nud(self):
             self.type = "transform"
             self.pattern = self._outer_instance.expression(0)
             self._outer_instance.advance("|")
