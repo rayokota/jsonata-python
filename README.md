@@ -103,7 +103,7 @@ helloworld.json
 
 ## Running Tests
 
-The project uses the repository of the reference implementation as a submodule. This allows referencing the current version of the unit tests. To clone this repository, run:
+This project uses the repository of the reference implementation as a submodule. This allows referencing the current version of the unit tests. To clone this repository, run:
 
 ```
 git clone --recurse-submodules https://github.com/rayokota/jsonata-python
