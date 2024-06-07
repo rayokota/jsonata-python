@@ -1,9 +1,8 @@
 ﻿import json
+import jsonata
 import math
 import pathlib
 import traceback
-
-from jsonata import jexception, jsonata, utils
 
 
 class TestJsonata:
@@ -60,7 +59,7 @@ class TestJsonata:
                 print("--Expr=" + str(expr) + " Expected=" + str(expected) + " ErrorCode=" + str(code))
                 print("--Data=" + str(data))
 
-                if isinstance(t, jexception.JException):
+                if isinstance(t, jsonata.JException):
                     je = t
                     print("--Exception     = " + str(je.error) + "  --> " + str(je))
                 else:
@@ -133,14 +132,14 @@ class TestJsonata:
             index = 0
             for i in o:
                 if i is None:
-                    o[index] = utils.Utils.NULL_VALUE
+                    o[index] = jsonata.Utils.NULL_VALUE
                 else:
                     self.replace_nulls(i)
                 index += 1
         if isinstance(o, dict):
             for k, v in o.items():
                 if v is None:
-                    o[k] = utils.Utils.NULL_VALUE
+                    o[k] = jsonata.Utils.NULL_VALUE
                 else:
                     self.replace_nulls(v)
 

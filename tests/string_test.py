@@ -1,4 +1,4 @@
-﻿from jsonata import jsonata
+﻿import jsonata
 
 
 #

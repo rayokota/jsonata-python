@@ -28,7 +28,7 @@ from jsonata import functions, jexception, jsonata, timebox
 def get_options(argv: list[str] | None = None) -> argparse.ArgumentParser:
     """Parses command-line arguments.
     """
-    parser = argparse.ArgumentParser(prog="jsonata", description="Pure Python JSONata")
+    parser = argparse.ArgumentParser(prog="jsonata.cli", description="Pure Python JSONata CLI")
     parser.add_argument(
         "-v", "--version", action='version', version='%(prog)s 0.1.0')
 

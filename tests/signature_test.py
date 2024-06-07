@@ -1,6 +1,5 @@
-﻿import pytest
-
-from jsonata import jexception, jsonata
+﻿import jsonata
+import pytest
 
 
 class TestSignature:
@@ -20,11 +19,11 @@ class TestSignature:
         expr.register_function("foo", jsonata.Jsonata.JFunction(TestSignature.JFunctionCallable2(), "(sao)"))
 
         # null not allowed
-        with pytest.raises(jexception.JException):
+        with pytest.raises(jsonata.JException):
             expr.evaluate(None)
 
         # boolean not allowed
-        with pytest.raises(jexception.JException):
+        with pytest.raises(jsonata.JException):
             expr.evaluate(True)
 
     class JFunctionCallable2(jsonata.Jsonata.JFunctionCallable):

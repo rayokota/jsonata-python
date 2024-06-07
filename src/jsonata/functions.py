@@ -840,9 +840,9 @@ class Functions:
                     i += 1
             else:
                 # Quote separator string + preserve trailing empty strings (-1)
-                result = list(filter(None, string.split(sep, -1)))
+                result = string.split(sep, -1)
         else:
-            result = list(filter(None, pattern.split(string)))
+            result = pattern.split(string)
         if limit is not None and int(limit) < len(result):
             result = result[0:int(limit)]
         return result

@@ -1,6 +1,5 @@
-﻿import pytest
-
-from jsonata import jsonata
+﻿import jsonata
+import pytest
 
 
 class TestTypes:

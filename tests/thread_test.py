@@ -1,8 +1,6 @@
-﻿import time
-
+﻿import jsonata
 import pytest
-
-from jsonata import jsonata
+import time
 
 
 class TestThread:
