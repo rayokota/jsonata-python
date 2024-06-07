@@ -159,11 +159,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         parser.print_help()
         return 1
 
+    icharset = options.icharset
+    ocharset = options.icharset
+
     expr_file = options.expression
     if expr_file is None:
         expr = options.expr
     else:
-        with open(expr_file, 'r') as fd:
+        with open(expr_file, 'r', encoding=icharset) as fd:
             expr = fd.read()
 
     prettify = not options.compact
@@ -172,15 +175,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     if bindings_file is None:
         bindings_str = options.bindings
     else:
-        with open(bindings_file, 'r') as fd:
+        with open(bindings_file, 'r', encoding=icharset) as fd:
             bindings_str = fd.read()
     if bindings_str is None:
         bindings = {}
     else:
         bindings = json.loads(bindings_str)
-
-    icharset = options.icharset
-    ocharset = options.icharset
 
     if options.input == '-' or options.input is None:
         input = sys.stdin.read()

@@ -75,7 +75,7 @@ class Generate:
                         suite.name + "/" + name + ".json\")\n\n")
                     count += 1
                     total += 1
-            with open(gendir + "/" + suite.name + "_test.py", "w") as f:
+            with open(gendir + "/" + suite.name + "_test.py", "w", encoding="utf-8") as f:
                 f.write(b.getvalue())
             if verbose:
                 print(b)

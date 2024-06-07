@@ -113,4 +113,4 @@ nox --sessions tests
 
 ## Notes
 
-JSONata date/time functions that handle ISO 8601 formats are only supported for Python 3.11+.
+JSONata date/time functions that use ISO 8601 formats are only supported for Python 3.11+.

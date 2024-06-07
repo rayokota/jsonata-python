@@ -167,7 +167,7 @@ class TestJsonata:
         if expr is None:
             expr_file = test_def.get("expr-file")
             file_name = name[0:name.rfind("/")] + "/" + expr_file
-            with open(file_name, 'r') as f:
+            with open(file_name, 'r', encoding="utf-8") as f:
                 expr = f.read()
 
         dataset = test_def.get("dataset")
