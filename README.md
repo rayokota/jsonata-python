@@ -13,7 +13,6 @@ The JSONata documentation can be found [here](https://jsonata.org).
 
 ```
 pip install jsonata-python
-
 ```
 
 ## Getting Started
@@ -27,7 +26,6 @@ A very simple start:
 >>> result = expr.evaluate(data)
 >>> result
 24
-
 ```
 
 ## Command Line Interface
