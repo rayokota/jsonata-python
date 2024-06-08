@@ -226,6 +226,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         start = int(start) if start is not None else None
         length = int(length) if length is not None else None
 
@@ -307,6 +310,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         if chars is None:
             return string
 
@@ -328,6 +334,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         pos = string.find(chars)
         if pos > -1:
             return string[pos + len(chars):]
@@ -345,6 +354,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         return string.casefold()
 
     #
@@ -357,6 +369,9 @@ class Functions:
         # undefined inputs always return undefined
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
 
         return string.upper()
 
@@ -371,6 +386,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         return len(string)
 
     #
@@ -383,6 +401,9 @@ class Functions:
         # undefined inputs always return undefined
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
 
         if not string:
             return ""
@@ -414,6 +435,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         if char is None or not char:
             char = " "
 
@@ -428,6 +452,10 @@ class Functions:
     def left_pad(string: Optional[str], size: Optional[int], pad_str: Optional[str]) -> Optional[str]:
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         if pad_str is None:
             pad_str = " "
 
@@ -451,6 +479,10 @@ class Functions:
     def right_pad(string: Optional[str], size: Optional[int], pad_str: Optional[str]) -> Optional[str]:
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         if pad_str is None:
             pad_str = " "
 
@@ -511,6 +543,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            return None
+
         result = False
 
         if isinstance(token, str):
@@ -538,6 +573,9 @@ class Functions:
         # undefined inputs always return undefined
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
 
         # limit, if specified, must be a non-negative number
         if limit is not None and limit < 0:
@@ -710,6 +748,10 @@ class Functions:
     def replace(string: Optional[str], pattern: Union[str, re.Pattern], replacement: Optional[Any], limit: Optional[int]) -> Optional[str]:
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         if isinstance(pattern, str):
             if not pattern:
                 raise jexception.JException("Second argument of replace function cannot be an empty string", 0)
@@ -740,6 +782,10 @@ class Functions:
         # undefined inputs always return undefined
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         try:
             return base64.b64encode(string.encode("utf-8")).decode("utf-8")
         except Exception as e:
@@ -755,6 +801,10 @@ class Functions:
         # undefined inputs always return undefined
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         try:
             return base64.b64decode(string.encode("utf-8")).decode("utf-8")
         except Exception as e:
@@ -771,6 +821,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # See https://stackoverflow.com/questions/946170/equivalent-javascript-functions-for-pythons-urllib-parse-quote-and-urllib-par
         return urllib.parse.quote(string, safe="~()*!.'")
 
@@ -784,6 +837,9 @@ class Functions:
         # undefined inputs always return undefined
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
 
         # See https://stackoverflow.com/questions/946170/equivalent-javascript-functions-for-pythons-urllib-parse-quote-and-urllib-par
         return urllib.parse.quote(string, safe="~@#$&()*!+=:;,.?/'")
@@ -799,6 +855,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # See https://stackoverflow.com/questions/946170/equivalent-javascript-functions-for-pythons-urllib-parse-quote-and-urllib-par
         return urllib.parse.unquote(string, errors="strict")
 
@@ -813,6 +872,9 @@ class Functions:
         if string is None:
             return None
 
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # See https://stackoverflow.com/questions/946170/equivalent-javascript-functions-for-pythons-urllib-parse-quote-and-urllib-par
         return urllib.parse.unquote(string, errors="strict")
 
@@ -820,6 +882,9 @@ class Functions:
     def split(string: Optional[str], pattern: Union[str, Optional[re.Pattern]], limit: Optional[float]) -> Optional[list[str]]:
         if string is None:
             return None
+
+        if string is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
 
         if limit is not None and int(limit) < 0:
             raise jexception.JException("D3020", -1, string)
