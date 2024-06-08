@@ -1974,7 +1974,7 @@ class Functions:
         result = None
         if isinstance(input, list):
             result = utils.Utils.create_sequence()
-            for _, inp in enumerate(input):
+            for inp in input:
                 res = Functions.lookup(inp, key)
                 if res is not None:
                     if isinstance(res, list):

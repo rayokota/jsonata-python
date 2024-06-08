@@ -189,7 +189,7 @@ class Jsonata:
             if matches is not None:
                 if not (isinstance(matches, list)):
                     matches = [matches]
-                for _, match_ in enumerate(matches):
+                for match_ in matches:
                     # evaluate the update value for each match
                     update = self._jsonata.eval(self._expr.update, match_, self._environment)
                     # update must be an object
@@ -214,7 +214,7 @@ class Jsonata:
                             if not utils.Utils.is_array_of_strings(deletions):
                                 # throw type error
                                 raise jexception.JException("T2012", self._expr.delete.position, val)
-                            for _, item in enumerate(deletions):
+                            for item in deletions:
                                 if isinstance(match_, dict):
                                     match_.pop(item, None)
                                     # delete match[deletions[jj]]
@@ -288,7 +288,7 @@ class Jsonata:
                 result = self.evaluate_transform_expression(expr, input, environment)
 
         if getattr(expr, "predicate", None) is not None:
-            for _, item in enumerate(expr.predicate):
+            for item in expr.predicate:
                 result = self.evaluate_filter(item.expr, result, environment)
 
         if getattr(expr, "type", None) is not None and expr.type != "path" and getattr(expr, "group", None) is not None:
@@ -404,10 +404,10 @@ class Jsonata:
 
         result = utils.Utils.create_sequence()
 
-        for _, inp in enumerate(input):
+        for inp in input:
             res = self.eval(expr, inp, environment)
             if expr.stages is not None:
-                for _, stage in enumerate(expr.stages):
+                for stage in expr.stages:
                     res = self.evaluate_filter(stage.expr, res, environment)
             if res is not None:
                 result.append(res)
@@ -432,7 +432,7 @@ class Jsonata:
     def evaluate_stages(self, stages: Optional[Sequence[parser.Parser.Symbol]], input: Any,
                         environment: Optional[Frame]) -> Any:
         result = input
-        for _, stage in enumerate(stages):
+        for stage in stages:
             if stage.type == "filter":
                 result = self.evaluate_filter(stage.expr, result, environment)
             elif stage.type == "index":
@@ -471,7 +471,7 @@ class Jsonata:
         if tuple_bindings is None:
             tuple_bindings = [{"@": item} for item in input if item is not None]
 
-        for _, tupleBinding in enumerate(tuple_bindings):
+        for tupleBinding in tuple_bindings:
             step_env = self.create_frame_from_tuple(environment, tupleBinding)
             res = self.eval(expr, tupleBinding["@"], step_env)
             # res is the binding sequence for the output tuple stream
@@ -870,7 +870,7 @@ class Jsonata:
         if not (isinstance(rhs, list)):
             rhs = [rhs]
 
-        for _, item in enumerate(rhs):
+        for item in rhs:
             if item == lhs:
                 result = True
                 break
@@ -1352,7 +1352,7 @@ class Jsonata:
             evaluated_args.append(applyto_context)
         # eager evaluation - evaluate the arguments
         args = expr.arguments if expr.arguments is not None else []
-        for _, val in enumerate(args):
+        for val in args:
             arg = self.eval(val, input, environment)
             if utils.Utils.is_function(arg) or functions.Functions.is_lambda(arg):
                 # wrap this in a closure
@@ -1420,7 +1420,7 @@ class Jsonata:
             if isinstance(next, parser.Parser.Symbol):  # Java: not if JFunction
                 next.position = result.body.procedure.position
             evaluated_args = []
-            for _, arg in enumerate(result.body.arguments):
+            for arg in result.body.arguments:
                 evaluated_args.append(self.eval(arg, result.input, result.environment))
 
             result = self.apply_inner(next, evaluated_args, input, environment)
@@ -1535,7 +1535,7 @@ class Jsonata:
         result = None
         # evaluate the arguments
         evaluated_args = []
-        for _, arg in enumerate(expr.arguments):
+        for arg in expr.arguments:
             if arg.type == "operator" and (arg.value == "?"):
                 evaluated_args.append(arg)
             else:

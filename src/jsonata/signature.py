@@ -230,7 +230,7 @@ class Signature:
         partial_pattern = "^"
 
         good_to = 0
-        for _, param in enumerate(self._params):
+        for param in self._params:
             partial_pattern += param.regex
             tester = re.compile(partial_pattern)
             match_ = tester.fullmatch(bad_sig)

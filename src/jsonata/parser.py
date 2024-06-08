@@ -956,7 +956,7 @@ class Parser:
         slots = laststep.seeking_parent if (laststep.seeking_parent is not None) else []
         if laststep.type == "parent":
             slots.append(laststep.slot)
-        for _, slot in enumerate(slots):
+        for slot in slots:
             index = len(path.steps) - 2
             while slot.level > 0:
                 if index < 0:
