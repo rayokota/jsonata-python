@@ -358,9 +358,7 @@ class Jsonata:
                 # tuple stream is carrying ancestry information - keep this
                 result_sequence = tuple_bindings
             else:
-                result_sequence = utils.Utils.create_sequence()
-                for _, tupleBinding in enumerate(tuple_bindings):
-                    result_sequence.append(tupleBinding["@"])
+                result_sequence = utils.Utils.create_sequence_from_iter(b["@"] for b in tuple_bindings)
 
         if expr.keep_singleton_array:
 
@@ -460,11 +458,9 @@ class Jsonata:
                 result = self.evaluate_sort_expression(expr, tuple_bindings, environment)
             else:
                 sorted = self.evaluate_sort_expression(expr, input, environment)
-                result = utils.Utils.create_sequence()
+                result = utils.Utils.create_sequence_from_iter({"@": item, expr.index: ss}
+                                                               for ss, item in enumerate(sorted))
                 result.tuple_stream = True
-                for ss, item in enumerate(sorted):
-                    tuple = {"@": item, expr.index: ss}
-                    result.append(tuple)
             if expr.stages is not None:
                 result = self.evaluate_stages(expr.stages, result, environment)
             return result
@@ -1045,7 +1041,7 @@ class Jsonata:
         if size > 1e7:
             raise jexception.JException("D2014", -1, size)
 
-        return list(range(lhs, rhs + 1))
+        return utils.Utils.RangeList(lhs, rhs + 1)
 
     #
     # Evaluate bind expression against input data
@@ -1484,12 +1480,7 @@ class Jsonata:
             elif isinstance(proc, Jsonata.JLambda):
                 result = proc.call(input, validated_args)
             elif isinstance(proc, re.Pattern):
-                result = []
-                for s in validated_args:
-                    # System.err.println("PAT "+proc+" input "+s)
-                    if proc.search(s) is not None:
-                        # System.err.println("MATCH")
-                        result.append(s)
+                result = [s for s in validated_args if proc.search(s) is not None]
             else:
                 print("Proc not found " + str(proc))
                 raise jexception.JException("T1006", 0)

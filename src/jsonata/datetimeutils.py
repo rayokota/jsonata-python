@@ -800,10 +800,10 @@ class DateTimeUtils:
 
     @staticmethod
     def start_of_first_week(year_month: 'DateTimeUtils.YearMonth') -> datetime.date:
-        # // ISO 8601 defines the first week of the year to be the week that contains the first Thursday
-        #         // XPath F&O extends this same definition for the first week of a month
-        #         // the week starts on a Monday - calculate the millis for the start of the first week
-        #         // millis for given 1st Jan of that year (at 00:00 UTC)
+        # ISO 8601 defines the first week of the year to be the week that contains the first Thursday
+        # XPath F&O extends this same definition for the first week of a month
+        # the week starts on a Monday - calculate the millis for the start of the first week
+        # millis for given 1st Jan of that year (at 00:00 UTC)
         jan1 = datetime.date(year_month.year, year_month.month, 1)
         day_of_jan1 = jan1.isoweekday()
         # if Jan 1 is Fri, Sat or Sun, then add the number of days ( in millis) to jan1 to get the start of week 1

@@ -1561,20 +1561,13 @@ class Functions:
     #     
     @staticmethod
     def map(arr: Optional[Sequence], func: Optional[Any]) -> Optional[list]:
-
         # undefined inputs always return undefined
         if arr is None:
             return None
 
-        result = utils.Utils.create_sequence()
-        # do the map - iterate over the arrays, and invoke func
-        for i, arg in enumerate(arr):
-            func_args = Functions.hof_func_args(func, arg, i, arr)
-
-            res = Functions.func_apply(func, func_args)
-            if res is not None:
-                result.append(res)
-        return result
+        result = (res for res in (Functions.func_apply(func, Functions.hof_func_args(func, arg, i, arr))
+                                  for i, arg in enumerate(arr)) if res is not None)
+        return utils.Utils.create_sequence_from_iter(result)
 
     #
     # Create a map from an array of arguments
@@ -1588,16 +1581,9 @@ class Functions:
         if arr is None:
             return None
 
-        result = utils.Utils.create_sequence()
-
-        for i, entry in enumerate(arr):
-            func_args = Functions.hof_func_args(func, entry, i, arr)
-            # invoke func
-            res = Functions.func_apply(func, func_args)
-            if Functions.to_boolean(res):
-                result.append(entry)
-
-        return result
+        result = (arg for i, arg in enumerate(arr) if Functions.to_boolean(
+            Functions.func_apply(func, Functions.hof_func_args(func, arg, i, arr))))
+        return utils.Utils.create_sequence_from_iter(result)
 
     #
     # Given an array, find the single element matching a specified condition
@@ -1641,25 +1627,10 @@ class Functions:
     #     
     @staticmethod
     def zip(*args: Sequence) -> list:
-        result = []
-        # length of the shortest array
-        length = sys.maxsize
-        nargs = 0
-        # nargs : the real size of args!=null
-        while nargs < len(args):
-            if args[nargs] is None:
-                length = 0
-                break
+        if any(a is None for a in args):
+            return []
 
-            length = min(length, len(args[nargs]))
-            nargs += 1
-
-        for i in range(0, length):
-            tuple = []
-            for k in range(0, nargs):
-                tuple.append(args[k][i])
-            result.append(tuple)
-        return result
+        return [list(a) for a in zip(*args)]
 
     #
     # Fold left function
@@ -1705,14 +1676,15 @@ class Functions:
     #     
     @staticmethod
     def keys(arg: Union[Sequence, Mapping, None]) -> list:
-        result = utils.Utils.create_sequence()
-
         if isinstance(arg, list):
             # merge the keys of all of the items in the array
             keys = {k: '' for el in arg for k in Functions.keys(el)}
-            result.extend(keys.keys())
+            result = utils.Utils.create_sequence_from_iter(keys.keys())
         elif isinstance(arg, dict):
-            result.extend(arg.keys())
+            result = utils.Utils.create_sequence_from_iter(arg.keys())
+        else:
+            result = utils.Utils.create_sequence()
+
         return result
 
     # here: append, lookup
@@ -1724,10 +1696,7 @@ class Functions:
     #     
     @staticmethod
     def exists(arg: Optional[Any]) -> bool:
-        if arg is None:
-            return False
-        else:
-            return True
+        return arg is not None
 
     #
     # Splits an object into an array of object with one property each
@@ -1762,8 +1731,7 @@ class Functions:
         if arg is None:
             return None
 
-        result = {k: v for obj in arg for k, v in obj.items()}
-        return result
+        return {k: v for obj in arg for k, v in obj.items()}
 
     #
     # Reverses the order of items in an array
@@ -1795,16 +1763,9 @@ class Functions:
         if obj is None:
             return None
 
-        result = utils.Utils.create_sequence()
-
-        for key in obj:
-            func_args = Functions.hof_func_args(func, obj[key], key, obj)
-            # invoke func
-            val = Functions.func_apply(func, func_args)
-            if val is not None:
-                result.append(val)
-
-        return result
+        result = (res for res in (Functions.func_apply(func, Functions.hof_func_args(func, value, key, obj))
+                                  for key, value in obj.items()) if res is not None)
+        return utils.Utils.create_sequence_from_iter(result)
 
     #
     #
@@ -1958,25 +1919,14 @@ class Functions:
         if arg is None:
             return None
 
-        result = {}
-
-        for item, entry in arg.items():
-            func_args = Functions.hof_func_args(func, entry, item, arg)
-            # invoke func
-            res = Functions.func_apply(func, func_args)
-            if jsonata.Jsonata.boolize(res):
-                result[item] = entry
+        result = {item: entry for item, entry in arg.items() if jsonata.Jsonata.boolize(
+            Functions.func_apply(func, Functions.hof_func_args(func, entry, item, arg)))}
 
         # empty objects should be changed to undefined
         if not result:
             result = None
 
         return result
-
-    # /////
-    # /////
-    # /////
-    # /////
 
     #
     # Append second argument to first

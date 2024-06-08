@@ -1110,8 +1110,7 @@ class Parser:
                 if result.type != "path":
                     _res = Parser.Symbol(self)
                     _res.type = "path"
-                    _res.steps = []
-                    _res.steps.append(result)
+                    _res.steps = [result]
                     result = _res
                 sort_step = Parser.Symbol(self)
                 sort_step.type = "sort"
@@ -1160,8 +1159,7 @@ class Parser:
                 else:
                     _res = Parser.Symbol(self)
                     _res.type = "path"
-                    _res.steps = []
-                    _res.steps.append(result)
+                    _res.steps = [result]
                     result = _res
                     if step.predicate is not None:
                         step.stages = step.predicate
@@ -1293,8 +1291,7 @@ class Parser:
         elif type == "name":
             result = Parser.Symbol(self)
             result.type = "path"
-            result.steps = []
-            result.steps.append(expr)
+            result.steps = [expr]
             if expr.keep_array:
                 result.keep_singleton_array = True
         elif type == "parent":

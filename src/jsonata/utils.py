@@ -21,7 +21,7 @@
 #
 
 import math
-from typing import Any, MutableMapping, MutableSequence, Optional
+from typing import Any, MutableMapping, MutableSequence, Optional, Iterable
 
 from jsonata import jexception
 
@@ -73,14 +73,21 @@ class Utils:
 
     @staticmethod
     def create_sequence(el: Optional[Any] = NONE) -> list:
-        sequence = Utils.JList()
-        sequence.sequence = True
         if el is not Utils.NONE:
             if isinstance(el, list) and len(el) == 1:
-                sequence.append(el[0])
+                sequence = Utils.JList(el)
             else:
                 # This case does NOT exist in Javascript! Why?
-                sequence.append(el)
+                sequence = Utils.JList([el])
+        else:
+            sequence = Utils.JList()
+        sequence.sequence = True
+        return sequence
+
+    @staticmethod
+    def create_sequence_from_iter(it: Iterable) -> list:
+        sequence = Utils.JList(it)
+        sequence.sequence = True
         return sequence
 
     class JList(list):
@@ -92,13 +99,34 @@ class Utils:
 
         def __init__(self, c=()):
             super().__init__(c)
+            # Jsonata specific flags
             self.sequence = False
             self.outer_wrapper = False
             self.tuple_stream = False
             self.keep_singleton = False
             self.cons = False
 
-        # Jsonata specific flags
+    class RangeList(list):
+        a: int
+        b: int
+        size: int
+
+        def __init__(self, left, right):
+            super().__init__()
+            self.a = left
+            self.b = right
+            self.size = self.b - self.a + 1
+
+        def __len__(self):
+            return self.size
+
+        def __getitem__(self, index):
+            if index < self.size:
+                return Utils.convert_number(self.a + index)
+            raise IndexError(index)
+
+        def __iter__(self):
+            return iter(range(self.a, self.b))
 
     @staticmethod
     def is_sequence(result: Optional[Any]) -> bool:
