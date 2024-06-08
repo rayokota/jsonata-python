@@ -246,7 +246,7 @@ class DateTimeUtils:
         while value > 0:
             letters.insert(0, chr((value - 1) % 26 + ord(a_code)))
             value = math.trunc((value - 1) / float(26))
-        return functools.reduce(lambda a, b: a + b, letters, "")
+        return "".join(letters)
 
     @staticmethod
     def format_integer(value: int, picture: Optional[str]) -> str:
@@ -468,7 +468,7 @@ class DateTimeUtils:
             if separators[i].character is not sep_char:
                 return 0
 
-        indexes = list(map(lambda separator: separator.position, separators))
+        indexes = [separator.position for separator in separators]
         factor = int(functools.reduce(math.gcd, indexes))
         for index in range(1, len(indexes) + 1):
             if (indexes.index(index * factor) if index * factor in indexes else -1) == -1:

@@ -51,16 +51,16 @@ class Timebox:
         self.depth = 0
 
         # register callbacks
-        def entry_callback(_exp, _input, _env):
-            if _env.is_parallel_call:
+        def entry_callback(exp, input, env):
+            if env.is_parallel_call:
                 return
             self.depth += 1
             self.check_runaway()
 
         expr.set_evaluate_entry_callback(entry_callback)
 
-        def exit_callback(_exp, _input, _env, _res):
-            if _env.is_parallel_call:
+        def exit_callback(exp, input, env, res):
+            if env.is_parallel_call:
                 return
             self.depth -= 1
             self.check_runaway()

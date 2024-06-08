@@ -283,24 +283,24 @@ class Tokenizer:
             if i == self.length or " \t\n\r".find(ch) > -1 or str(ch) in Tokenizer.operators:
                 if self.path[self.position] == '$':
                     # variable reference
-                    _name = self.path[self.position + 1:i]
+                    name = self.path[self.position + 1:i]
                     self.position = i
-                    return self.create("variable", _name)
+                    return self.create("variable", name)
                 else:
-                    _name = self.path[self.position:i]
+                    name = self.path[self.position:i]
                     self.position = i
-                    if _name == "or" or _name == "in" or _name == "and":
-                        return self.create("operator", _name)
-                    elif _name == "true":
+                    if name == "or" or name == "in" or name == "and":
+                        return self.create("operator", name)
+                    elif name == "true":
                         return self.create("value", True)
-                    elif _name == "false":
+                    elif name == "false":
                         return self.create("value", False)
-                    elif _name == "null":
+                    elif name == "null":
                         return self.create("value", None)
                     else:
-                        if self.position == self.length and _name == "":
+                        if self.position == self.length and name == "":
                             # whitespace at end of input
                             return None
-                        return self.create("name", _name)
+                        return self.create("name", name)
             else:
                 i += 1

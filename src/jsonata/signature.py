@@ -243,11 +243,8 @@ class Signature:
         # haven't added the trailing '$' in the regex yet.
         raise jexception.JException("T0410", -1, (good_to + 1), function_name)
 
-    def validate(self, _args: Any, context: Optional[Any]) -> Optional[Any]:
+    def validate(self, args: Any, context: Optional[Any]) -> Optional[Any]:
 
-        result = []
-
-        args = _args
         supplied_sig = ""
         for arg in args:
             supplied_sig += self.get_symbol(arg)
@@ -257,8 +254,7 @@ class Signature:
             validated_args = []
             arg_index = 0
             index = 0
-            for _param in self._params:
-                param = _param
+            for param in self._params:
                 arg = args[arg_index] if arg_index < len(args) else None
                 match_ = is_valid.group(index + 1)
                 if "" == match_:
@@ -309,8 +305,7 @@ class Signature:
                                     raise jexception.JException("T0412", -1, arg, param.subtype)
                                 # the function expects an array. If it's not one, make it so
                                 if single != "a":
-                                    _arg = [arg]
-                                    arg = _arg
+                                    arg = [arg]
                             validated_args.append(arg)
                             arg_index += 1
                         else:

@@ -170,7 +170,7 @@ class Jsonata:
             self._expr = expr
             self._environment = environment
 
-        def call(self, _input: Optional[Any], args: Optional[Sequence]) -> Optional[Any]:
+        def call(self, input: Optional[Any], args: Optional[Sequence]) -> Optional[Any]:
             # /* async */ Object (obj) { // signature <(oa):o>
 
             obj = args[0]
@@ -182,11 +182,10 @@ class Jsonata:
             # this Object returns a copy of obj with changes specified by the pattern/operation
             result = functions.Functions.function_clone(obj)
 
-            _matches = self._jsonata.eval(self._expr.pattern, result, self._environment)
-            if _matches is not None:
-                if not (isinstance(_matches, list)):
-                    _matches = [_matches]
-                matches = _matches
+            matches = self._jsonata.eval(self._expr.pattern, result, self._environment)
+            if matches is not None:
+                if not (isinstance(matches, list)):
+                    matches = [matches]
                 for _, match_ in enumerate(matches):
                     # evaluate the update value for each match
                     update = self._jsonata.eval(self._expr.update, match_, self._environment)
@@ -212,10 +211,9 @@ class Jsonata:
                             if not utils.Utils.is_array_of_strings(deletions):
                                 # throw type error
                                 raise jexception.JException("T2012", self._expr.delete.position, val)
-                            _deletions = deletions
-                            for _, _del in enumerate(_deletions):
+                            for _, item in enumerate(deletions):
                                 if isinstance(match_, dict):
-                                    match_.pop(_del, None)
+                                    match_.pop(item, None)
                                     # delete match[deletions[jj]]
 
             return result
@@ -299,13 +297,12 @@ class Jsonata:
 
         # mangle result (list of 1 element -> 1 element, empty list -> null)
         if result is not None and utils.Utils.is_sequence(result) and not result.tuple_stream:
-            _result = result
             if expr.keep_array:
-                _result.keep_singleton = True
-            if len(_result) == 0:
+                result.keep_singleton = True
+            if len(result) == 0:
                 result = None
-            elif len(_result) == 1:
-                result = _result if _result.keep_singleton else _result[0]
+            elif len(result) == 1:
+                result = result if result.keep_singleton else result[0]
 
         return result
 
@@ -475,19 +472,15 @@ class Jsonata:
         result.tuple_stream = True
         step_env = environment
         if tuple_bindings is None:
-            filtered = filter(lambda item: item is not None, input)
-            tuple_bindings = list(map(lambda item: {"@": item}, filtered))
+            tuple_bindings = [{"@": item} for item in input if item is not None]
 
         for _, tupleBinding in enumerate(tuple_bindings):
             step_env = self.create_frame_from_tuple(environment, tupleBinding)
-            _res = self.eval(expr, tupleBinding["@"], step_env)
+            res = self.eval(expr, tupleBinding["@"], step_env)
             # res is the binding sequence for the output tuple stream
-            if _res is not None:
-                res = None
-                if not (isinstance(_res, list)):
-                    res = [_res]
-                else:
-                    res = _res
+            if res is not None:
+                if not (isinstance(res, list)):
+                    res = [res]
                 for bb, item in enumerate(res):
                     tuple = {}
                     tuple.update(tupleBinding)
@@ -519,8 +512,7 @@ class Jsonata:
     # @returns {*} Result after applying predicates
     #    
     # async 
-    def evaluate_filter(self, _predicate: Optional[Any], input: Optional[Any], environment: Optional[Frame]) -> Any:
-        predicate = _predicate
+    def evaluate_filter(self, predicate: Optional[Any], input: Optional[Any], environment: Optional[Frame]) -> Any:
         results = utils.Utils.create_sequence()
         if isinstance(input, utils.Utils.JList) and input.tuple_stream:
             results.tuple_stream = True
@@ -568,10 +560,8 @@ class Jsonata:
     # @returns {*} Evaluated input data
     #    
     # async 
-    def evaluate_binary(self, _expr: Optional[parser.Parser.Symbol], input: Optional[Any],
+    def evaluate_binary(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any],
                         environment: Optional[Frame]) -> Optional[Any]:
-        expr = _expr
-        result = None
         lhs = self.eval(expr.lhs, input, environment)
         op = str(expr.value)
 
@@ -764,21 +754,21 @@ class Jsonata:
     # @param {Object} op - opcode
     # @returns {*} Result
     #     
-    def evaluate_numeric_expression(self, _lhs: Optional[Any], _rhs: Optional[Any], op: Optional[str]) -> Optional[Any]:
+    def evaluate_numeric_expression(self, lhs: Optional[Any], rhs: Optional[Any], op: Optional[str]) -> Optional[Any]:
         result = 0
 
-        if _lhs is not None and not utils.Utils.is_numeric(_lhs):
-            raise jexception.JException("T2001", -1, op, _lhs)
-        if _rhs is not None and not utils.Utils.is_numeric(_rhs):
-            raise jexception.JException("T2002", -1, op, _rhs)
+        if lhs is not None and not utils.Utils.is_numeric(lhs):
+            raise jexception.JException("T2001", -1, op, lhs)
+        if rhs is not None and not utils.Utils.is_numeric(rhs):
+            raise jexception.JException("T2002", -1, op, rhs)
 
-        if _lhs is None or _rhs is None:
+        if lhs is None or rhs is None:
             # if either side is undefined, the result is undefined
             return None
 
         # System.out.println("op22 "+op+" "+_lhs+" "+_rhs)
-        lhs = float(_lhs)
-        rhs = float(_rhs)
+        lhs = float(lhs)
+        rhs = float(rhs)
 
         if op == "+":
             result = lhs + rhs
@@ -862,16 +852,14 @@ class Jsonata:
 
                 raise jexception.JException("T2009", 0, lhs, rhs)
 
-        _lhs = lhs
-
         if op == "<":
-            result = _lhs < rhs
+            result = lhs < rhs
         elif op == "<=":
-            result = _lhs <= rhs
+            result = lhs <= rhs
         elif op == ">":
-            result = _lhs > rhs
+            result = lhs > rhs
         elif op == ">=":
-            result = _lhs >= rhs
+            result = lhs >= rhs
         return result
 
     #
@@ -889,8 +877,7 @@ class Jsonata:
             return False
 
         if not (isinstance(rhs, list)):
-            _rhs = [rhs]
-            rhs = _rhs
+            rhs = [rhs]
 
         for _, item in enumerate(rhs):
             if item == lhs:
@@ -954,15 +941,14 @@ class Jsonata:
     # @returns {{}} Evaluated input data
     #     
     # async 
-    def evaluate_group_expression(self, expr: Optional[parser.Parser.Symbol], _input: Optional[Any],
+    def evaluate_group_expression(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any],
                                   environment: Optional[Frame]) -> Any:
         result = {}
         groups = {}
-        reduce = True if (isinstance(_input, utils.Utils.JList)) and _input.tuple_stream else False
+        reduce = True if (isinstance(input, utils.Utils.JList)) and input.tuple_stream else False
         # group the input sequence by "key" expression
-        if not (isinstance(_input, list)):
-            _input = utils.Utils.create_sequence(_input)
-        input = _input
+        if not (isinstance(input, list)):
+            input = utils.Utils.create_sequence(input)
 
         # if the array is empty, add an undefined entry to enable literal JSON object to be generated
         if len(input) == 0:
@@ -1019,10 +1005,9 @@ class Jsonata:
 
         return result
 
-    def reduce_tuple_stream(self, _tuple_stream: Optional[Any]) -> Optional[Any]:
-        if not (isinstance(_tuple_stream, list)):
-            return _tuple_stream
-        tuple_stream = _tuple_stream
+    def reduce_tuple_stream(self, tuple_stream: Optional[Any]) -> Optional[Any]:
+        if not (isinstance(tuple_stream, list)):
+            return tuple_stream
 
         result = {}
         result.update(tuple_stream[0])
@@ -1052,21 +1037,21 @@ class Jsonata:
             # if either side is undefined, the result is undefined
             return result
 
-        _lhs = int(lhs)
-        _rhs = int(rhs)
+        lhs = int(lhs)
+        rhs = int(rhs)
 
-        if _lhs > _rhs:
+        if lhs > rhs:
             # if the lhs is greater than the rhs, return undefined
             return result
 
         # limit the size of the array to ten million entries (1e7)
         # this is an implementation defined limit to protect against
         # memory and performance issues.  This value may increase in the future.
-        size = _rhs - _lhs + 1
+        size = rhs - lhs + 1
         if size > 1e7:
             raise jexception.JException("D2014", -1, size)
 
-        return list(range(_lhs, _rhs + 1))
+        return list(range(lhs, rhs + 1))
 
     #
     # Evaluate bind expression against input data
@@ -1508,13 +1493,12 @@ class Jsonata:
             elif isinstance(proc, Jsonata.JLambda):
                 result = proc.call(input, validated_args)
             elif isinstance(proc, re.Pattern):
-                _res = []
+                result = []
                 for s in validated_args:
                     # System.err.println("PAT "+proc+" input "+s)
                     if proc.search(s) is not None:
                         # System.err.println("MATCH")
-                        _res.append(s)
-                result = _res
+                        result.append(s)
             else:
                 print("Proc not found " + str(proc))
                 raise jexception.JException("T1006", 0)
@@ -1615,9 +1599,7 @@ class Jsonata:
     # @returns {*} Result of procedure
     #      
     # async 
-    def apply_procedure(self, _proc: Optional[Any], _args: Optional[Any]) -> Optional[Any]:
-        args = _args
-        proc = _proc
+    def apply_procedure(self, proc: Optional[Any], args: Optional[Any]) -> Optional[Any]:
         result = None
         env = self.create_frame(proc.environment)
         for i, arg in enumerate(proc.arguments):
@@ -1669,7 +1651,7 @@ class Jsonata:
     # @param {Array} args - Arguments
     # @returns {{lambda: boolean, input: *, environment: {bind, lookup}, arguments: Array, body: *}} Result of partially applying native function
     #      
-    def partial_apply_native_function(self, _native: Optional[JFunction], args: Sequence) -> parser.Parser.Symbol:
+    def partial_apply_native_function(self, native: Optional[JFunction], args: Sequence) -> parser.Parser.Symbol:
         # create a lambda Object that wraps and invokes the native function
         # get the list of declared arguments from the native function
         # this has to be picked out from the toString() value
@@ -1679,7 +1661,7 @@ class Jsonata:
         sig_args = []
         part_args = []
         i = 0
-        while i < _native.get_number_of_args():
+        while i < native.get_number_of_args():
             arg_name = "$" + chr(ord('a') + i)
             sig_args.append(arg_name)
             if i >= len(args) or args[i] is None:
@@ -1689,7 +1671,7 @@ class Jsonata:
             i += 1
 
         body = "function(" + ", ".join(sig_args) + "){"
-        body += "$" + _native.function_name + "(" + ", ".join(sig_args) + ") }"
+        body += "$" + native.function_name + "(" + ", ".join(sig_args) + ") }"
 
         if self.parser.dbg:
             print("partial trampoline = " + body)

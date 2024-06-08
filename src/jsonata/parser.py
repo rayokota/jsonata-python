@@ -69,7 +69,7 @@ class Parser:
 
         def nud(self):
             # error - symbol has been invoked as a unary operator
-            _err = jexception.JException("S0211", self.position, self.value)
+            err = jexception.JException("S0211", self.position, self.value)
 
             if self._outer_instance.recover:
                 #                
@@ -80,7 +80,7 @@ class Parser:
                 #                
                 return Parser.Symbol("(error)")
             else:
-                raise _err
+                raise err
 
         def led(self, left):
             raise NotImplementedError("led not implemented")
@@ -1029,7 +1029,7 @@ class Parser:
                     # }
 
                 # any step that signals keeping a singleton array, should be flagged on the path
-                if len(list(filter(lambda step: step.keep_array, result.steps))) > 0:
+                if len([step for step in result.steps if step.keep_array]) > 0:
                     result.keep_singleton_array = True
                 # if first step is a path constructor, flag it for special handling
                 firststep = result.steps[0]
@@ -1066,10 +1066,9 @@ class Parser:
 
                 predicate = self.process_ast(expr.rhs)
                 if predicate.seeking_parent is not None:
-                    _step = step
                     for slot in predicate.seeking_parent:
                         if slot.level == 1:
-                            self.seek_parent(_step, slot)
+                            self.seek_parent(step, slot)
                         else:
                             slot.level -= 1
                     self.push_ancestry(step, predicate)
@@ -1099,8 +1098,8 @@ class Parser:
                     raise jexception.JException("S0210", expr.position)
                 # object constructor - process each pair
                 result.group = Parser.Symbol(self)
-                result.group.lhs_object = list(
-                    map(lambda pair: [self.process_ast(pair[0]), self.process_ast(pair[1])], expr.rhs_object))
+                result.group.lhs_object = [[self.process_ast(pair[0]), self.process_ast(pair[1])]
+                                           for pair in expr.rhs_object]
                 result.group.position = expr.position
 
             elif value == "^":
@@ -1126,7 +1125,7 @@ class Parser:
                     res.expression = expression
                     return res
 
-                sort_step.terms = list(map(lambda1, expr.rhs_terms))
+                sort_step.terms = [lambda1(x) for x in expr.rhs_terms]
                 result.steps.append(sort_step)
                 self.resolve_ancestry(result)
             elif value == ":=":
@@ -1184,15 +1183,14 @@ class Parser:
                 result.lhs = self.process_ast(expr.lhs)
                 result.rhs = self.process_ast(expr.rhs)
             else:
-                _result = Parser.Infix(self, None)
-                _result.type = expr.type
-                _result.value = expr.value
-                _result.position = expr.position
-                _result.lhs = self.process_ast(expr.lhs)
-                _result.rhs = self.process_ast(expr.rhs)
-                self.push_ancestry(_result, _result.lhs)
-                self.push_ancestry(_result, _result.rhs)
-                result = _result
+                result = Parser.Infix(self, None)
+                result.type = expr.type
+                result.value = expr.value
+                result.position = expr.position
+                result.lhs = self.process_ast(expr.lhs)
+                result.rhs = self.process_ast(expr.rhs)
+                self.push_ancestry(result, result.lhs)
+                self.push_ancestry(result, result.rhs)
 
         elif type == "unary":
             result = Parser.Symbol(self)
@@ -1211,7 +1209,7 @@ class Parser:
                     self.push_ancestry(result, value)
                     return value
 
-                result.expressions = list(map(lambda2, expr.expressions))
+                result.expressions = [lambda2(x) for x in expr.expressions]
             elif expr_value == "{":
                 # object constructor - process each pair
                 # throw new Error("processAST {} unimpl")
@@ -1222,7 +1220,7 @@ class Parser:
                     self.push_ancestry(result, value)
                     return [key, value]
 
-                result.lhs_object = list(map(lambda3, expr.lhs_object))
+                result.lhs_object = [lambda3(x) for x in expr.lhs_object]
             else:
                 # all other unary expressions - just process the expression
                 result.expression = self.process_ast(expr.expression)
@@ -1247,7 +1245,7 @@ class Parser:
                 self.push_ancestry(result, arg_ast)
                 return arg_ast
 
-            result.arguments = list(map(lambda4, expr.arguments))
+            result.arguments = [lambda4(x) for x in expr.arguments]
             result.procedure = self.process_ast(expr.procedure)
         elif type == "lambda":
             result = Parser.Symbol(self)
@@ -1289,7 +1287,7 @@ class Parser:
                     result.consarray = True
                 return part
 
-            result.expressions = list(map(lambda5, expr.expressions))
+            result.expressions = [lambda5(x) for x in expr.expressions]
             # TODO scan the array of expressions to see if any of them assign variables
             # if so, need to mark the block as one that needs to create a new frame
         elif type == "name":

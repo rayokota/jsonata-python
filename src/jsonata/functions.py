@@ -221,13 +221,13 @@ class Functions:
     # @returns {string|*} Substring
     #     
     @staticmethod
-    def substring(string: Optional[str], _start: Optional[float], _length: Optional[float]) -> Optional[str]:
+    def substring(string: Optional[str], start: Optional[float], length: Optional[float]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
 
-        start = int(_start) if _start is not None else None
-        length = int(_length) if _length is not None else None
+        start = int(start) if start is not None else None
+        length = int(length) if length is not None else None
 
         # not used: var strArray = stringToArray(string)
         str_length = len(string)
@@ -409,20 +409,20 @@ class Functions:
     # @returns {string} - padded string
     #     
     @staticmethod
-    def pad(string: Optional[str], width: Optional[int], _char: Optional[str]) -> Optional[str]:
+    def pad(string: Optional[str], width: Optional[int], char: Optional[str]) -> Optional[str]:
         # undefined inputs always return undefined
         if string is None:
             return None
 
-        if _char is None or len(_char) == 0:
-            _char = " "
+        if char is None or len(char) == 0:
+            char = " "
 
         result = None
 
         if width < 0:
-            result = Functions.left_pad(string, -width, _char)
+            result = Functions.left_pad(string, -width, char)
         else:
-            result = Functions.right_pad(string, width, _char)
+            result = Functions.right_pad(string, width, char)
         return result
 
     # Source: Jsonata4Java PadFunction
@@ -607,12 +607,12 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all(s: Optional[str], pattern: re.Pattern, _replacement: Optional[Any]) -> Optional[str]:
+    def safe_replace_all(s: Optional[str], pattern: re.Pattern, replacement: Optional[Any]) -> Optional[str]:
 
-        if not (isinstance(_replacement, str)):
-            return Functions.safe_replace_all_fn(s, pattern, _replacement)
+        if not (isinstance(replacement, str)):
+            return Functions.safe_replace_all_fn(s, pattern, replacement)
 
-        replacement = str(_replacement)
+        replacement = str(replacement)
 
         replacement = Functions.safe_replacement(replacement)
         r = None
@@ -911,11 +911,11 @@ class Functions:
 
         # Check optional exponent spec correctness in each sub-picture
         exponent_separator = decimal_format.get('exponent-separator', 'e')
-        _pattern = re.compile(r'(?<=[{0}]){1}[{0}]'.format(
+        pattern = re.compile(r'(?<=[{0}]){1}[{0}]'.format(
             re.escape(active_characters), exponent_separator
         ))
         for p in sub_pictures:
-            for match in _pattern.finditer(p):
+            for match in pattern.finditer(p):
                 if percent_sign in p or per_mille_sign in p:
                     raise jexception.JException('D3092', -1)
                 elif any(c not in digits_family for c in p[match.span()[1] - 1:]):
@@ -930,7 +930,7 @@ class Functions:
                         else:
                             has_suffix = True
 
-                exponent_pattern = _pattern
+                exponent_pattern = pattern
 
         if value is None:
             return None
@@ -1161,11 +1161,11 @@ class Functions:
 
         if num_digit:
             separator = ''
-            _separator = {x for x in fmt if x not in digits_family and x != optional_digit}
-            if len(_separator) != 1:
+            sep = {x for x in fmt if x not in digits_family and x != optional_digit}
+            if len(sep) != 1:
                 repeat = None
             else:
-                separator = _separator.pop()
+                separator = sep.pop()
                 chunks = fmt.split(separator)
 
                 if len(chunks[0]) > len(chunks[-1]):
@@ -1200,18 +1200,17 @@ class Functions:
     # @returns {string} - the converted string
     #     
     @staticmethod
-    def format_base(value: Optional[float], _radix: Optional[float]) -> Optional[str]:
+    def format_base(value: Optional[float], radix: Optional[float]) -> Optional[str]:
         # undefined inputs always return undefined
         if value is None:
             return None
 
         value = Functions.round(value, 0)
 
-        radix = 0
-        if _radix is None:
+        if radix is None:
             radix = 10
         else:
-            radix = int(_radix)
+            radix = int(radix)
 
         if radix < 2 or radix > 36:
             raise jexception.JException("D3100", radix)
@@ -1421,7 +1420,7 @@ class Functions:
             if len(el) == 1:
                 result = Functions.to_boolean(el[0])
             elif len(el) > 1:
-                trues_length = len(list(filter(lambda e: jsonata.Jsonata.boolize(e), el)))
+                trues_length = len([e for e in el if jsonata.Jsonata.boolize(e)])
                 result = trues_length > 0
         elif isinstance(arg, str):
             s = str(arg)
@@ -1878,14 +1877,13 @@ class Functions:
     # @returns {Array} - sequence of distinct values
     #     
     @staticmethod
-    def distinct(_arr: Optional[Any]) -> Optional[Any]:
+    def distinct(arr: Optional[Any]) -> Optional[Any]:
         # undefined inputs always return undefined
-        if _arr is None:
+        if arr is None:
             return None
 
-        if not (isinstance(_arr, list)) or len(_arr) <= 1:
-            return _arr
-        arr = _arr
+        if not (isinstance(arr, list)) or len(arr) <= 1:
+            return arr
 
         results = utils.Utils.create_sequence() if (isinstance(arr, utils.Utils.JList)) else []
 
@@ -1975,9 +1973,8 @@ class Functions:
         # lookup the 'name' item in the input
         result = None
         if isinstance(input, list):
-            _input = input
             result = utils.Utils.create_sequence()
-            for _, inp in enumerate(_input):
+            for _, inp in enumerate(input):
                 res = Functions.lookup(inp, key)
                 if res is not None:
                     if isinstance(res, list):
