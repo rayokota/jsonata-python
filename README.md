@@ -38,7 +38,7 @@ A very simple start:
 The CLI provides the same functionality as the [Dashjoin JSONata CLI](https://github.com/dashjoin/jsonata-cli).
 
 ```
-% python -m jsonata.cli
+% python3 -m jsonata.cli
 usage: jsonata.cli [-h] [-v] [-e <file>] [-i <arg>] [-ic <arg>] [-f {auto,json,string}] [-o <arg>] [-oc <arg>] [-time] [-c] [-b <json-string>]
                    [-bf <file>] [-it]
                    [expr]
@@ -84,10 +84,10 @@ hello world
 % ls | python3 -m jsonata.cli $
 helloworld.json
 
-% ps -o pid="",%cpu="",%mem="" | python -m jsonata.cli '$.$split(/\n/).$trim().[ $split(/\s+/)[$length()>0].$number() ]' -c
+% ps -o pid="",%cpu="",%mem="" | python3 -m jsonata.cli '$.$split(/\n/).$trim().[ $split(/\s+/)[$length()>0].$number() ]' -c
 [[4105,0,0],[4646,0,0],[4666,0,0],[33696,0,0]...]
 
-% curl -s https://raw.githubusercontent.com/jsonata-js/jsonata/master/test/test-suite/datasets/dataset1.json | python -m jsonata.cli '{"Name": FirstName & " " & Surname, "Cities": **.City, "Emails": Email[type="home"].address}'
+% curl -s https://raw.githubusercontent.com/jsonata-js/jsonata/master/test/test-suite/datasets/dataset1.json | python3 -m jsonata.cli '{"Name": FirstName & " " & Surname, "Cities": **.City, "Emails": Email[type="home"].address}'
 {
   "Name": "Fred Smith",
   "Cities": [
