@@ -1709,9 +1709,7 @@ class Functions:
 
         if isinstance(arg, list):
             # merge the keys of all of the items in the array
-            keys = {}
-            for el in arg:
-                keys.update({k: '' for k in Functions.keys(el)})
+            keys = {k: '' for el in arg for k in Functions.keys(el)}
             result.extend(keys.keys())
         elif isinstance(arg, dict):
             result.extend(arg.keys())
@@ -1764,11 +1762,7 @@ class Functions:
         if arg is None:
             return None
 
-        result = {}
-
-        for obj in arg:
-            for k, v in obj.items():
-                result[k] = v
+        result = {k: v for obj in arg for k, v in obj.items()}
         return result
 
     #

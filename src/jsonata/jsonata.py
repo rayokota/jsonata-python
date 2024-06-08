@@ -483,8 +483,7 @@ class Jsonata:
                 if not (isinstance(res, list)):
                     res = [res]
                 for bb, item in enumerate(res):
-                    tuple = {}
-                    tuple.update(tupleBinding)
+                    tuple = dict(tupleBinding)
                     # Object.assign(tuple, tupleBindings[ee])
                     if (isinstance(res, utils.Utils.JList)) and res.tuple_stream:
                         tuple.update(item)
@@ -1005,8 +1004,7 @@ class Jsonata:
         if not (isinstance(tuple_stream, list)):
             return tuple_stream
 
-        result = {}
-        result.update(tuple_stream[0])
+        result = dict(tuple_stream[0])
 
         # Object.assign(result, tuple_stream[0])
         for ii in range(1, len(tuple_stream)):

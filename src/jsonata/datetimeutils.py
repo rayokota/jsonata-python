@@ -1050,8 +1050,7 @@ class DateTimeUtils:
             regex = "[MDCLXVI]+" if is_upper else "[mdclxvi]+"
             matcher = DateTimeUtils.MatcherPartRoman(regex, is_upper)
         elif format_spec.primary == DateTimeUtils.Formats.WORDS:
-            words = set()
-            words.update(DateTimeUtils._word_values.keys())
+            words = set(DateTimeUtils._word_values.keys())
             words.add("and")
             words.add("[\\-, ]")
             regex = "(?:" + "|".join(words) + ")+"
