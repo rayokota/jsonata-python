@@ -471,28 +471,28 @@ class Jsonata:
         if tuple_bindings is None:
             tuple_bindings = [{"@": item} for item in input if item is not None]
 
-        for tupleBinding in tuple_bindings:
-            step_env = self.create_frame_from_tuple(environment, tupleBinding)
-            res = self.eval(expr, tupleBinding["@"], step_env)
+        for tuple_binding in tuple_bindings:
+            step_env = self.create_frame_from_tuple(environment, tuple_binding)
+            res = self.eval(expr, tuple_binding["@"], step_env)
             # res is the binding sequence for the output tuple stream
             if res is not None:
                 if not (isinstance(res, list)):
                     res = [res]
                 for bb, item in enumerate(res):
-                    tuple = dict(tupleBinding)
+                    tuple = dict(tuple_binding)
                     # Object.assign(tuple, tupleBindings[ee])
                     if (isinstance(res, utils.Utils.JList)) and res.tuple_stream:
                         tuple.update(item)
                     else:
                         if expr.focus is not None:
                             tuple[expr.focus] = item
-                            tuple["@"] = tupleBinding["@"]
+                            tuple["@"] = tuple_binding["@"]
                         else:
                             tuple["@"] = item
                         if expr.index is not None:
                             tuple[expr.index] = bb
                         if expr.ancestor is not None:
-                            tuple[expr.ancestor.label] = tupleBinding["@"]
+                            tuple[expr.ancestor.label] = tuple_binding["@"]
                     result.append(tuple)
 
         if expr.stages is not None:

@@ -128,7 +128,7 @@ class Functions:
         if isinstance(arg, str):
             return str(arg)
 
-        return Functions._string(arg, prettify is not None and prettify)
+        return Functions._string(arg, bool(prettify))
 
     @staticmethod
     def _string(arg: Any, prettify: bool) -> str:
@@ -259,7 +259,7 @@ class Functions:
     #         length is 0 or a negative number, an empty string is returned.
     #     
     @staticmethod
-    def substr(string: Optional[str], start: Optional[int], length: Optional[int]) -> str:
+    def substr(string: str, start: int, length: int) -> str:
 
         # below has to convert start and length for emojis and unicode
         orig_len = len(string)
@@ -515,7 +515,7 @@ class Functions:
     # @returns {object} - structure that represents the match(es)
     #     
     @staticmethod
-    def evaluate_matcher(matcher: Optional[re.Pattern], string: Optional[str]) -> list[RegexpMatch]:
+    def evaluate_matcher(matcher: re.Pattern, string: Optional[str]) -> list[RegexpMatch]:
         res = []
         matches = matcher.finditer(string)
         for m in matches:
@@ -637,7 +637,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all(s: Optional[str], pattern: re.Pattern, replacement: Optional[Any]) -> Optional[str]:
+    def safe_replace_all(s: str, pattern: re.Pattern, replacement: Optional[Any]) -> Optional[str]:
 
         if not (isinstance(replacement, str)):
             return Functions.safe_replace_all_fn(s, pattern, replacement)
@@ -697,7 +697,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all_fn(s: Optional[str], pattern: re.Pattern, fn: Optional[Any]) -> str:
+    def safe_replace_all_fn(s: str, pattern: re.Pattern, fn: Optional[Any]) -> str:
         def replace_fn(t):
             res = Functions.func_apply(fn, [Functions.to_jsonata_match(t)])
             if isinstance(res, str):
@@ -717,7 +717,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_first(s: Optional[str], pattern: re.Pattern, replacement: str) -> Optional[str]:
+    def safe_replace_first(s: str, pattern: re.Pattern, replacement: str) -> Optional[str]:
         replacement = Functions.safe_replacement(replacement)
         r = None
         for i in range(0, 10):
@@ -1506,7 +1506,7 @@ class Functions:
         return not Functions.to_boolean(arg)
 
     @staticmethod
-    def get_function_arity(func: Optional[Any]) -> int:
+    def get_function_arity(func: Any) -> int:
         from jsonata import jsonata
         if isinstance(func, jsonata.Jsonata.JFunction):
             return func.signature.get_min_number_of_args()
@@ -1524,7 +1524,7 @@ class Functions:
     # @returns {*[]} the argument list
     #     
     @staticmethod
-    def hof_func_args(func: Optional[Any], arg1: Optional[Any], arg2: Optional[Any], arg3: Optional[Any]) -> list:
+    def hof_func_args(func: Any, arg1: Optional[Any], arg2: Optional[Any], arg3: Optional[Any]) -> list:
         func_args = [arg1]
         # the other two are optional - only supply it if the function can take it
         length = Functions.get_function_arity(func)
@@ -1543,7 +1543,7 @@ class Functions:
     # @throws Throwable
     #     
     @staticmethod
-    def func_apply(func: Optional[Any], func_args: Optional[Sequence]) -> Optional[Any]:
+    def func_apply(func: Any, func_args: Optional[Sequence]) -> Optional[Any]:
         from jsonata import jsonata
         res = None
         if Functions.is_lambda(func):
@@ -1560,7 +1560,7 @@ class Functions:
     # @returns {Array} Map array
     #     
     @staticmethod
-    def map(arr: Optional[Sequence], func: Optional[Any]) -> Optional[list]:
+    def map(arr: Optional[Sequence], func: Any) -> Optional[list]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1576,7 +1576,7 @@ class Functions:
     # @returns {Array} Map array
     #     
     @staticmethod
-    def filter(arr: Optional[Sequence], func: Optional[Any]) -> Optional[list]:
+    def filter(arr: Optional[Sequence], func: Any) -> Optional[list]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1593,7 +1593,7 @@ class Functions:
     # @returns {*} Matching element
     #     
     @staticmethod
-    def single(arr: Optional[Sequence], func: Optional[Any]) -> Optional[Any]:
+    def single(arr: Optional[Sequence], func: Any) -> Optional[Any]:
         # undefined inputs always return undefined
         if arr is None:
             return None
@@ -1640,7 +1640,7 @@ class Functions:
     # @returns {*} Result
     #     
     @staticmethod
-    def fold_left(sequence: Optional[Sequence], func: Optional[Any], init: Optional[Any]) -> Optional[Any]:
+    def fold_left(sequence: Optional[Sequence], func: Any, init: Optional[Any]) -> Optional[Any]:
         # undefined inputs always return undefined
         if sequence is None:
             return None
@@ -1726,7 +1726,7 @@ class Functions:
     # @returns {*} - the object
     #     
     @staticmethod
-    def merge(arg: Optional[Sequence]) -> Optional[dict]:
+    def merge(arg: Optional[Sequence[Mapping]]) -> Optional[dict]:
         # undefined inputs always return undefined
         if arg is None:
             return None
@@ -1759,7 +1759,7 @@ class Functions:
     # @returns {Array} - the resultant array
     #     
     @staticmethod
-    def each(obj: Optional[Mapping], func: Optional[Any]) -> Optional[list]:
+    def each(obj: Optional[Mapping], func: Any) -> Optional[list]:
         if obj is None:
             return None
 
@@ -1914,7 +1914,7 @@ class Functions:
     # @returns {object} - sifted object
     #     
     @staticmethod
-    def sift(arg: Optional[Mapping], func: Optional[Any]) -> Optional[dict]:
+    def sift(arg: Optional[Mapping], func: Any) -> Optional[dict]:
         from jsonata import jsonata
         if arg is None:
             return None
