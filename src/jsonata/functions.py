@@ -77,7 +77,7 @@ class Functions:
     @staticmethod
     def max(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
-        if args is None or len(args) == 0:
+        if args is None or not args:
             return None
 
         return max(args)
@@ -90,7 +90,7 @@ class Functions:
     @staticmethod
     def min(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
-        if args is None or len(args) == 0:
+        if args is None or not args:
             return None
 
         return min(args)
@@ -103,7 +103,7 @@ class Functions:
     @staticmethod
     def average(args: Optional[Sequence[float]]) -> Optional[float]:
         # undefined inputs always return undefined
-        if args is None or len(args) == 0:
+        if args is None or not args:
             return None
 
         return sum(args) / len(args)
@@ -384,7 +384,7 @@ class Functions:
         if string is None:
             return None
 
-        if len(string) == 0:
+        if not string:
             return ""
 
         # normalize whitespace
@@ -414,10 +414,8 @@ class Functions:
         if string is None:
             return None
 
-        if char is None or len(char) == 0:
+        if char is None or not char:
             char = " "
-
-        result = None
 
         if width < 0:
             result = Functions.left_pad(string, -width, char)
@@ -436,10 +434,7 @@ class Functions:
         str_data = string
         str_len = len(str_data)
 
-        pad_data = pad_str
-        pad_len = len(pad_data)
-
-        if pad_len == 0:
+        if not pad_str:
             pad_str = " "
         pads = size - str_len
         if pads <= 0:
@@ -462,10 +457,7 @@ class Functions:
         str_data = string
         str_len = len(str_data)
 
-        pad_data = pad_str
-        pad_len = len(pad_data)
-
-        if pad_len == 0:
+        if not pad_str:
             pad_str = " "
         pads = size - str_len
         if pads <= 0:
@@ -528,7 +520,7 @@ class Functions:
             # if (dbg) System.out.println("match = "+matches)
             # result = (typeof matches !== 'undefined')
             # throw new Error("regexp not impl"); //result = false
-            result = len(matches) > 0
+            result = bool(matches)
         else:
             raise RuntimeError("unknown type to match: " + str(token))
 
@@ -634,7 +626,7 @@ class Functions:
                 suffix = g[-1]
                 prefix = g[:-1]
                 # Try capturing a smaller numbered group, e.g. "\g<1>2" instead of "\g<12>"
-                replace = "" if len(prefix) == 0 else r"\g<" + prefix + ">" + suffix
+                replace = "" if not prefix else r"\g<" + prefix + ">" + suffix
 
                 # Adjust replacement to remove the non-existing group
                 replacement = replacement.replace(r"\g<" + g + ">", replace)
@@ -708,7 +700,7 @@ class Functions:
                 suffix = g[-1]
                 prefix = g[:-1]
                 # Try capturing a smaller numbered group, e.g. "\g<1>2" instead of "\g<12>"
-                replace = "" if len(prefix) == 0 else r"\g<" + prefix + ">" + suffix
+                replace = "" if not prefix else r"\g<" + prefix + ">" + suffix
 
                 # Adjust replacement to remove the non-existing group
                 replacement = replacement.replace(r"\g<" + g + ">", replace)
@@ -719,7 +711,7 @@ class Functions:
         if string is None:
             return None
         if isinstance(pattern, str):
-            if len((str(pattern))) == 0:
+            if not pattern:
                 raise jexception.JException("Second argument of replace function cannot be an empty string", 0)
         if limit is None:
             if isinstance(pattern, str):
@@ -838,7 +830,7 @@ class Functions:
 
         if isinstance(pattern, str):
             sep = str(pattern)
-            if len(sep) == 0:
+            if not sep:
                 # $split("str", ""): Split string into characters
                 lim = int(limit) if limit is not None else sys.maxsize
                 i = 0
@@ -1420,11 +1412,10 @@ class Functions:
             if len(el) == 1:
                 result = Functions.to_boolean(el[0])
             elif len(el) > 1:
-                trues_length = len([e for e in el if jsonata.Jsonata.boolize(e)])
-                result = trues_length > 0
+                result = any(jsonata.Jsonata.boolize(e) for e in el)
         elif isinstance(arg, str):
             s = str(arg)
-            if len(s) > 0:
+            if s:
                 result = True
         elif isinstance(arg, bool):
             result = bool(arg)
@@ -1432,7 +1423,7 @@ class Functions:
             if float(arg) != 0:
                 result = True
         elif isinstance(arg, dict):
-            if len(arg) > 0:
+            if arg:
                 result = True
         return result
 
@@ -1624,7 +1615,7 @@ class Functions:
             raise jexception.JException("D3050", 1)
 
         index = 0
-        if init is None and len(sequence) > 0:
+        if init is None and sequence:
             result = sequence[0]
             index = 1
         else:
@@ -1918,7 +1909,7 @@ class Functions:
                 result[item] = entry
 
         # empty objects should be changed to undefined
-        if len(result) == 0:
+        if not result:
             result = None
 
         return result
@@ -1982,10 +1973,12 @@ class Functions:
                     else:
                         result.append(res)
         elif isinstance(input, dict):
-            result = input.get(key)
+            result = input.get(key, utils.Utils.NONE)
             # Detect the case where the value is null:
             if result is None and key in input:
                 result = utils.Utils.NULL_VALUE
+            elif result is utils.Utils.NONE:
+                result = None
         return result
 
     @staticmethod
@@ -2000,12 +1993,12 @@ class Functions:
 
     @staticmethod
     def call(clz: Optional[Type], name: Optional[str], args: Optional[Sequence]) -> Optional[Any]:
-        return Functions._call(Functions.get_function(clz, name), args)
+        m = Functions.get_function(clz, name)
+        nargs = len(inspect.signature(m).parameters)
+        return Functions._call(m, nargs, args)
 
     @staticmethod
-    def _call(m: Callable, args: Optional[Sequence]) -> Optional[Any]:
-        nargs = len(inspect.signature(m).parameters)
-
+    def _call(m: Callable, nargs: int, args: Optional[Sequence]) -> Optional[Any]:
         call_args = list(args)
         while len(call_args) < nargs:
             # Add default arg null if not enough args were provided
@@ -2057,12 +2050,11 @@ class Functions:
 
     # Adapted from: org.apache.commons.lang3.StringUtils
     @staticmethod
-    def is_numeric(cs: Optional[Sequence]) -> bool:
-        if cs is None or len(cs) == 0:
+    def is_numeric(cs: Optional[str]) -> bool:
+        if cs is None or not cs:
             return False
-        sz = len(cs)
-        for i in range(0, sz):
-            if not cs[i].isdigit():
+        for c in cs:
+            if not c.isdigit():
                 return False
         return True
 

@@ -67,7 +67,7 @@ class Utils:
     @staticmethod
     def is_function(o: Optional[Any]) -> bool:
         from jsonata import jsonata
-        return isinstance(o, (jsonata.Jsonata.JFunction, jsonata.Jsonata.JFunctionCallable))
+        return isinstance(o, jsonata.Jsonata.JFunctionCallable)
 
     NONE = object()
 

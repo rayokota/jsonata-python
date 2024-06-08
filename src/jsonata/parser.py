@@ -920,7 +920,7 @@ class Parser:
             slot.level += 1
         elif node.type == "block":
             # look in last expression in the block
-            if len(node.expressions) > 0:
+            if node.expressions:
                 node.tuple = True
                 slot = self.seek_parent(node.expressions[-1], slot)
         elif node.type == "path":
@@ -1029,7 +1029,7 @@ class Parser:
                     # }
 
                 # any step that signals keeping a singleton array, should be flagged on the path
-                if len([step for step in result.steps if step.keep_array]) > 0:
+                if [step for step in result.steps if step.keep_array]:
                     result.keep_singleton_array = True
                 # if first step is a path constructor, flag it for special handling
                 firststep = result.steps[0]
@@ -1389,7 +1389,7 @@ class Parser:
             # error - trying to derive ancestor at top level
             raise jexception.JException("S0217", expr.position, expr.type)
 
-        if len(self.errors) > 0:
+        if self.errors:
             expr.errors = self.errors
 
         return expr

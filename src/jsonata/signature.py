@@ -110,7 +110,6 @@ class Signature:
 
     def get_symbol(self, value: Optional[Any]) -> str:
         from jsonata import functions
-        symbol = None
         if value is None:
             symbol = "m"
         else:
@@ -244,7 +243,6 @@ class Signature:
         raise jexception.JException("T0410", -1, (good_to + 1), function_name)
 
     def validate(self, args: Any, context: Optional[Any]) -> Optional[Any]:
-
         supplied_sig = ""
         for arg in args:
             supplied_sig += self.get_symbol(arg)
@@ -291,7 +289,7 @@ class Signature:
                                         array_ok = False
                                     elif single == "a":
                                         arg_arr = arg
-                                        if len(arg_arr) > 0:
+                                        if arg_arr:
                                             item_type = self.get_symbol(arg_arr[0])
                                             if item_type != str(param.subtype[0]):
                                                 array_ok = False

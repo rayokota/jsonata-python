@@ -59,8 +59,9 @@ class Jsonata:
         def lookup(self, name: str) -> Optional[Any]:
             # Important: if we have a null value,
             # return it
-            if name in self.bindings:
-                return self.bindings[name]
+            val = self.bindings.get(name, utils.Utils.NONE)
+            if val is not utils.Utils.NONE:
+                return val
             if self.parent is not None:
                 return self.parent.lookup(name)
             return None
@@ -143,6 +144,7 @@ class Jsonata:
         signature: Optional[sig.Signature]
         clz: Type[functions.Functions]
         method: Optional[Any]
+        nargs: int
 
         def __init__(self, function_name, signature, clz, impl_method_name):
             super().__init__(None, None)
@@ -151,14 +153,15 @@ class Jsonata:
             if impl_method_name is None:
                 impl_method_name = self.function_name
             self.method = functions.Functions.get_function(clz, impl_method_name)
+            self.nargs = len(inspect.signature(self.method).parameters) if self.method is not None else 0
             if self.method is None:
                 print("Function not implemented: " + function_name + " impl=" + impl_method_name)
 
         def call(self, input: Optional[Any], args: Optional[Sequence]) -> Optional[Any]:
-            return functions.Functions._call(self.method, args)
+            return functions.Functions._call(self.method, self.nargs, args)
 
         def get_number_of_args(self) -> int:
-            return len(inspect.signature(self.method).parameters) if self.method is not None else 0
+            return self.nargs
 
     class Transformer(JFunctionCallable):
         _jsonata: 'Jsonata'
@@ -299,7 +302,7 @@ class Jsonata:
         if result is not None and utils.Utils.is_sequence(result) and not result.tuple_stream:
             if expr.keep_array:
                 result.keep_singleton = True
-            if len(result) == 0:
+            if not result:
                 result = None
             elif len(result) == 1:
                 result = result if result.keep_singleton else result[0]
@@ -316,7 +319,6 @@ class Jsonata:
     # async 
     def evaluate_path(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any],
                       environment: Optional[Frame]) -> Optional[Any]:
-        input_sequence = None
         # expr is an array of steps
         # if the first step is a variable reference ($...), including root reference ($$),
         #   then the path is absolute rather than relative
@@ -345,7 +347,7 @@ class Jsonata:
                 else:
                     result_sequence = self.evaluate_step(step, input_sequence, environment, ii == len(expr.steps) - 1)
 
-            if not is_tuple_stream and (result_sequence is None or len(result_sequence) == 0):
+            if not is_tuple_stream and (result_sequence is None or not result_sequence):
                 break
 
             if step.focus is None:
@@ -396,7 +398,6 @@ class Jsonata:
     # async 
     def evaluate_step(self, expr: parser.Parser.Symbol, input: Optional[Any], environment: Optional[Frame],
                       last_step: bool) -> Optional[Any]:
-        result = None
         if expr.type == "sort":
             result = self.evaluate_sort_expression(expr, input, environment)
             if expr.stages is not None:
@@ -673,7 +674,7 @@ class Jsonata:
     #    
     def evaluate_wildcard(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any]) -> Optional[Any]:
         results = utils.Utils.create_sequence()
-        if (isinstance(input, utils.Utils.JList)) and input.outer_wrapper and len(input) > 0:
+        if (isinstance(input, utils.Utils.JList)) and input.outer_wrapper and input:
             input = input[0]
         if input is not None and isinstance(input, dict):
             for value in input.values():
@@ -790,13 +791,7 @@ class Jsonata:
     # @returns {*} Result
     #      
     def evaluate_equality_expression(self, lhs: Optional[Any], rhs: Optional[Any], op: Optional[str]) -> Optional[Any]:
-        result = None
-
-        # type checks
-        ltype = type(lhs) if lhs is not None else None
-        rtype = type(rhs) if rhs is not None else None
-
-        if ltype is None or rtype is None:
+        if lhs is None or rhs is None:
             # if either side is undefined, the result is false
             return False
 
@@ -808,6 +803,7 @@ class Jsonata:
         if not isinstance(rhs, bool) and isinstance(rhs, (int, float)):
             rhs = float(rhs)
 
+        result = None
         if op == "=":
             result = lhs == rhs  # isDeepEqual(lhs, rhs);
         elif op == "!=":
@@ -951,7 +947,7 @@ class Jsonata:
             input = utils.Utils.create_sequence(input)
 
         # if the array is empty, add an undefined entry to enable literal JSON object to be generated
-        if len(input) == 0:
+        if not input:
             input.append(None)
 
         for itemIndex, item in enumerate(input):
@@ -1343,8 +1339,6 @@ class Jsonata:
     # async 
     def evaluate_function(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any], environment: Optional[Frame],
                           applyto_context: Optional[Any]) -> Optional[Any]:
-        result = None
-
         # this.current is set by getPerThreadInstance() at this point
 
         # create the procedure
@@ -1449,7 +1443,6 @@ class Jsonata:
     # async 
     def apply_inner(self, proc: Optional[Any], args: Optional[Any], input: Optional[Any],
                     environment: Optional[Frame]) -> Optional[Any]:
-        result = None
         try:
             validated_args = args
             if proc is not None:

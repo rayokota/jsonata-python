@@ -460,7 +460,7 @@ class DateTimeUtils:
 
     @staticmethod
     def _get_regular_repeat(separators: Sequence['DateTimeUtils.GroupingSeparator']) -> int:
-        if len(separators) == 0:
+        if not separators:
             return 0
 
         sep_char = separators[0].character
@@ -862,7 +862,7 @@ class DateTimeUtils:
                     pass
                 i += 1
 
-            if len(components) == 0:
+            if not components:
                 # nothing specified
                 return None
 
