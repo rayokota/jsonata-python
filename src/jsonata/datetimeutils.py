@@ -146,11 +146,7 @@ class DateTimeUtils:
     @staticmethod
     def words_to_number(text: str) -> int:
         parts = re.split(",\\s|\\sand\\s|[\\s\\-]", text)
-        values = [0 for _ in range(len(parts))]
-        i = 0
-        while i < len(parts):
-            values[i] = DateTimeUtils._word_values[parts[i]]
-            i += 1
+        values = [DateTimeUtils._word_values[part] for i, part in enumerate(parts)]
         segs = deque()
         segs.append(0)
         for value in values:
@@ -170,11 +166,7 @@ class DateTimeUtils:
     @staticmethod
     def words_to_long(text: str) -> int:
         parts = re.split(",\\s|\\sand\\s|[\\s\\-]", text)
-        values = [0 for _ in range(len(parts))]
-        i = 0
-        while i < len(parts):
-            values[i] = DateTimeUtils._word_values_long[parts[i]]
-            i += 1
+        values = [DateTimeUtils._word_values_long[part] for i, part in enumerate(parts)]
         segs = deque()
         segs.append(int(0))
         for value in values:
@@ -229,8 +221,7 @@ class DateTimeUtils:
     def roman_to_decimal(roman: str) -> int:
         decimal = 0
         max = 1
-        for i in range(len(roman) - 1, -1, -1):
-            digit = roman[i]
+        for i, digit in enumerate(reversed(roman)):
             value = DateTimeUtils._roman_values[digit]
             if value < max:
                 decimal -= value
@@ -416,8 +407,7 @@ class DateTimeUtils:
             separator_position = 0
             format_codepoints = list(primary_format)
             # ArrayUtils.reverse(format_codepoints)
-            for ix in range(len(format_codepoints) - 1, -1, -1):
-                code_point = format_codepoints[ix]
+            for ix, code_point in enumerate(reversed(format_codepoints)):
                 digit = False
                 i = 0
                 while i < len(DateTimeUtils._decimal_groups):
