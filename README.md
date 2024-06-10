@@ -1,6 +1,7 @@
 # jsonata-python
 
-[![Build Status][github-actions-shield]][github-actions-link] [![NuGet Package](https://img.shields.io/pypi/v/jsonata-python.svg)](https://www.pypi.org/projects/jsonata-python)
+[![Build Status][github-actions-shield]][github-actions-link]
+[![PyPI](https://img.shields.io/pypi/v/jsonata-python.svg)](https://www.pypi.org/project/jsonata-python)
 
 [github-actions-shield]: https://github.com/rayokota/jsonata-python/actions/workflows/test.yml/badge.svg?branch=master
 [github-actions-link]: https://github.com/rayokota/jsonata-python/actions
