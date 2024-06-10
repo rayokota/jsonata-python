@@ -569,7 +569,7 @@ class Functions:
     # @returns {Array} The array of match objects
     #     
     @staticmethod
-    def match_(string: Optional[str], regex: Optional[re.Pattern], limit: Optional[int]) -> Optional[list[dict]]:
+    def match_(string: Optional[str], regex: Optional[re.Pattern], limit: Optional[int]) -> Optional[list[dict[str, Any]]]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -676,7 +676,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def to_jsonata_match(mr: re.Match[str]) -> dict[str, str]:
+    def to_jsonata_match(mr: re.Match[str]) -> dict[str, list[str]]:
         obj = {"match": mr.group()}
 
         groups = []
