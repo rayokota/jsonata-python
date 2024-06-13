@@ -11,7 +11,7 @@ Pure Python implementation of JSONata.
 This is a Python port of the  [JSONata reference implementation](https://github.com/jsonata-js/jsonata), 
 and also borrows from the [Dashjoin Java port](https://github.com/dashjoin/jsonata-java).
 
-This implementation supports 100% of the language features of JSONata, with no external depencencies.
+This implementation supports 100% of the language features of JSONata, with no external dependencies.
 The JSONata documentation can be found [here](https://jsonata.org).
 
 
