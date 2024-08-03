@@ -275,7 +275,7 @@ class Jsonata:
             elif expr.type == "regex":
                 result = self.evaluate_regex(expr)  # , input, environment);
             elif expr.type == "function":
-                result = self.evaluate_function(expr, input, environment, None)
+                result = self.evaluate_function(expr, input, environment, utils.Utils.NONE)
             elif expr.type == "variable":
                 result = self.evaluate_variable(expr, input, environment)
             elif expr.type == "lambda":
@@ -1274,11 +1274,6 @@ class Jsonata:
 
         lhs = self.eval(expr.lhs, input, environment)
 
-        # Map null to NULL_VALUE before applying to functions
-        # TODO: fix more generically!
-        if lhs is None:
-            lhs = utils.Utils.NULL_VALUE
-
         if expr.rhs.type == "function":
             # Symbol applyTo = new Symbol(); applyTo.context = lhs
             # this is a Object _invocation_; invoke it with lhs expression as the first argument
@@ -1348,7 +1343,7 @@ class Jsonata:
 
         evaluated_args = []
 
-        if applyto_context is not None:
+        if applyto_context is not utils.Utils.NONE:
             evaluated_args.append(applyto_context)
         # eager evaluation - evaluate the arguments
         args = expr.arguments if expr.arguments is not None else []

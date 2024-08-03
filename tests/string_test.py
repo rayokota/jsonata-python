@@ -36,6 +36,14 @@ class TestString:
     # Additional $split tests
     #   
     def test_split(self):
+        # Splitting on an undefined value
+        res = jsonata.Jsonata("$split(a, '-')").evaluate({})
+        assert res == None
+
+        # Splitting on an undefined value, equivalent to above
+        res = jsonata.Jsonata("a ~> $split('-')").evaluate({})
+        assert res == None
+
         # Splitting empty string with empty separator must return empty list
         res = jsonata.Jsonata("$split('', '')").evaluate(None)
         assert res == []
