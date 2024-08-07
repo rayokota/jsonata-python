@@ -755,22 +755,82 @@ class Functions:
         if isinstance(pattern, str):
             if not pattern:
                 raise jexception.JException("Second argument of replace function cannot be an empty string", 0)
-        if limit is None:
-            if isinstance(pattern, str):
-                return re.sub(pattern, str(replacement), string)
-            else:
-                return Functions.safe_replace_all(string, pattern, replacement)
-        else:
+        
+        if limit is not None and limit < 0:
+            raise jexception.JException("Fourth argument of replace function must evaluate to a positive number", 0)
 
-            if limit < 0:
-                raise jexception.JException("Fourth argument of replace function must evaluate to a positive number", 0)
-
-            for i in range(0, limit):
-                if isinstance(pattern, str):
-                    string = re.sub(pattern, str(replacement), string, 1)
+        def string_replacer(match):
+            result = ''
+            position = 0
+            repl = str(replacement)
+            while position < len(repl):
+                index = repl.find('$', position)
+                if index == -1:
+                    result += repl[position:]
+                    break
+                result += repl[position:index]
+                position = index + 1
+                if position < len(repl):
+                    dollar_val = repl[position]
+                    if dollar_val == '$':
+                        result += '$'
+                        position += 1
+                    elif dollar_val == '0':
+                        result += match.group(0)
+                        position += 1
+                    else:
+                        max_digits = len(str(len(match.groups())))
+                        group_num = repl[position:position+max_digits]
+                        if group_num.isdigit():
+                            group_index = int(group_num)
+                            if 0 < group_index <= len(match.groups()):
+                                result += match.group(group_index) or ''
+                                position += len(group_num)
+                            else:
+                                result += '$'
+                        else:
+                            result += '$'
                 else:
-                    string = Functions.safe_replace_first(string, pattern, str(replacement))
-            return string
+                    result += '$'
+            return result
+
+        if callable(replacement):
+            replacer = lambda m: replacement(m.groupdict())
+        elif isinstance(replacement, str):
+            replacer = string_replacer
+        else:
+            replacer = lambda m: str(replacement)
+
+        if isinstance(pattern, str):
+            # Use string methods for literal string patterns
+            result = ''
+            position = 0
+            count = 0
+            while True:
+                if limit is not None and count >= limit:
+                    result += string[position:]
+                    break
+                index = string.find(pattern, position)
+                if index == -1:
+                    result += string[position:]
+                    break
+                result += string[position:index]
+                match = re.match(re.escape(pattern), string[index:])
+                result += replacer(match)
+                position = index + len(pattern)
+                count += 1
+            return result
+        else:
+            # Use regex for pattern objects
+            if limit is None:
+                return Functions.safe_replace_all(string, pattern, replacement)
+            else:
+                count = 0
+                result = string
+                while count < limit:
+                    result = Functions.safe_replace_first(result, pattern, str(replacement))
+                    count += 1
+                return result
 
     #
     # Base64 encode a string

@@ -32,6 +32,12 @@ class TestString:
         assert jsonata.Jsonata("$string($)").evaluate({"a": str('\n')}) == "{\"a\":\"\\n\"}"
         assert jsonata.Jsonata("$string($)").evaluate({"a": "</"}) == "{\"a\":\"</\"}"
 
+    def test_replace(self):
+        assert jsonata.Jsonata("$replace('hello', '.', '')").evaluate(None) == "hello"
+        assert jsonata.Jsonata("$replace('hello', 'l', 'x')").evaluate(None) == "hexxo"
+        assert jsonata.Jsonata("$replace('h.ello', '.', '')").evaluate(None) == "hello"
+        assert jsonata.Jsonata("$replace('h.e.l.l.o', '.', '',2)").evaluate(None) == "hel.l.o"
+
     #
     # Additional $split tests
     #   
