@@ -1575,7 +1575,7 @@ class Functions:
 
             return len(signature(func.function).parameters)
         else:
-            raise RuntimeError(f"unexpected function '{type(func)}'")
+            return len(func.arguments)
 
     #
     # Helper function to build the arguments to be supplied to the function arg of the
