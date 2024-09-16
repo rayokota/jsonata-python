@@ -22,3 +22,8 @@ class TestCustomFunction:
         expression = jsonata.Jsonata("$abc(a,b,c)")
         expression.register_lambda("abc", lambda x, y, z: str(x) + str(y) + str(z))
         assert expression.evaluate({"a": "a", "b": "b", "c": "c"}) == "abc"
+
+    def test_map(self):
+        expression = jsonata.Jsonata("$map([1, 2, 3], $square)")
+        expression.register_lambda("square", lambda x: x * x)
+        assert expression.evaluate([1, 2, 3]) == [1, 4, 9]
