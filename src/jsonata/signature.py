@@ -307,6 +307,7 @@ class Signature:
                             validated_args.append(arg)
                             arg_index += 1
                         else:
+                            arg = args[arg_index] if arg_index < len(args) else None
                             validated_args.append(arg)
                             arg_index += 1
             return validated_args
