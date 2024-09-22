@@ -1570,8 +1570,11 @@ class Functions:
         from jsonata import jsonata
         if isinstance(func, jsonata.Jsonata.JFunction):
             return func.signature.get_min_number_of_args()
+        elif isinstance(func, jsonata.Jsonata.JLambda):
+            from inspect import signature
+
+            return len(signature(func.function).parameters)
         else:
-            # Lambda
             return len(func.arguments)
 
     #
