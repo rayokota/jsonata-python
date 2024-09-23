@@ -1246,7 +1246,6 @@ class Parser:
 
             result.arguments = [lambda4(x) for x in expr.arguments]
             result.procedure = self.process_ast(expr.procedure)
-            result.keep_array = result.procedure.keep_array
         elif type == "lambda":
             result = Parser.Symbol(self)
             result.type = expr.type
