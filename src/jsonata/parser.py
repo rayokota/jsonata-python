@@ -1180,6 +1180,7 @@ class Parser:
                 result.position = expr.position
                 result.lhs = self.process_ast(expr.lhs)
                 result.rhs = self.process_ast(expr.rhs)
+                result.keep_array = result.lhs.keep_array or result.rhs.keep_array
             else:
                 result = Parser.Infix(self, None)
                 result.type = expr.type
