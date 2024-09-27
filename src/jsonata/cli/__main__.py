@@ -34,7 +34,7 @@ def get_options(argv: Optional[list[str]] = None) -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(prog="jsonata.cli", description="Pure Python JSONata CLI")
     parser.add_argument(
-        "-v", "--version", action='version', version='%(prog)s 0.4.0')
+        "-v", "--version", action='version', version='%(prog)s 0.5.0')
 
     parser.add_argument(
         "-e", "--expression", metavar="<file>",
