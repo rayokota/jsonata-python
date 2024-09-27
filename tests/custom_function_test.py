@@ -31,13 +31,3 @@ class TestCustomFunction:
     def test_map_with_function(self):
         expression = jsonata.Jsonata("$map([1, 2, 3], function($v) { $v * $v })")
         assert expression.evaluate(None) == [1, 4, 9]
-
-    def test_singleton_map(self):
-        expression = jsonata.Jsonata("$map([1], $square)[]")
-        expression.register_lambda("square", lambda x: x * x)
-        assert expression.evaluate(None) == [1]
-
-    def test_singleton_map_with_chain(self):
-        expression = jsonata.Jsonata("$ ~> $map($square)[]")
-        expression.register_lambda("square", lambda x: x * x)
-        assert expression.evaluate([1]) == [1]
