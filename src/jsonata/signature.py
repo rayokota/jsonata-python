@@ -1,7 +1,5 @@
 ﻿#
-# jsonata-java is the JSONata Java reference port
-# 
-# Copyright Dashjoin GmbH. https://dashjoin.com
+# Copyright Robert Yokota
 # 
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
