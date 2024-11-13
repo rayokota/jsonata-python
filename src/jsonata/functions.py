@@ -2010,15 +2010,9 @@ class Functions:
             arg1 = utils.Utils.create_sequence(arg1)
         if not (isinstance(arg2, list)):
             arg2 = utils.Utils.JList([arg2])
-        # else
-        #     // Arg2 was a list: add it as a list element (don't flatten)
-        #     ((List)arg1).add((List)arg2)
 
         arg1 = utils.Utils.JList(arg1)  # create a new copy!
-        if isinstance(arg2, utils.Utils.JList) and arg2.cons:
-            arg1.append(arg2)
-        else:
-            arg1.extend(arg2)
+        arg1.extend(arg2)
         return arg1
 
     @staticmethod
