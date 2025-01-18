@@ -138,7 +138,10 @@ class Tokenizer:
                 start = self.position
                 while current_char == 'i' or current_char == 'm':
                     self.position += 1
-                    current_char = self.path[self.position]
+                    if self.position < self.length:
+                        current_char = self.path[self.position]
+                    else:
+                        current_char = None
                 flags = self.path[start:self.position] + 'g'
 
                 # Convert flags to Java Pattern flags

@@ -38,6 +38,10 @@ class TestString:
         assert jsonata.Jsonata("$replace('h.ello', '.', '')").evaluate(None) == "hello"
         assert jsonata.Jsonata("$replace('h.e.l.l.o', '.', '',2)").evaluate(None) == "hel.l.o"
 
+    def test_regex(self):
+        assert (jsonata.Jsonata("($matcher := $eval('/^' & 'foo' & '/i'); $.$spread()[$.$keys() ~> $matcher])")
+                .evaluate({"foo": 1, "bar": 2}) == {"foo": 1})
+
     #
     # Additional $split tests
     #   
