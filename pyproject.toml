@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jsonata-python"
-version = "0.5.1"
+version = "0.5.2"
 description = "Pure Python implementation of JSONata"
 readme = "README.md"
 requires-python = ">=3.9"
