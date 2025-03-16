@@ -54,7 +54,7 @@ def get_options(argv: Optional[list[str]] = None) -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-o", "--output", metavar="<arg>",
-        help="JSON output file (- for stdin)"
+        help="JSON output file (default=stdout)"
     )
     parser.add_argument(
         "-oc", "--ocharset", default="utf-8", metavar="<arg>",
@@ -78,7 +78,7 @@ def get_options(argv: Optional[list[str]] = None) -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-it", "--interactive", default=False, action="store_true",
-        help="Interactive REPL"
+        help="Interactive REPL (requires input file)"
     )
 
     # The expression
@@ -160,8 +160,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     options = parser.parse_args(argv)
 
     if options.expression is None and options.expr is None:
-        parser.print_help()
-        return 1
+        if not options.interactive:
+            parser.print_help()
+            return 1
 
     icharset = options.icharset
     ocharset = options.icharset
@@ -187,6 +188,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         bindings = json.loads(bindings_str)
 
     if options.input == '-' or options.input is None:
+        if options.interactive:
+            parser.print_help()
+            return 1
         input = sys.stdin.read()
     else:
         with open(options.input, 'r', encoding=icharset) as fd:

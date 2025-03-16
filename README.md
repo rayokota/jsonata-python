@@ -61,7 +61,7 @@ options:
   -f {auto,json,string}, --format {auto,json,string}
                         Input format (default=auto)
   -o <arg>, --output <arg>
-                        JSON output file (- for stdin)
+                        JSON output file (default=stdout)
   -oc <arg>, --ocharset <arg>
                         Output character set (default=utf-8)
   -time                 Print performance timers to stderr
@@ -70,7 +70,7 @@ options:
                         JSONata variable bindings
   -bf <file>, --bindings-file <file>
                         JSONata variable bindings file
-  -it, --interactive    Interactive REPL
+  -it, --interactive    Interactive REPL (requires input file)
 ```
 
 ### Examples
@@ -100,6 +100,11 @@ helloworld.json
     "frederic.smith@very-serious.com"
   ]
 }
+
+% python3 -m jsonata.cli -i helloworld.json -it
+Enter an expression to have it evaluated.
+JSONata> (a & b)
+hello world
 ```
 
 ## Running Tests
