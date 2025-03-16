@@ -722,7 +722,7 @@ class Functions:
         r = None
         for i in range(0, 10):
             try:
-                r = re.sub(pattern, replacement, s, 1)
+                r = re.sub(pattern, replacement, s, count=1)
                 break
             except Exception as e:
                 msg = str(e)
