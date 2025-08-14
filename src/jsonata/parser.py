@@ -529,6 +529,12 @@ class Parser:
         # if/then/else ternary operator ?:
         self.register(Parser.InfixTernaryOperator(self, tokenizer.Tokenizer.operators["?"]))
 
+        # coalescing operator ??
+        self.register(Parser.InfixCoalesce(self, tokenizer.Tokenizer.operators["??"]))
+
+        # elvis/default operator ?:
+        self.register(Parser.InfixDefault(self, tokenizer.Tokenizer.operators["?:"]))
+
         # object transformer
         self.register(Parser.PrefixObjectTransformer(self))
 
@@ -852,6 +858,43 @@ class Parser:
                 # else condition
                 self._outer_instance.advance(":")
                 self._else = self._outer_instance.expression(0)
+            return self
+
+    class InfixCoalesce(Infix):
+        _outer_instance: 'Parser'
+
+        def __init__(self, outer_instance, get):
+            super().__init__(outer_instance, "??", get)
+            self._outer_instance = outer_instance
+
+        def led(self, left):
+            self.type = "condition"
+            # condition becomes function exists(left)
+            cond = Parser.Symbol(self._outer_instance)
+            cond.type = "function"
+            cond.value = "("
+            proc = Parser.Symbol(self._outer_instance)
+            proc.type = "variable"
+            proc.value = "exists"
+            cond.procedure = proc
+            cond.arguments = [left]
+            self.condition = cond
+            self.then = left
+            self._else = self._outer_instance.expression(0)
+            return self
+
+    class InfixDefault(Infix):
+        _outer_instance: 'Parser'
+
+        def __init__(self, outer_instance, get):
+            super().__init__(outer_instance, "?:", get)
+            self._outer_instance = outer_instance
+
+        def led(self, left):
+            self.type = "condition"
+            self.condition = left
+            self.then = left
+            self._else = self._outer_instance.expression(0)
             return self
 
     class PrefixObjectTransformer(Prefix):

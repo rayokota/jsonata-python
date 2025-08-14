@@ -441,6 +441,13 @@ class Functions:
         if char is None or not char:
             char = " "
 
+        # match JS: truncate width to integer
+        if width is not None:
+            try:
+                width = int(width)
+            except Exception:
+                width = 0
+
         if width < 0:
             result = Functions.left_pad(string, -width, char)
         else:

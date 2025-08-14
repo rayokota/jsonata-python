@@ -65,6 +65,8 @@ class Tokenizer:
         '<=': 40,
         '>=': 40,
         '~>': 40,
+        '?:': 40,
+        '??': 40,
         'and': 30,
         'or': 25,
         'in': 40,
@@ -216,6 +218,14 @@ class Tokenizer:
             # ~>  chain function
             self.position += 2
             return self.create("operator", "~>")
+        if current_char == '?' and have_more and self.path[self.position + 1] == ':':
+            # ?: default / elvis operator
+            self.position += 2
+            return self.create("operator", "?:")
+        if current_char == '?' and have_more and self.path[self.position + 1] == '?':
+            # ?? coalescing operator
+            self.position += 2
+            return self.create("operator", "??")
         # test for single char operators
         if Tokenizer.operators.get(str(current_char)) is not None:
             self.position += 1
