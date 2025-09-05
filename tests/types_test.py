@@ -40,3 +40,10 @@ class TestTypes:
         expr2.set_validate_input(False)
         with pytest.raises(TypeError):
             expr2.evaluate({"a": a_set})
+
+    def test_fix_issue_21(self):
+        """
+        https://github.com/rayokota/jsonata-python/issues/21
+        """
+        assert jsonata.Jsonata("true = 1").evaluate({}) is False
+        assert jsonata.Jsonata("false = 0").evaluate({}) is False
