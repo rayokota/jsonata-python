@@ -800,9 +800,9 @@ class Jsonata:
 
         result = None
         if op == "=":
-            result = lhs == rhs  # isDeepEqual(lhs, rhs);
+            result = utils.Utils.is_deep_equal(lhs, rhs)
         elif op == "!=":
-            result = lhs != rhs  # !isDeepEqual(lhs, rhs);
+            result = not utils.Utils.is_deep_equal(lhs, rhs)
         return result
 
     #

@@ -90,6 +90,27 @@ class Utils:
         sequence.sequence = True
         return sequence
 
+    @staticmethod
+    def is_deep_equal(lhs: Optional[Any], rhs: Optional[Any]) -> bool:
+        if isinstance(lhs, list) and isinstance(rhs, list):
+            if len(lhs) != len(rhs):
+                return False
+            for ii, _ in enumerate(lhs):
+                if not Utils.is_deep_equal(lhs[ii], rhs[ii]):
+                    return False
+            return True
+        elif isinstance(lhs, dict) and isinstance(rhs, dict):
+            if lhs.keys() != rhs.keys():
+                return False
+            for key in lhs.keys():
+                if not Utils.is_deep_equal(lhs[key], rhs[key]):
+                    return False
+            return True
+        if lhs == rhs and type(lhs) == type(rhs):
+            return True
+
+        return False
+
     class JList(list):
         sequence: bool
         outer_wrapper: bool
