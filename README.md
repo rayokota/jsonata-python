@@ -40,7 +40,7 @@ The CLI provides the same functionality as the [Dashjoin JSONata CLI](https://gi
 
 ```
 % jsonata -h
-usage: jsonata.cli [-h] [-v] [-e <file>] [-i <arg>] [-ic <arg>] [-f {auto,json,string}] [-o <arg>] [-oc <arg>] [-time] [-c] [-b <json-string>]
+usage: jsonata [-h] [-v] [-e <file>] [-i <arg>] [-ic <arg>] [-f {auto,json,string}] [-o <arg>] [-oc <arg>] [-time] [-c] [-b <json-string>]
                    [-bf <file>] [-it]
                    [expr]
 
