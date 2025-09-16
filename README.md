@@ -18,7 +18,7 @@ The JSONata documentation can be found [here](https://jsonata.org).
 ## Installation
 
 ```
-pip install jsonata-python
+pipx install jsonata-python
 ```
 
 ## Getting Started
@@ -39,7 +39,7 @@ A very simple start:
 The CLI provides the same functionality as the [Dashjoin JSONata CLI](https://github.com/dashjoin/jsonata-cli).
 
 ```
-% python3 -m jsonata.cli
+% jsonata -h
 usage: jsonata.cli [-h] [-v] [-e <file>] [-i <arg>] [-ic <arg>] [-f {auto,json,string}] [-o <arg>] [-oc <arg>] [-time] [-c] [-b <json-string>]
                    [-bf <file>] [-it]
                    [expr]
