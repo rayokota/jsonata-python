@@ -18,7 +18,7 @@ The JSONata documentation can be found [here](https://jsonata.org).
 ## Installation
 
 ```
-pip install jsonata-python
+pipx install jsonata-python
 ```
 
 ## Getting Started
@@ -39,8 +39,8 @@ A very simple start:
 The CLI provides the same functionality as the [Dashjoin JSONata CLI](https://github.com/dashjoin/jsonata-cli).
 
 ```
-% python3 -m jsonata.cli
-usage: jsonata.cli [-h] [-v] [-e <file>] [-i <arg>] [-ic <arg>] [-f {auto,json,string}] [-o <arg>] [-oc <arg>] [-time] [-c] [-b <json-string>]
+% jsonata -h
+usage: jsonata [-h] [-v] [-e <file>] [-i <arg>] [-ic <arg>] [-f {auto,json,string}] [-o <arg>] [-oc <arg>] [-time] [-c] [-b <json-string>]
                    [-bf <file>] [-it]
                    [expr]
 
@@ -76,19 +76,19 @@ options:
 ### Examples
 
 ```
-% echo '{"a":"hello", "b":" world"}' | python3 -m jsonata.cli '(a & b)'
+% echo '{"a":"hello", "b":" world"}' | jsonata '(a & b)'
 hello world
 
-% echo '{"a":"hello", "b":" world"}' | python3 -m jsonata.cli -o helloworld.json $
+% echo '{"a":"hello", "b":" world"}' | jsonata -o helloworld.json $
 # helloworld.json written
 
-% ls | python3 -m jsonata.cli $
+% ls | jsonata $
 helloworld.json
 
-% ps -o pid="",%cpu="",%mem="" | python3 -m jsonata.cli '$.$split(/\n/).$trim().[ $split(/\s+/)[$length()>0].$number() ]' -c
+% ps -o pid="",%cpu="",%mem="" | jsonata '$.$split(/\n/).$trim().[ $split(/\s+/)[$length()>0].$number() ]' -c
 [[4105,0,0],[4646,0,0],[4666,0,0],[33696,0,0]...]
 
-% curl -s https://raw.githubusercontent.com/jsonata-js/jsonata/master/test/test-suite/datasets/dataset1.json | python3 -m jsonata.cli '{"Name": FirstName & " " & Surname, "Cities": **.City, "Emails": Email[type="home"].address}'
+% curl -s https://raw.githubusercontent.com/jsonata-js/jsonata/master/test/test-suite/datasets/dataset1.json | jsonata '{"Name": FirstName & " " & Surname, "Cities": **.City, "Emails": Email[type="home"].address}'
 {
   "Name": "Fred Smith",
   "Cities": [
@@ -101,7 +101,7 @@ helloworld.json
   ]
 }
 
-% python3 -m jsonata.cli -i helloworld.json -it
+% jsonata -i helloworld.json -it
 Enter an expression to have it evaluated.
 JSONata> (a & b)
 hello world
