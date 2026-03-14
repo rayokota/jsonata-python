@@ -469,7 +469,7 @@ class Jsonata:
         result.tuple_stream = True
         step_env = environment
         if tuple_bindings is None:
-            tuple_bindings = [{"@": item} for item in input if item is not None]
+            tuple_bindings = [{"@": item} for item in input]
 
         for tuple_binding in tuple_bindings:
             step_env = self.create_frame_from_tuple(environment, tuple_binding)
@@ -519,7 +519,7 @@ class Jsonata:
             if index < 0:
                 # count in from end of array
                 index = len(input) + index
-            item = input[index] if index < len(input) else None
+            item = input[index] if 0 <= index < len(input) else None
             if item is not None:
                 if isinstance(item, list):
                     results = item
@@ -684,9 +684,6 @@ class Jsonata:
                 if isinstance(value, list):
                     value = self.flatten(value, None)
                     results = functions.Functions.append(results, value)
-                elif isinstance(value, dict):
-                    # Call recursively do decompose the map
-                    results.extend(self.evaluate_wildcard(expr, value))
                 else:
                     results.append(value)
 
@@ -1475,7 +1472,14 @@ class Jsonata:
             elif isinstance(proc, Jsonata.JLambda):
                 result = proc.call(input, validated_args)
             elif isinstance(proc, re.Pattern):
-                result = [s for s in validated_args if proc.search(s) is not None]
+                _res = []
+                for s in validated_args:
+                    if isinstance(s, str):
+                        _res.append(Jsonata._regex_closure(proc.finditer(s)))
+                if len(_res) == 1:
+                    result = _res[0]
+                else:
+                    result = _res
             else:
                 print("Proc not found " + str(proc))
                 raise jexception.JException("T1006", 0)
@@ -1488,6 +1492,19 @@ class Jsonata:
             #  }
             raise err
         return result
+
+    @staticmethod
+    def _regex_closure(iterator):
+        m = next(iterator, None)
+        if m is None:
+            return None
+        return {
+            "match": m.group(),
+            "start": m.start(),
+            "end": m.end(),
+            "groups": [m.group()],
+            "next": Jsonata.JLambda(lambda: Jsonata._regex_closure(iterator))
+        }
 
     #
     # Evaluate lambda against input data

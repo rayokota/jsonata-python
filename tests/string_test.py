@@ -42,6 +42,33 @@ class TestString:
         assert (jsonata.Jsonata("($matcher := $eval('/^' & 'foo' & '/i'); $.$spread()[$.$keys() ~> $matcher])")
                 .evaluate({"foo": 1, "bar": 2}) == {"foo": 1})
 
+    def test_regex_literal(self):
+        expr = jsonata.Jsonata("/^test.*$/")
+        result = expr.evaluate(None)
+        assert result.pattern == "^test.*$"
+
+    def test_eval_regex(self):
+        expr = jsonata.Jsonata("$eval('/^test.*$/')")
+        result = expr.evaluate(None)
+        assert result.pattern == "^test.*$"
+
+    def test_eval_regex_check_answer_data(self):
+        expr = jsonata.Jsonata("(\n    $matcher := $eval('/l/');\n    ('Hello World' ~> $matcher);\n)")
+        result = expr.evaluate(None)
+        assert result["match"] == "l"
+        assert result["start"] == 2
+        assert result["end"] == 3
+        assert result["groups"] == ["l"]
+        assert callable(result["next"].function)
+
+    def test_eval_regex_call_next_and_check_result(self):
+        expr = jsonata.Jsonata("(\n    $matcher := $eval('/l/');\n    ('Hello World' ~> $matcher).next();\n)")
+        result = expr.evaluate(None)
+        assert result["match"] == "l"
+        assert result["start"] == 3
+        assert result["end"] == 4
+        assert result["groups"] == ["l"]
+
     #
     # Additional $split tests
     #   
@@ -83,6 +110,11 @@ class TestString:
         # Escaped regexp, trailing empty strings, and limit
         res = jsonata.Jsonata("$split('this.*.*is.*a.*test.*.*.*.*.*.*', /\\.\\*/, 8)").evaluate(None)
         assert res == ["this", "", "is", "a", "test", "", "", ""]
+
+    def test_fieldname_with_special_char(self):
+        expr = jsonata.Jsonata("$ ~> |$|{}|")
+        o = {"a\nb": "c\nd"}
+        assert expr.evaluate(o) == o
 
     def test_trim(self):
         assert jsonata.Jsonata("$trim(\"\n\")").evaluate(None) == ""

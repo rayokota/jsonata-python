@@ -74,11 +74,7 @@ class Utils:
     @staticmethod
     def create_sequence(el: Optional[Any] = NONE) -> list:
         if el is not Utils.NONE:
-            if isinstance(el, list) and len(el) == 1:
-                sequence = Utils.JList(el)
-            else:
-                # This case does NOT exist in Javascript! Why?
-                sequence = Utils.JList([el])
+            sequence = Utils.JList([el])
         else:
             sequence = Utils.JList()
         sequence.sequence = True

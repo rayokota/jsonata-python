@@ -1836,7 +1836,8 @@ class Functions:
     #     
     @staticmethod
     def error(message: Optional[str]) -> NoReturn:
-        raise jexception.JException("D3137", -1, message if message is not None else "$error() function evaluated")
+        raise jexception.JException("D3137", -1,
+                                    message if message is not None else "$error() function evaluated")
 
     #
     #
@@ -1851,8 +1852,8 @@ class Functions:
             raise jexception.JException("T0410", -1)
 
         if not condition:
-            raise jexception.JException("D3141", -1, "$assert() statement failed")
-            #                message: message || "$assert() statement failed"
+            raise jexception.JException("D3141", -1,
+                                        message if message is not None else "$assert() statement failed")
 
     #
     #

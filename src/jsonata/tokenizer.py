@@ -137,7 +137,10 @@ class Tokenizer:
                 if pattern == "":
                     raise jexception.JException("S0301", self.position)
                 self.position += 1
-                current_char = self.path[self.position]
+                if self.position < self.length:
+                    current_char = self.path[self.position]
+                else:
+                    current_char = None
                 # flags
                 start = self.position
                 while current_char == 'i' or current_char == 'm':

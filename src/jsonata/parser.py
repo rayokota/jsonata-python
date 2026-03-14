@@ -1047,7 +1047,8 @@ class Parser:
                 rest = self.process_ast(expr.rhs)
                 if (rest.type == "function" and rest.procedure.type == "path" and len(
                         rest.procedure.steps) == 1 and rest.procedure.steps[0].type == "name" and
-                        result.steps[-1].type == "function"):
+                        result.steps[-1].type == "function" and
+                        isinstance(rest.procedure.steps[0].value, Parser.Symbol)):
                     # next function in chain of functions - will override a thenable
                     result.steps[-1].next_function = rest.procedure.steps[0].value
                 if rest.type == "path":
