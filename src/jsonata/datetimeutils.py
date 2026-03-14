@@ -637,14 +637,14 @@ class DateTimeUtils:
 
         offset_millis = (60 * offset_hours + offset_minutes) * 60 * 1000
         date_time = datetime.datetime.fromtimestamp((millis + offset_millis) / 1000.0, datetime.timezone.utc)
-        result = ""
+        parts = []
         for part in format_spec.parts:
             if part.type == "literal":
-                result += part.value
+                parts.append(part.value)
             else:
-                result += DateTimeUtils._format_component(date_time, part, offset_hours, offset_minutes)
+                parts.append(DateTimeUtils._format_component(date_time, part, offset_hours, offset_minutes))
 
-        return result
+        return ''.join(parts)
 
     @staticmethod
     def _format_component(date: datetime.datetime, marker_spec: SpecPart, offset_hours: int,
