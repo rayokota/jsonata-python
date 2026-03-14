@@ -1472,7 +1472,14 @@ class Jsonata:
             elif isinstance(proc, Jsonata.JLambda):
                 result = proc.call(input, validated_args)
             elif isinstance(proc, re.Pattern):
-                result = [s for s in validated_args if proc.search(s) is not None]
+                _res = []
+                for s in validated_args:
+                    if isinstance(s, str):
+                        _res.append(Jsonata._regex_closure(proc.finditer(s)))
+                if len(_res) == 1:
+                    result = _res[0]
+                else:
+                    result = _res
             else:
                 print("Proc not found " + str(proc))
                 raise jexception.JException("T1006", 0)
@@ -1485,6 +1492,19 @@ class Jsonata:
             #  }
             raise err
         return result
+
+    @staticmethod
+    def _regex_closure(iterator):
+        m = next(iterator, None)
+        if m is None:
+            return None
+        return {
+            "match": m.group(),
+            "start": m.start(),
+            "end": m.end(),
+            "groups": [m.group()],
+            "next": Jsonata.JLambda(lambda: Jsonata._regex_closure(iterator))
+        }
 
     #
     # Evaluate lambda against input data
