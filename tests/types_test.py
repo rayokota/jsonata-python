@@ -48,7 +48,7 @@ class TestTypes:
         assert jsonata.Jsonata("true = 1").evaluate({}) is False
         assert jsonata.Jsonata("false = 0").evaluate({}) is False
 
-    def test_fix_issue_23(self):
+    def test_fix_issue_28(self):
         """
         https://github.com/rayokota/jsonata-python/issues/23
         """
