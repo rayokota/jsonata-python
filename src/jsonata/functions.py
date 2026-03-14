@@ -474,11 +474,7 @@ class Functions:
         pads = size - str_len
         if pads <= 0:
             return string
-        padding = ""
-        i = 0
-        while i < pads + 1:
-            padding += pad_str
-            i += 1
+        padding = pad_str * (pads // len(pad_str) + 1)
         return Functions.substr(padding, 0, pads) + string
 
     # Source: Jsonata4Java PadFunction
@@ -501,11 +497,7 @@ class Functions:
         pads = size - str_len
         if pads <= 0:
             return string
-        padding = ""
-        i = 0
-        while i < pads + 1:
-            padding += pad_str
-            i += 1
+        padding = pad_str * (pads // len(pad_str) + 1)
         return string + Functions.substr(padding, 0, pads)
 
     @dataclass
@@ -767,23 +759,23 @@ class Functions:
             raise jexception.JException("Fourth argument of replace function must evaluate to a positive number", 0)
 
         def string_replacer(match):
-            result = ''
+            parts = []
             position = 0
             repl = str(replacement)
             while position < len(repl):
                 index = repl.find('$', position)
                 if index == -1:
-                    result += repl[position:]
+                    parts.append(repl[position:])
                     break
-                result += repl[position:index]
+                parts.append(repl[position:index])
                 position = index + 1
                 if position < len(repl):
                     dollar_val = repl[position]
                     if dollar_val == '$':
-                        result += '$'
+                        parts.append('$')
                         position += 1
                     elif dollar_val == '0':
-                        result += match.group(0)
+                        parts.append(match.group(0))
                         position += 1
                     else:
                         max_digits = len(str(len(match.groups())))
@@ -791,15 +783,15 @@ class Functions:
                         if group_num.isdigit():
                             group_index = int(group_num)
                             if 0 < group_index <= len(match.groups()):
-                                result += match.group(group_index) or ''
+                                parts.append(match.group(group_index) or '')
                                 position += len(group_num)
                             else:
-                                result += '$'
+                                parts.append('$')
                         else:
-                            result += '$'
+                            parts.append('$')
                 else:
-                    result += '$'
-            return result
+                    parts.append('$')
+            return ''.join(parts)
 
         if callable(replacement):
             replacer = lambda m: replacement(m.groupdict())
@@ -810,23 +802,23 @@ class Functions:
 
         if isinstance(pattern, str):
             # Use string methods for literal string patterns
-            result = ''
+            parts = []
             position = 0
             count = 0
             while True:
                 if limit is not None and count >= limit:
-                    result += string[position:]
+                    parts.append(string[position:])
                     break
                 index = string.find(pattern, position)
                 if index == -1:
-                    result += string[position:]
+                    parts.append(string[position:])
                     break
-                result += string[position:index]
+                parts.append(string[position:index])
                 match = re.match(re.escape(pattern), string[index:])
-                result += replacer(match)
+                parts.append(replacer(match))
                 position = index + len(pattern)
                 count += 1
-            return result
+            return ''.join(parts)
         else:
             # Use regex for pattern objects
             if limit is None:
