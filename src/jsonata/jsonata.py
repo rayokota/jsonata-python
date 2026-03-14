@@ -519,7 +519,7 @@ class Jsonata:
             if index < 0:
                 # count in from end of array
                 index = len(input) + index
-            item = input[index] if index < len(input) else None
+            item = input[index] if 0 <= index < len(input) else None
             if item is not None:
                 if isinstance(item, list):
                     results = item

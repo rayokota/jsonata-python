@@ -17,3 +17,5 @@ venv/
 .idea
 .venv
 tests/gen
+
+.claude

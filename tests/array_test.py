@@ -3,6 +3,12 @@
 
 class TestArray:
 
+    def test_negative_index(self):
+        expr = jsonata.Jsonata("item[-1]")
+        assert expr.evaluate({"item": []}) is None
+        expr = jsonata.Jsonata("$[-1]")
+        assert expr.evaluate([]) is None
+
     def test_array(self):
         assert jsonata.Jsonata("$.[{ }] ~> $reduce($append)").evaluate([True, True]) == [{}, {}]
 
