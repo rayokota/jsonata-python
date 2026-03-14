@@ -524,7 +524,7 @@ class DateTimeUtils:
         while pos < len(picture):
             if picture[pos] == '[':
                 # check it's not a doubled [[
-                if picture[pos + 1] == '[':
+                if pos + 1 < len(picture) and picture[pos + 1] == '[':
                     # literal [
                     format.add_literal(picture, start, pos)
                     format.parts.append(DateTimeUtils.SpecPart("literal", value="["))
