@@ -308,6 +308,7 @@ class Signature:
                             arg = args[arg_index] if arg_index < len(args) else None
                             validated_args.append(arg)
                             arg_index += 1
+                index += 1
             return validated_args
         self.throw_validation_error(args, supplied_sig, self.function_name)
 
