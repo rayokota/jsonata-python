@@ -47,3 +47,18 @@ class TestTypes:
         """
         assert jsonata.Jsonata("true = 1").evaluate({}) is False
         assert jsonata.Jsonata("false = 0").evaluate({}) is False
+
+    def test_fix_issue_23(self):
+        """
+        https://github.com/rayokota/jsonata-python/issues/23
+        """
+        class PlainScalarString(str):
+            pass
+
+        data = {
+            "foo": [
+                {"some_attr": PlainScalarString("some_value"), "bar": 17},
+                {"some_attr": PlainScalarString("other_value"), "bar": 19},
+            ]
+        }
+        assert jsonata.Jsonata('foo[some_attr="some_value"].bar').evaluate(data) == 17

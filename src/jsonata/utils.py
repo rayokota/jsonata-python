@@ -106,9 +106,10 @@ class Utils:
                 if not Utils.is_deep_equal(lhs[key], rhs[key]):
                     return False
             return True
-        if lhs == rhs and type(lhs) == type(rhs):
+        if lhs == rhs:
+            if isinstance(lhs, bool) != isinstance(rhs, bool):
+                return False
             return True
-
         return False
 
     class JList(list):
