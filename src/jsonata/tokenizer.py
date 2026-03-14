@@ -32,6 +32,8 @@ from typing import Any, Optional
 
 from jsonata import jexception, utils
 
+_NUMBER_PATTERN = re.compile(r"^-?(0|([1-9][0-9]*))(\.[0-9]+)?([Ee][-+]?[0-9]+)?")
+
 
 class Tokenizer:
     operators = {
@@ -264,8 +266,7 @@ class Tokenizer:
                 self.position += 1
             raise jexception.JException("S0101", self.position)
         # test for numbers
-        numregex = re.compile("^-?(0|([1-9][0-9]*))(\\.[0-9]+)?([Ee][-+]?[0-9]+)?")
-        match_ = numregex.search(self.path[self.position:])
+        match_ = _NUMBER_PATTERN.search(self.path[self.position:])
         if match_ is not None:
             num = float(match_.group(0))
             if not math.isnan(num) and math.isfinite(num):
