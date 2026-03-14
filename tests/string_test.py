@@ -84,6 +84,11 @@ class TestString:
         res = jsonata.Jsonata("$split('this.*.*is.*a.*test.*.*.*.*.*.*', /\\.\\*/, 8)").evaluate(None)
         assert res == ["this", "", "is", "a", "test", "", "", ""]
 
+    def test_fieldname_with_special_char(self):
+        expr = jsonata.Jsonata("$ ~> |$|{}|")
+        o = {"a\nb": "c\nd"}
+        assert expr.evaluate(o) == o
+
     def test_trim(self):
         assert jsonata.Jsonata("$trim(\"\n\")").evaluate(None) == ""
         assert jsonata.Jsonata("$trim(\" \")").evaluate(None) == ""
