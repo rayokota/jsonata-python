@@ -10,6 +10,11 @@ class TestArray:
         expr = jsonata.Jsonata("*")
         assert expr.evaluate([{"x": 1}]) == {"x": 1}
 
+    def test_index(self):
+        expr = jsonata.Jsonata("($x:=['a','b']; $x#$i.$i)")
+        assert expr.evaluate(1) == [0, 1]
+        assert expr.evaluate(None) == [0, 1]
+
     def test_wildcard_filter(self):
         value1 = {"value": {"Name": "Cell1", "Product": "Product1"}}
         value2 = {"value": {"Name": "Cell2", "Product": "Product2"}}

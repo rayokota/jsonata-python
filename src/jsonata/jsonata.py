@@ -469,7 +469,7 @@ class Jsonata:
         result.tuple_stream = True
         step_env = environment
         if tuple_bindings is None:
-            tuple_bindings = [{"@": item} for item in input if item is not None]
+            tuple_bindings = [{"@": item} for item in input]
 
         for tuple_binding in tuple_bindings:
             step_env = self.create_frame_from_tuple(environment, tuple_binding)
