@@ -105,6 +105,9 @@ class JException(RuntimeError):
 
         formatted = message
 
+        if formatted == "{{{message}}}":
+            return str(arg1)
+
         # Replace any {{var}} with format "{}"
         formatted = re.sub("\\{\\{\\w+\\}\\}", "{}", formatted)
 

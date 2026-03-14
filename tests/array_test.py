@@ -1,4 +1,5 @@
 ﻿import jsonata
+import pytest
 
 
 class TestArray:
@@ -31,3 +32,9 @@ class TestArray:
 
         expression2 = jsonata.Jsonata("**[value.Product = 'Product1']")
         assert expression2.evaluate(data) == value1
+
+    def test_assert_custom_message(self):
+        expr = jsonata.Jsonata("$assert(false, 'custom error')")
+        with pytest.raises(jsonata.JException) as exc_info:
+            expr.evaluate(None)
+        assert "custom error" in str(exc_info.value)
