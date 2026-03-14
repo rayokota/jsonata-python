@@ -42,6 +42,16 @@ class TestString:
         assert (jsonata.Jsonata("($matcher := $eval('/^' & 'foo' & '/i'); $.$spread()[$.$keys() ~> $matcher])")
                 .evaluate({"foo": 1, "bar": 2}) == {"foo": 1})
 
+    def test_regex_literal(self):
+        expr = jsonata.Jsonata("/^test.*$/")
+        result = expr.evaluate(None)
+        assert result.pattern == "^test.*$"
+
+    def test_eval_regex(self):
+        expr = jsonata.Jsonata("$eval('/^test.*$/')")
+        result = expr.evaluate(None)
+        assert result.pattern == "^test.*$"
+
     #
     # Additional $split tests
     #   
