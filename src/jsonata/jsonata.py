@@ -684,9 +684,6 @@ class Jsonata:
                 if isinstance(value, list):
                     value = self.flatten(value, None)
                     results = functions.Functions.append(results, value)
-                elif isinstance(value, dict):
-                    # Call recursively do decompose the map
-                    results.extend(self.evaluate_wildcard(expr, value))
                 else:
                     results.append(value)
 
