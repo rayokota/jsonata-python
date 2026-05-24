@@ -3,6 +3,23 @@ import jsonata
 import math
 import pathlib
 import traceback
+import uuid
+
+
+# Sentinel representing a JSONata undefined result (distinct from JSONata null,
+# which surfaces as Python None after Utils.convert_nulls).
+UNDEFINED = "__UNDEFINED__" + uuid.uuid4().hex
+
+
+def evaluate_jsonata(expr, data, bindings):
+    """Evaluate `expr`, returning UNDEFINED for an undefined result (to
+    distinguish it from JSONata null, which becomes Python None)."""
+    j = jsonata.Jsonata(expr)
+    j.set_output_convert_nulls(False)
+    result = j.evaluate(data, bindings)
+    if result is None:
+        result = UNDEFINED
+    return jsonata.Utils.convert_nulls(result)
 
 
 class TestJsonata:
@@ -27,20 +44,15 @@ class TestJsonata:
                 for k, v in bindings.items():
                     binding_frame.bind(k, v)
 
-            jsonata_expr = jsonata.Jsonata(expr)
             if binding_frame is not None:
                 binding_frame.set_runtime_bounds(500000 if TestJsonata.debug else 10000, 303)
-            result = jsonata_expr.evaluate(data, binding_frame)
+
+            result = evaluate_jsonata(expr, data, binding_frame)
+
             if code is not None:
                 success = False
 
-            if expected is not None and expected != result:
-                # if ((""+expected).equals(""+result))
-                #     System.out.println("Value equals failed, stringified equals = true. Result = "+result)
-                # else
-                success = False
-
-            if expected is None and result is not None:
+            if expected != result:
                 success = False
 
             if TestJsonata.debug and success:
@@ -119,22 +131,6 @@ class TestJsonata:
             success &= self.run_test_case(name, test_case)
         return success
 
-    def replace_nulls(self, o):
-        if isinstance(o, list):
-            index = 0
-            for i in o:
-                if i is None:
-                    o[index] = jsonata.Utils.NULL_VALUE
-                else:
-                    self.replace_nulls(i)
-                index += 1
-        if isinstance(o, dict):
-            for k, v in o.items():
-                if v is None:
-                    o[k] = jsonata.Utils.NULL_VALUE
-                else:
-                    self.replace_nulls(v)
-
     testOverrides = None
 
     @staticmethod
@@ -174,20 +170,21 @@ class TestJsonata:
         bindings = test_def.get("bindings")
         result = test_def.get("result")
 
-        # if (result == null)
-        #   if (testDef.containsKey("result"))
-        #     result = Jsonata.NULL_VALUE
-
-        # replaceNulls(result)
+        # Check if test is expected to return undefined result
+        if str(test_def.get("undefinedResult")).lower() == "true":
+            result = UNDEFINED
 
         code = test_def.get("code")
 
         if isinstance(test_def.get("error"), dict):
             code = test_def.get("error").get("code")
 
-        # System.out.println(""+bindings)
-
         data = test_def.get("data")
+        # Explicit `"data": null` means JSONata null input (not undefined), so
+        # feed it as NULL_VALUE since Python None would be read as undefined.
+        if "data" in test_def and data is None:
+            data = jsonata.Utils.NULL_VALUE
+
         if data is None and dataset is not None:
             data = self.read_json("jsonata/test/test-suite/datasets/" + dataset + ".json")
 
