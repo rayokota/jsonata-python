@@ -31,3 +31,10 @@ class TestNullSafety:
 
         res = jsonata.Jsonata("$spread(null)").evaluate(None)
         assert res is None
+
+    def test_array_index_preserves_null(self):
+        # Indexing into an array element that is JSON null must yield null,
+        # not be filtered out as if it were undefined.
+        data = {"data": [[1, None, 3], [2, None, 4], [3, None, 5]]}
+        res = jsonata.Jsonata("[$map(data, function($row) { $row[1] })]").evaluate(data)
+        assert res == [None, None, None]

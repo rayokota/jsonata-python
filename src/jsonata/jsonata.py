@@ -512,15 +512,21 @@ class Jsonata:
         results = utils.Utils.create_sequence()
         if isinstance(input, utils.Utils.JList) and input.tuple_stream:
             results.tuple_stream = True
-        if not (isinstance(input, list)):
+        if input is None:
+            # undefined input yields undefined output; skip filtering entirely
+            input = utils.Utils.create_sequence()
+        elif not (isinstance(input, list)):
             input = utils.Utils.create_sequence(input)
         if predicate.type == "number":
             index = int(predicate.value)  # round it down - was Math.floor
             if index < 0:
                 # count in from end of array
                 index = len(input) + index
-            item = input[index] if 0 <= index < len(input) else None
-            if item is not None:
+            if 0 <= index < len(input):
+                item = input[index]
+                # Preserve JSON null at this index (vs. out-of-bounds, which is undefined)
+                if item is None:
+                    item = utils.Utils.NULL_VALUE
                 if isinstance(item, list):
                     results = item
                 else:
