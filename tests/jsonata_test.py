@@ -104,6 +104,29 @@ class TestJsonata:
         print(str(data))
         self.eval_expr("foo.bar", data, None, 42, None)
 
+    def test_dict_bindings(self):
+        data = {
+            "products": [
+                {"name": "Apple", "price": 1.20},
+                {"name": "Banana", "price": 0.50},
+                {"name": "Cherry", "price": 2.50},
+            ]
+        }
+        expr = jsonata.Jsonata(
+            "products[price <= $maxPrice]"
+            ".(name & ' costs ' & $currencySymbol & $string(price))"
+        )
+        expected = ["Apple costs $1.2", "Banana costs $0.5"]
+
+        # A plain dict can be passed directly as the bindings.
+        assert expr.evaluate(data, bindings={"maxPrice": 1.50, "currencySymbol": "$"}) == expected
+
+        # A Frame is still accepted for backward compatibility.
+        binding_frame = jsonata.Jsonata.Frame(None)
+        binding_frame.bind("maxPrice", 1.50)
+        binding_frame.bind("currencySymbol", "$")
+        assert expr.evaluate(data, bindings=binding_frame) == expected
+
     def run_case(self, name):
         if not self.run_test_suite(name):
             raise Exception()

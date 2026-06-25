@@ -31,7 +31,7 @@ import re
 import sys
 import threading
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping
+from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping, Union
 
 from jsonata import functions, jexception, parser, signature as sig, timebox, utils
 
@@ -1976,7 +1976,7 @@ class Jsonata:
     def set_output_convert_nulls(self, output_convert_nulls: bool) -> None:
         self.output_convert_nulls = output_convert_nulls
 
-    def evaluate(self, input: Optional[Any], bindings: Optional[Frame] = None) -> Optional[Any]:
+    def evaluate(self, input: Optional[Any], bindings: Optional[Union[Frame, Mapping[str, Any]]] = None) -> Optional[Any]:
         # throw if the expression compiled with syntax errors
         if self.errors is not None:
             raise jexception.JException("S0500", 0)
@@ -1986,7 +1986,9 @@ class Jsonata:
             # var exec_env
             # the variable bindings have been passed in - create a frame to hold these
             exec_env = self.create_frame(self.environment)
-            for k, v in bindings.bindings.items():
+            # accept either a Frame or a plain mapping (e.g. dict) of variable bindings
+            items = bindings.bindings if isinstance(bindings, Jsonata.Frame) else bindings
+            for k, v in items.items():
                 exec_env.bind(k, v)
         else:
             exec_env = self.environment
