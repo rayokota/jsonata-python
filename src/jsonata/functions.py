@@ -36,7 +36,7 @@ import sys
 import unicodedata
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any, AnyStr, Mapping, NoReturn, Optional, Sequence, Callable, Type, Union
+from typing import Any, AnyStr, Mapping, NoReturn, Optional, Protocol, Sequence, Callable, Type, Union
 
 from jsonata import datetimeutils, jexception, parser, utils
 
@@ -506,6 +506,18 @@ class Functions:
         index: int
         groups: Sequence[AnyStr]
 
+    class CompiledPattern(Protocol):
+        """
+        Structural type for a compiled regex: matches stdlib `re.Pattern`
+        as well as whatever a pluggable regex_engine's compile() returns
+        (e.g. a `google-re2` pattern object). See Functions.is_regex.
+        """
+
+        def search(self, string: str) -> Optional[Any]: ...
+        def finditer(self, string: str) -> Any: ...
+        def sub(self, repl: Any, string: str, count: int = 0) -> str: ...
+        def split(self, string: str, maxsplit: int = 0) -> list[str]: ...
+
     #
     # Evaluate the matcher function against the str arg
     #
@@ -514,7 +526,7 @@ class Functions:
     # @returns {object} - structure that represents the match(es)
     #     
     @staticmethod
-    def evaluate_matcher(matcher: re.Pattern, string: Optional[str]) -> list[RegexpMatch]:
+    def evaluate_matcher(matcher: CompiledPattern, string: Optional[str]) -> list[RegexpMatch]:
         res = []
         matches = matcher.finditer(string)
         for m in matches:
@@ -537,7 +549,7 @@ class Functions:
     # @returns {Boolean} - true if str contains token
     #     
     @staticmethod
-    def contains(string: Optional[str], token: Union[None, str, re.Pattern]) -> Optional[bool]:
+    def contains(string: Optional[str], token: Union[None, str, CompiledPattern]) -> Optional[bool]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -568,7 +580,7 @@ class Functions:
     # @returns {Array} The array of match objects
     #     
     @staticmethod
-    def match_(string: Optional[str], regex: Optional[re.Pattern], limit: Optional[int]) -> Optional[list[dict[str, Any]]]:
+    def match_(string: Optional[str], regex: Optional[CompiledPattern], limit: Optional[int]) -> Optional[list[dict[str, Any]]]:
         # undefined inputs always return undefined
         if string is None:
             return None
@@ -636,7 +648,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all(s: str, pattern: re.Pattern, replacement: Optional[Any]) -> Optional[str]:
+    def safe_replace_all(s: str, pattern: CompiledPattern, replacement: Optional[Any]) -> Optional[str]:
 
         if not (isinstance(replacement, str)):
             return Functions.safe_replace_all_fn(s, pattern, replacement)
@@ -696,7 +708,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_all_fn(s: str, pattern: re.Pattern, fn: Optional[Any]) -> str:
+    def safe_replace_all_fn(s: str, pattern: CompiledPattern, fn: Optional[Any]) -> str:
         def replace_fn(t):
             res = Functions.func_apply(fn, [Functions.to_jsonata_match(t)])
             if isinstance(res, str):
@@ -716,7 +728,7 @@ class Functions:
     # @return
     #     
     @staticmethod
-    def safe_replace_first(s: str, pattern: re.Pattern, replacement: str) -> Optional[str]:
+    def safe_replace_first(s: str, pattern: CompiledPattern, replacement: str) -> Optional[str]:
         replacement = Functions.safe_replacement(replacement)
         r = None
         for i in range(0, 10):
@@ -744,7 +756,7 @@ class Functions:
         return r
 
     @staticmethod
-    def replace(string: Optional[str], pattern: Union[str, re.Pattern], replacement: Optional[Any], limit: Optional[int]) -> Optional[str]:
+    def replace(string: Optional[str], pattern: Union[str, CompiledPattern], replacement: Optional[Any], limit: Optional[int]) -> Optional[str]:
         if string is None:
             return None
 
@@ -938,7 +950,7 @@ class Functions:
         return urllib.parse.unquote(string, errors="strict")
 
     @staticmethod
-    def split(string: Optional[str], pattern: Union[str, Optional[re.Pattern]], limit: Optional[float]) -> Optional[list[str]]:
+    def split(string: Optional[str], pattern: Union[str, Optional[CompiledPattern]], limit: Optional[float]) -> Optional[list[str]]:
         if string is None:
             return None
 
