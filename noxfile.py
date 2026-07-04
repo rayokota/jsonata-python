@@ -44,7 +44,10 @@ def tests(session):
     build_and_check_dists(session)
 
     generated_files = os.listdir("dist/")
-    generated_sdist = os.path.join("dist/", generated_files[1])
+    sdists = [f for f in generated_files if f.endswith(".tar.gz")]
+    if not sdists:
+        session.error("No sdist (.tar.gz) found in dist/")
+    generated_sdist = max((os.path.join("dist/", f) for f in sdists), key=os.path.getmtime)
 
     session.install(generated_sdist)
 
@@ -63,10 +66,10 @@ def test_re2(session):
     build_and_check_dists(session)
 
     generated_files = os.listdir("dist/")
-    sdists = sorted(f for f in generated_files if f.endswith(".tar.gz"))
+    sdists = [f for f in generated_files if f.endswith(".tar.gz")]
     if not sdists:
         session.error("No sdist (.tar.gz) found in dist/")
-    generated_sdist = os.path.join("dist/", sdists[0])
+    generated_sdist = max((os.path.join("dist/", f) for f in sdists), key=os.path.getmtime)
 
     session.install(generated_sdist)
 

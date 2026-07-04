@@ -63,3 +63,17 @@ class TestRE2Engine:
         # support backreferences. Confirms the default path is unaffected.
         expr = jsonata.Jsonata(r'$match("xaay", /(a)\1/)')
         assert expr.evaluate(None)["match"] == "aa"
+
+    def test_eval_uses_enclosing_regex_engine(self):
+        # $eval dynamically parses and evaluates a nested expression
+        # (functions.py's function_eval); it must reuse the enclosing
+        # expression's regex_engine rather than silently falling back to
+        # stdlib re. Proven the same way as test_rejects_backreferences:
+        # a backreference inside the $eval'd source must fail to compile
+        # under RE2, surfaced as a D3120 "invalid expression" error.
+        expr = jsonata.Jsonata(
+            r"""$eval('$match("xaay", /(a)\\1/)')""", RE2Engine
+        )
+        with pytest.raises(jsonata.JException) as exc_info:
+            expr.evaluate(None)
+        assert exc_info.value.error == "D3120"
