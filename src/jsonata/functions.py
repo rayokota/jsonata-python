@@ -2025,8 +2025,14 @@ class Functions:
     #
     @staticmethod
     def is_regex(value: Optional[Any]) -> bool:
-        return isinstance(value, re.Pattern) or (
-            hasattr(value, "search") and hasattr(value, "finditer") and hasattr(value, "sub")
+        if isinstance(value, re.Pattern):
+            return True
+        if value is None or inspect.ismodule(value) or inspect.isclass(value):
+            return False
+        return (
+            callable(getattr(value, "search", None))
+            and callable(getattr(value, "finditer", None))
+            and callable(getattr(value, "sub", None))
         )
 
     #

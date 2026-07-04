@@ -63,7 +63,10 @@ def test_re2(session):
     build_and_check_dists(session)
 
     generated_files = os.listdir("dist/")
-    generated_sdist = os.path.join("dist/", generated_files[1])
+    sdists = sorted(f for f in generated_files if f.endswith(".tar.gz"))
+    if not sdists:
+        session.error("No sdist (.tar.gz) found in dist/")
+    generated_sdist = os.path.join("dist/", sdists[0])
 
     session.install(generated_sdist)
 

@@ -1887,8 +1887,9 @@ class Jsonata:
     # JSONata
     # @param {Object} expr - JSONata expression
     # @param {Object} regex_engine - module/object providing a `compile(pattern, flags)`
-    #     function compatible with the stdlib `re` module (e.g. `re2`), used to compile
-    #     JSONata regex literals. Defaults to the stdlib `re` module.
+    #     function compatible with the stdlib `re` module (or an adapter that exposes
+    #     this interface for engines like `google-re2`), used to compile JSONata regex
+    #     literals. Defaults to the stdlib `re` module.
     # @returns Evaluated expression
     # @throws jexception.JException An exception if an error occured.
     #
