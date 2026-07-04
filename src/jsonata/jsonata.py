@@ -231,7 +231,19 @@ class Jsonata:
     def eval(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
         # Thread safety:
         # Make sure each evaluate is executed on an instance per thread
-        return self.get_per_thread_instance()._eval(expr, input, environment)
+        _this = self.get_per_thread_instance()
+        # Save and restore the evaluation context so that nested
+        # evaluations (e.g. $eval()) see the correct context: without this,
+        # evaluating a sibling argument (e.g. $eval's own second argument)
+        # would leave _this.environment pointing at whatever inner scope it
+        # last touched, rather than the environment in effect at this call.
+        _input = _this.input
+        _environment = _this.environment
+        try:
+            return _this._eval(expr, input, environment)
+        finally:
+            _this.input = _input
+            _this.environment = _environment
 
     def _eval(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
         result = None
