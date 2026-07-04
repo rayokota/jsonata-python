@@ -236,9 +236,10 @@ class Jsonata:
     def _eval(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
         result = None
 
-        # Store the current input
-        # This is required by Functions.functionEval for current $eval() input context
+        # Store the current input and environment
+        # This is required by Functions.functionEval for current $eval() context
         self.input = input
+        self.environment = environment
 
         if self.parser.dbg:
             print("eval expr=" + str(expr) + " type=" + expr.type)  # +" input="+input);

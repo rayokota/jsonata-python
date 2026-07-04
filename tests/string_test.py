@@ -69,6 +69,19 @@ class TestString:
         assert result["end"] == 4
         assert result["groups"] == ["l"]
 
+    def test_eval_sees_enclosing_variable_binding(self):
+        # $eval's dynamically-parsed expression must see variables bound in
+        # the enclosing scope (here, via an in-expression := assignment),
+        # not just the static top-level environment.
+        expr = jsonata.Jsonata('($x := 5; $eval("$x + 1"))')
+        assert expr.evaluate(None) == 6
+
+    def test_eval_sees_explicit_top_level_bindings(self):
+        # Same as above, but for bindings passed via evaluate()'s bindings
+        # argument rather than an in-expression assignment.
+        expr = jsonata.Jsonata('$eval("$x")')
+        assert expr.evaluate(None, {"x": 42}) == 42
+
     #
     # Additional $split tests
     #   
