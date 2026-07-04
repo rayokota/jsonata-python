@@ -50,3 +50,21 @@ def tests(session):
 
     session.run("python", "tests/generate.py")
     session.run("py.test", "tests/", *session.posargs)
+
+
+# Exercises the optional pluggable regex_engine hook against Google's RE2
+# (tests/re2_engine_test.py). Kept as its own session so the main `tests`
+# session -- and the package itself -- stay free of a google-re2 dependency;
+# this one opts in explicitly.
+@nox.session
+def test_re2(session):
+    session.install("pytest")
+    session.install("google-re2")
+    build_and_check_dists(session)
+
+    generated_files = os.listdir("dist/")
+    generated_sdist = os.path.join("dist/", generated_files[1])
+
+    session.install(generated_sdist)
+
+    session.run("py.test", "tests/re2_engine_test.py", *session.posargs)

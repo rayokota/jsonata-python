@@ -1300,7 +1300,7 @@ class Jsonata:
         return result
 
     def is_function_like(self, o: Optional[Any]) -> bool:
-        return utils.Utils.is_function(o) or functions.Functions.is_lambda(o) or (isinstance(o, re.Pattern))
+        return utils.Utils.is_function(o) or functions.Functions.is_lambda(o) or functions.Functions.is_regex(o)
 
     CURRENT = threading.local()
     MUTEX = threading.Lock()
@@ -1477,7 +1477,7 @@ class Jsonata:
                 #  }
             elif isinstance(proc, Jsonata.JLambda):
                 result = proc.call(input, validated_args)
-            elif isinstance(proc, re.Pattern):
+            elif functions.Functions.is_regex(proc):
                 _res = []
                 for s in validated_args:
                     if isinstance(s, str):
@@ -1886,12 +1886,15 @@ class Jsonata:
     #
     # JSONata
     # @param {Object} expr - JSONata expression
+    # @param {Object} regex_engine - module/object providing a `compile(pattern, flags)`
+    #     function compatible with the stdlib `re` module (e.g. `re2`), used to compile
+    #     JSONata regex literals. Defaults to the stdlib `re` module.
     # @returns Evaluated expression
     # @throws jexception.JException An exception if an error occured.
-    #      
+    #
     @staticmethod
-    def jsonata(expression: Optional[str]) -> 'Jsonata':
-        return Jsonata(expression)
+    def jsonata(expression: Optional[str], regex_engine: Any = re) -> 'Jsonata':
+        return Jsonata(expression, regex_engine)
 
     #
     # Internal constructor
@@ -1904,11 +1907,13 @@ class Jsonata:
     ast: Optional[parser.Parser.Symbol]
     timestamp: int
     input: Optional[Any]
+    regex_engine: Any
 
-    def __init__(self, expr: Optional[str]) -> None:
+    def __init__(self, expr: Optional[str], regex_engine: Any = re) -> None:
+        self.regex_engine = regex_engine
         try:
             self.parser = Jsonata.get_parser()
-            self.ast = self.parser.parse(expr)  # , optionsRecover);
+            self.ast = self.parser.parse(expr, regex_engine)  # , optionsRecover);
             self.errors = self.ast.errors
             self.ast.errors = None  # delete ast.errors;
         except jexception.JException as err:
@@ -1930,13 +1935,6 @@ class Jsonata:
         #  environment.bind("millis", defineFunction(function() {
         #      return timestamp.getTime()
         #  }, "<:n>"))
-
-        # FIXED: options.RegexEngine not implemented in Java
-        #  if(options && options.RegexEngine) {
-        #      jsonata.RegexEngine = options.RegexEngine
-        #  } else {
-        #      jsonata.RegexEngine = RegExp
-        #  }
 
         # Set instance for this thread
         Jsonata.CURRENT.jsonata = self

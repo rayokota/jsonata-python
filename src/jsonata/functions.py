@@ -549,7 +549,7 @@ class Functions:
 
         if isinstance(token, str):
             result = (string.find(str(token)) != - 1)
-        elif isinstance(token, re.Pattern):
+        elif Functions.is_regex(token):
             matches = Functions.evaluate_matcher(token, string)
             # if (dbg) System.out.println("match = "+matches)
             # result = (typeof matches !== 'undefined')
@@ -647,7 +647,7 @@ class Functions:
         r = None
         for i in range(0, 10):
             try:
-                r = re.sub(pattern, replacement, s)
+                r = pattern.sub(replacement, s)
                 break
             except Exception as e:
                 msg = str(e)
@@ -704,7 +704,7 @@ class Functions:
             else:
                 raise jexception.JException("D3012", -1)
 
-        r = re.sub(pattern, replace_fn, s)
+        r = pattern.sub(replace_fn, s)
         return r
 
     #
@@ -721,7 +721,7 @@ class Functions:
         r = None
         for i in range(0, 10):
             try:
-                r = re.sub(pattern, replacement, s, count=1)
+                r = pattern.sub(replacement, s, count=1)
                 break
             except Exception as e:
                 msg = str(e)
@@ -2020,6 +2020,16 @@ class Functions:
         return isinstance(result, parser.Parser.Symbol) and result._jsonata_lambda
 
     #
+    # Tests whether a value is a compiled regex, from the stdlib re module
+    # or from a pluggable regex_engine (e.g. re2) with a compatible interface.
+    #
+    @staticmethod
+    def is_regex(value: Optional[Any]) -> bool:
+        return isinstance(value, re.Pattern) or (
+            hasattr(value, "search") and hasattr(value, "finditer") and hasattr(value, "sub")
+        )
+
+    #
     # Return value from an object for a given key
     # @param {Object} input - Object/Array
     # @param {String} key - Key in object
@@ -2201,7 +2211,7 @@ class Functions:
 
         ast = None
         try:
-            ast = jsonata.Jsonata(expr)
+            ast = jsonata.Jsonata(expr, jsonata.Jsonata.CURRENT.jsonata.regex_engine)
         except Exception as err:
             # error parsing the expression passed to $eval
             # populateMessage(err)

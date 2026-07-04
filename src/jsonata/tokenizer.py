@@ -95,12 +95,13 @@ class Tokenizer:
     path: str
     length: int
 
-    def __init__(self, path):
+    def __init__(self, path, regex_engine=re):
         self.position = 0
         self.depth = 0
 
         self.path = path
         self.length = len(path)
+        self.regex_engine = regex_engine
 
     @dataclass
     class Token:
@@ -121,7 +122,7 @@ class Tokenizer:
                 return True
         return False
 
-    def scan_regex(self) -> re.Pattern:
+    def scan_regex(self):
         # the prefix '/' will have been previously scanned. Find the end of the regex.
         # search for closing '/' ignoring any that are escaped, or within brackets
         start = self.position
@@ -157,7 +158,7 @@ class Tokenizer:
                     _flags |= re.I
                 if "m" in flags:
                     _flags |= re.M
-                return re.compile(pattern, _flags)  # Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+                return self.regex_engine.compile(pattern, _flags)  # Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
             if (current_char == '(' or current_char == '[' or current_char == '{') and self.path[self.position - 1] != '\\':
                 self.depth += 1
             if (current_char == ')' or current_char == ']' or current_char == '}') and self.path[self.position - 1] != '\\':

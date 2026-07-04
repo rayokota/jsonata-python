@@ -25,6 +25,7 @@
 #
 
 import copy
+import re
 from typing import Any, MutableSequence, Optional, Sequence
 
 from jsonata import jexception, tokenizer, signature, utils
@@ -1413,11 +1414,11 @@ class Parser:
             res.type = "binary"
         return res
 
-    def parse(self, jsonata: Optional[str]) -> Symbol:
+    def parse(self, jsonata: Optional[str], regex_engine: Any = re) -> Symbol:
         self.source = jsonata
 
         # now invoke the tokenizer and the parser and return the syntax tree
-        self.lexer = tokenizer.Tokenizer(self.source)
+        self.lexer = tokenizer.Tokenizer(self.source, regex_engine)
         self.advance()
         # parse the tokens
         expr = self.expression(0)

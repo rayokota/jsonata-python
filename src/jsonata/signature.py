@@ -112,7 +112,7 @@ class Signature:
             symbol = "m"
         else:
             # first check to see if this is a function
-            if utils.Utils.is_function(value) or functions.Functions.is_lambda(value) or isinstance(value, re.Pattern):
+            if utils.Utils.is_function(value) or functions.Functions.is_lambda(value) or functions.Functions.is_regex(value):
                 symbol = "f"
             elif isinstance(value, str):
                 symbol = "s"
