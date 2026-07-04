@@ -733,7 +733,7 @@ class Functions:
         r = None
         for i in range(0, 10):
             try:
-                r = pattern.sub(replacement, s, count=1)
+                r = pattern.sub(replacement, s, 1)
                 break
             except Exception as e:
                 msg = str(e)
@@ -2045,6 +2045,7 @@ class Functions:
             callable(getattr(value, "search", None))
             and callable(getattr(value, "finditer", None))
             and callable(getattr(value, "sub", None))
+            and callable(getattr(value, "split", None))
         )
 
     #
