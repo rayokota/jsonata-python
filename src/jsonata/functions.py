@@ -36,9 +36,10 @@ import sys
 import unicodedata
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any, AnyStr, Mapping, NoReturn, Optional, Protocol, Sequence, Callable, Type, Union
+from typing import Any, AnyStr, Mapping, NoReturn, Optional, Sequence, Callable, Type, Union
 
 from jsonata import datetimeutils, jexception, parser, utils
+from jsonata.regex_engine import CompiledPattern
 
 
 class Functions:
@@ -505,18 +506,6 @@ class Functions:
         match: str
         index: int
         groups: Sequence[AnyStr]
-
-    class CompiledPattern(Protocol):
-        """
-        Structural type for a compiled regex: matches stdlib `re.Pattern`
-        as well as whatever a pluggable regex_engine's compile() returns
-        (e.g. a `google-re2` pattern object). See Functions.is_regex.
-        """
-
-        def search(self, string: str) -> Optional[Any]: ...
-        def finditer(self, string: str) -> Any: ...
-        def sub(self, repl: Any, string: str, count: int = 0) -> str: ...
-        def split(self, string: str, maxsplit: int = 0) -> list[str]: ...
 
     #
     # Evaluate the matcher function against the str arg

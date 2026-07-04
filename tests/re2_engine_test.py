@@ -1,53 +1,49 @@
-﻿import re
-
 import jsonata
 import pytest
+from jsonata.regex_engine import RegexFlags
 
 re2 = pytest.importorskip("re2")
 
 
-class RE2Engine:
+def re2_regex_engine(pattern: str, flags: RegexFlags):
     """
-    Adapts google-re2's Options-based compile() to the re.compile(pattern, flags)
+    Adapts google-re2's Options-based compile() to the (pattern, RegexFlags)
     interface expected by Jsonata's regex_engine hook.
     """
-
-    @staticmethod
-    def compile(pattern, flags=0):
-        options = re2.Options()
-        options.case_sensitive = not bool(flags & re.IGNORECASE)
-        options.one_line = not bool(flags & re.MULTILINE)
-        options.log_errors = False
-        return re2.compile(pattern, options)
+    options = re2.Options()
+    options.case_sensitive = not flags.case_insensitive
+    options.one_line = not flags.multiline
+    options.log_errors = False
+    return re2.compile(pattern, options)
 
 
 class TestRE2Engine:
 
     def test_match(self):
-        expr = jsonata.Jsonata('$match("hello world", /o w/)', RE2Engine)
+        expr = jsonata.Jsonata('$match("hello world", /o w/)', re2_regex_engine)
         assert expr.evaluate(None) == {"match": "o w", "index": 4, "groups": []}
 
     def test_match_case_insensitive_flag(self):
-        expr = jsonata.Jsonata('$match("HELLO", /hello/i)', RE2Engine)
+        expr = jsonata.Jsonata('$match("HELLO", /hello/i)', re2_regex_engine)
         result = expr.evaluate(None)
         assert result["match"] == "HELLO"
 
     def test_contains(self):
-        expr = jsonata.Jsonata('$contains("hello", /ell/)', RE2Engine)
+        expr = jsonata.Jsonata('$contains("hello", /ell/)', re2_regex_engine)
         assert expr.evaluate(None) is True
 
     def test_replace_with_string(self):
-        expr = jsonata.Jsonata('$replace("abc123def", /[0-9]+/, "#")', RE2Engine)
+        expr = jsonata.Jsonata('$replace("abc123def", /[0-9]+/, "#")', re2_regex_engine)
         assert expr.evaluate(None) == "abc#def"
 
     def test_replace_with_function(self):
         expr = jsonata.Jsonata(
-            '$replace("abc123", /[0-9]+/, function($m) { $m.match & "!" })', RE2Engine
+            '$replace("abc123", /[0-9]+/, function($m) { $m.match & "!" })', re2_regex_engine
         )
         assert expr.evaluate(None) == "abc123!"
 
     def test_split(self):
-        expr = jsonata.Jsonata('$split("a1b2c3", /[0-9]/)', RE2Engine)
+        expr = jsonata.Jsonata('$split("a1b2c3", /[0-9]/)', re2_regex_engine)
         assert expr.evaluate(None) == ["a", "b", "c", ""]
 
     def test_rejects_backreferences(self):
@@ -56,7 +52,7 @@ class TestRE2Engine:
         # guaranteed-linear-time engine, so this must fail at parse time
         # (regex literals are compiled while the expression is constructed).
         with pytest.raises(re2.error):
-            jsonata.Jsonata(r'$match("abab", /(a)\1/)', RE2Engine)
+            jsonata.Jsonata(r'$match("abab", /(a)\1/)', re2_regex_engine)
 
     def test_default_engine_still_stdlib_re(self):
         # No regex_engine argument -> falls back to stdlib re, which *does*
@@ -72,7 +68,7 @@ class TestRE2Engine:
         # a backreference inside the $eval'd source must fail to compile
         # under RE2, surfaced as a D3120 "invalid expression" error.
         expr = jsonata.Jsonata(
-            r"""$eval('$match("xaay", /(a)\\1/)')""", RE2Engine
+            r"""$eval('$match("xaay", /(a)\\1/)')""", re2_regex_engine
         )
         with pytest.raises(jsonata.JException) as exc_info:
             expr.evaluate(None)

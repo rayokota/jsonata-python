@@ -27,13 +27,13 @@
 import copy
 import inspect
 import math
-import re
 import sys
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping, Union
 
 from jsonata import functions, jexception, parser, signature as sig, timebox, utils
+from jsonata.regex_engine import RegexEngine, default_regex_engine
 
 
 #
@@ -1886,15 +1886,16 @@ class Jsonata:
     #
     # JSONata
     # @param {Object} expr - JSONata expression
-    # @param {Object} regex_engine - module/object providing a `compile(pattern, flags)`
-    #     function compatible with the stdlib `re` module (or an adapter that exposes
-    #     this interface for engines like `google-re2`), used to compile JSONata regex
-    #     literals. Defaults to the stdlib `re` module.
+    # @param {Object} regex_engine - callable taking (pattern: str, flags:
+    #     regex_engine.RegexFlags) and returning a compiled pattern, used to
+    #     compile JSONata regex literals. Every engine, including the
+    #     default, must translate RegexFlags into its own native
+    #     representation -- see jsonata.regex_engine.default_regex_engine.
     # @returns Evaluated expression
     # @throws jexception.JException An exception if an error occured.
     #
     @staticmethod
-    def jsonata(expression: Optional[str], regex_engine: Any = re) -> 'Jsonata':
+    def jsonata(expression: Optional[str], regex_engine: RegexEngine = default_regex_engine) -> 'Jsonata':
         return Jsonata(expression, regex_engine)
 
     #
@@ -1908,9 +1909,9 @@ class Jsonata:
     ast: Optional[parser.Parser.Symbol]
     timestamp: int
     input: Optional[Any]
-    regex_engine: Any
+    regex_engine: RegexEngine
 
-    def __init__(self, expr: Optional[str], regex_engine: Any = re) -> None:
+    def __init__(self, expr: Optional[str], regex_engine: RegexEngine = default_regex_engine) -> None:
         self.regex_engine = regex_engine
         try:
             self.parser = Jsonata.get_parser()
