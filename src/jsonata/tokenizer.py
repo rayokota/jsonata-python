@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from jsonata import jexception, utils
-from jsonata.regex_engine import RegexEngine, RegexFlags, default_regex_engine
+from jsonata.regex_engine import CompiledPattern, RegexEngine, RegexFlags, default_regex_engine
 
 _NUMBER_PATTERN = re.compile(r"^-?(0|([1-9][0-9]*))(\.[0-9]+)?([Ee][-+]?[0-9]+)?")
 
@@ -123,7 +123,7 @@ class Tokenizer:
                 return True
         return False
 
-    def scan_regex(self):
+    def scan_regex(self) -> CompiledPattern:
         # the prefix '/' will have been previously scanned. Find the end of the regex.
         # search for closing '/' ignoring any that are escaped, or within brackets
         start = self.position

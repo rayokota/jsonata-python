@@ -2209,7 +2209,15 @@ class Functions:
         # undefined inputs always return undefined
         if expr is None:
             return None
-        input = jsonata.Jsonata.CURRENT.jsonata.input  # =  this.input;
+
+        # Capture the enclosing instance *before* constructing the nested
+        # ast below: Jsonata.__init__ unconditionally overwrites
+        # Jsonata.CURRENT.jsonata as a side effect, so re-reading
+        # CURRENT.jsonata afterwards would silently return the inner
+        # expression instead of the enclosing one, losing access to its
+        # environment (e.g. outer variable bindings).
+        enclosing = jsonata.Jsonata.CURRENT.jsonata
+        input = enclosing.input  # =  this.input;
         if focus is not None:
             input = focus
             # if the input is a JSON array, then wrap it in a singleton sequence so it gets treated as a single input
@@ -2219,18 +2227,24 @@ class Functions:
 
         ast = None
         try:
-            ast = jsonata.Jsonata(expr, jsonata.Jsonata.CURRENT.jsonata.regex_engine)
-        except Exception as err:
-            # error parsing the expression passed to $eval
-            # populateMessage(err)
-            raise jexception.JException("D3120", -1)
-        result = None
-        try:
-            result = ast.evaluate(input, jsonata.Jsonata.CURRENT.jsonata.environment)
-        except Exception as err:
-            # error evaluating the expression passed to $eval
-            # populateMessage(err)
-            raise jexception.JException("D3121", -1)
+            try:
+                ast = jsonata.Jsonata(expr, enclosing.regex_engine)
+            except Exception as err:
+                # error parsing the expression passed to $eval
+                # populateMessage(err)
+                raise jexception.JException("D3120", -1)
+            result = None
+            try:
+                result = ast.evaluate(input, enclosing.environment)
+            except Exception as err:
+                # error evaluating the expression passed to $eval
+                # populateMessage(err)
+                raise jexception.JException("D3121", -1)
+        finally:
+            # Restore the enclosing instance as current now that the nested
+            # expression's construction/evaluation (which needed CURRENT.jsonata
+            # to be the *inner* ast -- see Jsonata.get_per_thread_instance) is done.
+            jsonata.Jsonata.CURRENT.jsonata = enclosing
 
         return result
 
