@@ -27,13 +27,13 @@
 import copy
 import inspect
 import math
-import re
 import sys
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, MutableSequence, Optional, Sequence, Type, MutableMapping, Union
 
 from jsonata import functions, jexception, parser, signature as sig, timebox, utils
+from jsonata.regex_engine import RegexEngine, default_regex_engine
 
 
 #
@@ -72,7 +72,7 @@ class Jsonata:
         # @param timeout Timeout in millis
         # @param maxRecursionDepth Max recursion depth
         #         
-        def set_runtime_bounds(self, timeout: int, max_recursion_depth: int) -> None:
+        def set_runtime_bounds(self, timeout: Optional[int], max_recursion_depth: Optional[int]) -> None:
             timebox.Timebox(self, timeout, max_recursion_depth)
 
         def set_evaluate_entry_callback(self, cb: Callable) -> None:
@@ -231,14 +231,27 @@ class Jsonata:
     def eval(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
         # Thread safety:
         # Make sure each evaluate is executed on an instance per thread
-        return self.get_per_thread_instance()._eval(expr, input, environment)
+        _this = self.get_per_thread_instance()
+        # Save and restore the evaluation context so that nested
+        # evaluations (e.g. $eval()) see the correct context: without this,
+        # evaluating a sibling argument (e.g. $eval's own second argument)
+        # would leave _this.environment pointing at whatever inner scope it
+        # last touched, rather than the environment in effect at this call.
+        _input = _this.input
+        _environment = _this.environment
+        try:
+            return _this._eval(expr, input, environment)
+        finally:
+            _this.input = _input
+            _this.environment = _environment
 
     def _eval(self, expr: Optional[parser.Parser.Symbol], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
         result = None
 
-        # Store the current input
-        # This is required by Functions.functionEval for current $eval() input context
+        # Store the current input and environment
+        # This is required by Functions.functionEval for current $eval() context
         self.input = input
+        self.environment = environment
 
         if self.parser.dbg:
             print("eval expr=" + str(expr) + " type=" + expr.type)  # +" input="+input);
@@ -1300,7 +1313,7 @@ class Jsonata:
         return result
 
     def is_function_like(self, o: Optional[Any]) -> bool:
-        return utils.Utils.is_function(o) or functions.Functions.is_lambda(o) or (isinstance(o, re.Pattern))
+        return utils.Utils.is_function(o) or functions.Functions.is_lambda(o) or functions.Functions.is_regex(o)
 
     CURRENT = threading.local()
     MUTEX = threading.Lock()
@@ -1477,7 +1490,7 @@ class Jsonata:
                 #  }
             elif isinstance(proc, Jsonata.JLambda):
                 result = proc.call(input, validated_args)
-            elif isinstance(proc, re.Pattern):
+            elif functions.Functions.is_regex(proc):
                 _res = []
                 for s in validated_args:
                     if isinstance(s, str):
@@ -1886,12 +1899,22 @@ class Jsonata:
     #
     # JSONata
     # @param {Object} expr - JSONata expression
+    # @param {Object} regex_engine - callable taking (pattern: str, flags:
+    #     regex_engine.RegexFlags) and returning a compiled pattern, used to
+    #     compile JSONata regex literals. Every engine, including the
+    #     default, must translate RegexFlags into its own native
+    #     representation -- see jsonata.regex_engine.default_regex_engine.
+    # @param {Integer} timeout - max evaluation time in milliseconds, or None
+    #     for no limit. Raises D1012 if exceeded.
+    # @param {Integer} stack - max eval-apply recursion depth, or None for
+    #     no limit. Raises D1011 if exceeded.
     # @returns Evaluated expression
     # @throws jexception.JException An exception if an error occured.
-    #      
+    #
     @staticmethod
-    def jsonata(expression: Optional[str]) -> 'Jsonata':
-        return Jsonata(expression)
+    def jsonata(expression: Optional[str], regex_engine: RegexEngine = default_regex_engine,
+               timeout: Optional[int] = None, stack: Optional[int] = None) -> 'Jsonata':
+        return Jsonata(expression, regex_engine, timeout, stack)
 
     #
     # Internal constructor
@@ -1904,11 +1927,18 @@ class Jsonata:
     ast: Optional[parser.Parser.Symbol]
     timestamp: int
     input: Optional[Any]
+    regex_engine: RegexEngine
+    timeout: Optional[int]
+    stack: Optional[int]
 
-    def __init__(self, expr: Optional[str]) -> None:
+    def __init__(self, expr: Optional[str], regex_engine: RegexEngine = default_regex_engine,
+                timeout: Optional[int] = None, stack: Optional[int] = None) -> None:
+        self.regex_engine = regex_engine
+        self.timeout = timeout
+        self.stack = stack
         try:
             self.parser = Jsonata.get_parser()
-            self.ast = self.parser.parse(expr)  # , optionsRecover);
+            self.ast = self.parser.parse(expr, regex_engine)  # , optionsRecover);
             self.errors = self.ast.errors
             self.ast.errors = None  # delete ast.errors;
         except jexception.JException as err:
@@ -1916,6 +1946,8 @@ class Jsonata:
             # populateMessage(err); // possible side-effects on `err`
             raise err
         self.environment = self.create_frame(Jsonata.static_frame)
+        if timeout is not None or stack is not None:
+            self.environment.set_runtime_bounds(timeout, stack)
 
         self.timestamp = timebox.Timebox.current_milli_time()  # will be overridden on each call to evalute()
 
@@ -1930,13 +1962,6 @@ class Jsonata:
         #  environment.bind("millis", defineFunction(function() {
         #      return timestamp.getTime()
         #  }, "<:n>"))
-
-        # FIXED: options.RegexEngine not implemented in Java
-        #  if(options && options.RegexEngine) {
-        #      jsonata.RegexEngine = options.RegexEngine
-        #  } else {
-        #      jsonata.RegexEngine = RegExp
-        #  }
 
         # Set instance for this thread
         Jsonata.CURRENT.jsonata = self

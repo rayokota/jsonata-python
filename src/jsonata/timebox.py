@@ -21,30 +21,31 @@
 #
 
 import time
+from typing import Optional
 
 from jsonata import jexception
 
 
 #
 # Configure max runtime / max recursion depth.
-# See Frame.setRuntimeBounds - usually not used directly
-# 
+# See Frame.set_runtime_bounds - usually not used directly
+#
 class Timebox:
     #
-    # Protect the process/browser from a runnaway expression
+    # Protect the process from a runaway expression
     # i.e. Infinite loop (tail recursion), or excessive stack growth
     #
     # @param {Object} expr - expression to protect
-    # @param {Number} timeout - max time in ms
-    # @param {Number} max_depth - max stack depth
+    # @param {Number} timeout - max time in ms, or None for no time limit
+    # @param {Number} max_depth - max stack depth, or None for no depth limit
     #
 
-    timeout: int
-    max_depth: int
+    timeout: Optional[int]
+    max_depth: Optional[int]
     time: int
     depth: int
 
-    def __init__(self, expr, timeout=10000, max_depth=100):
+    def __init__(self, expr, timeout: Optional[int] = None, max_depth: Optional[int] = None):
         self.timeout = timeout
         self.max_depth = max_depth
         self.time = Timebox.current_milli_time()
@@ -68,21 +69,12 @@ class Timebox:
         expr.set_evaluate_exit_callback(exit_callback)
 
     def check_runaway(self) -> None:
-        if self.depth > self.max_depth:
+        if self.max_depth is not None and self.depth > self.max_depth:
             # stack too deep
-            raise jexception.JException(
-                "Stack overflow error: Check for non-terminating recursive function.  Consider rewriting as tail-recursive. Depth=" + str(
-                    self.depth) + " max=" + str(self.max_depth), -1)
-            # stack: new Error().stack,
-            # code: "U1001"
-            # }
-        if Timebox.current_milli_time() - self.time > self.timeout:
+            raise jexception.JException("D1011", -1)
+        if self.timeout is not None and Timebox.current_milli_time() - self.time > self.timeout:
             # expression has run for too long
-            raise jexception.JException(
-                "Expression evaluation timeout: " + str(self.timeout) + "ms. Check for infinite loop", -1)
-            # stack: new Error().stack,
-            # code: "U1001"
-            # }
+            raise jexception.JException("D1012", -1, self.timeout)
 
     @staticmethod
     def current_milli_time() -> int:

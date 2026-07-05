@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from jsonata import jexception, utils
+from jsonata.regex_engine import CompiledPattern, RegexEngine, RegexFlags, default_regex_engine
 
 _NUMBER_PATTERN = re.compile(r"^-?(0|([1-9][0-9]*))(\.[0-9]+)?([Ee][-+]?[0-9]+)?")
 
@@ -95,12 +96,13 @@ class Tokenizer:
     path: str
     length: int
 
-    def __init__(self, path):
+    def __init__(self, path, regex_engine: RegexEngine = default_regex_engine):
         self.position = 0
         self.depth = 0
 
         self.path = path
         self.length = len(path)
+        self.regex_engine = regex_engine
 
     @dataclass
     class Token:
@@ -121,7 +123,7 @@ class Tokenizer:
                 return True
         return False
 
-    def scan_regex(self) -> re.Pattern:
+    def scan_regex(self) -> CompiledPattern:
         # the prefix '/' will have been previously scanned. Find the end of the regex.
         # search for closing '/' ignoring any that are escaped, or within brackets
         start = self.position
@@ -151,13 +153,11 @@ class Tokenizer:
                         current_char = None
                 flags = self.path[start:self.position] + 'g'
 
-                # Convert flags to Java Pattern flags
-                _flags = 0
-                if "i" in flags:
-                    _flags |= re.I
-                if "m" in flags:
-                    _flags |= re.M
-                return re.compile(pattern, _flags)  # Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+                regex_flags = RegexFlags(
+                    case_insensitive="i" in flags,
+                    multiline="m" in flags,
+                )
+                return self.regex_engine(pattern, regex_flags)
             if (current_char == '(' or current_char == '[' or current_char == '{') and self.path[self.position - 1] != '\\':
                 self.depth += 1
             if (current_char == ')' or current_char == ']' or current_char == '}') and self.path[self.position - 1] != '\\':

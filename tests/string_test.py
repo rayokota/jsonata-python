@@ -69,6 +69,30 @@ class TestString:
         assert result["end"] == 4
         assert result["groups"] == ["l"]
 
+    def test_eval_sees_enclosing_variable_binding(self):
+        # $eval's dynamically-parsed expression must see variables bound in
+        # the enclosing scope (here, via an in-expression := assignment),
+        # not just the static top-level environment.
+        expr = jsonata.Jsonata('($x := 5; $eval("$x + 1"))')
+        assert expr.evaluate(None) == 6
+
+    def test_eval_sees_explicit_top_level_bindings(self):
+        # Same as above, but for bindings passed via evaluate()'s bindings
+        # argument rather than an in-expression assignment.
+        expr = jsonata.Jsonata('$eval("$x")')
+        assert expr.evaluate(None, {"x": 42}) == 42
+
+    def test_eval_unaffected_by_sibling_argument_scope(self):
+        # $eval's second (focus) argument is evaluated before its own body
+        # runs, and here contains a nested block with its own environment.
+        # Without saving/restoring the evaluation context around each
+        # nested eval() call, evaluating that sibling argument would leave
+        # the tracked "current" environment pointing at the inner block's
+        # scope, causing $eval to resolve $x (from the outer scope) as
+        # undefined instead of 5.
+        expr = jsonata.Jsonata('($x := 5; $eval("$x", (($y := 1; $y))))')
+        assert expr.evaluate(None) == 5
+
     #
     # Additional $split tests
     #   
