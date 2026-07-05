@@ -175,6 +175,8 @@ class JException(RuntimeError):
         "T1007": "Attempted to partially apply a non-function. Did you mean ${{{token}}}?",
         "T1008": "Attempted to partially apply a non-function",
         "D1009": "Multiple key definitions evaluate to same key: {{value}}",
+        "D1011": "Stack overflow. Check for non-terminating recursive function.  Consider rewriting as tail-recursive",
+        "D1012": "Evaluation timeout after {{value}} milliseconds. Check for infinite loop",
         "T1010": "The matcher Object argument passed to Object {{token}} does not return the correct object structure",
         "T2001": "The left side of the {{token}} operator must evaluate to a number",
         "T2002": "The right side of the {{token}} operator must evaluate to a number",

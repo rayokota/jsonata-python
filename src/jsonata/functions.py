@@ -2228,22 +2228,45 @@ class Functions:
         ast = None
         try:
             try:
+                # Only used to parse expr into an AST (ast.ast below); the
+                # actual evaluation reuses the enclosing instance directly
+                # (see below), so regex_engine here just needs to be valid
+                # for parsing -- it does not need to be evaluated against.
                 ast = jsonata.Jsonata(expr, enclosing.regex_engine)
             except Exception as err:
                 # error parsing the expression passed to $eval
                 # populateMessage(err)
                 raise jexception.JException("D3120", -1)
+
+            # Constructing `ast` overwrote Jsonata.CURRENT.jsonata as a side
+            # effect (see Jsonata.__init__); restore it to the enclosing
+            # instance before evaluating, so enclosing.eval()'s own
+            # get_per_thread_instance() lookup resolves correctly.
+            jsonata.Jsonata.CURRENT.jsonata = enclosing
+
             result = None
             try:
-                result = ast.evaluate(input, enclosing.environment)
+                # Evaluate ast.ast (the parsed tree) using the *enclosing*
+                # instance's low-level eval(), reusing enclosing.environment
+                # directly rather than calling ast.evaluate(input, environment)
+                # (which copies environment's bindings one level deep into a
+                # fresh child frame rooted at ast's own static frame). This
+                # mirrors jsonata-java's Functions.functionEval, which calls
+                # Jsonata.current.get().evaluate(ast.ast, input, env) rather
+                # than constructing a second, disconnected evaluation
+                # context. Reusing the environment directly means $eval sees
+                # bindings at every level of the enclosing scope chain (not
+                # just the immediate frame) and correctly inherits any
+                # stack/timeout guardrails registered on an ancestor frame,
+                # since Frame.lookup walks the parent chain.
+                result = enclosing.eval(ast.ast, input, enclosing.environment)
             except Exception as err:
                 # error evaluating the expression passed to $eval
                 # populateMessage(err)
                 raise jexception.JException("D3121", -1)
         finally:
-            # Restore the enclosing instance as current now that the nested
-            # expression's construction/evaluation (which needed CURRENT.jsonata
-            # to be the *inner* ast -- see Jsonata.get_per_thread_instance) is done.
+            # Restore the enclosing instance as current now that $eval's
+            # parsing/evaluation is done.
             jsonata.Jsonata.CURRENT.jsonata = enclosing
 
         return result

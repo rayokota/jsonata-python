@@ -107,6 +107,36 @@ JSONata> (a & b)
 hello world
 ```
 
+## Guardrails
+
+JSONata is Turing-complete, so it's possible to write expressions that loop forever or exhaust memory. If you evaluate
+untrusted expressions, configure these guardrails (see the JS reference implementation's
+[guardrails docs](https://docs.jsonata.org/guardrails) for more background):
+
+- **Stack overflow** — the `stack` parameter caps the depth of the eval-apply cycle. Exceeding it raises `D1011`.
+- **Excessive execution time** — the `timeout` parameter (in milliseconds) catches tail-recursive infinite loops that
+  `stack` can't. Exceeding it raises `D1012`.
+- **Rogue regular expressions** — the `regex_engine` parameter lets you swap in a linear-time engine (e.g.
+  [`google-re2`](https://pypi.org/project/google-re2/)) to protect against [ReDoS](https://en.wikipedia.org/wiki/ReDoS),
+  since the `timeout` guardrail can't interrupt a regex match in progress.
+
+```python
+import re2  # pip install google-re2
+import jsonata
+from jsonata.regex_engine import RegexFlags
+
+
+def re2_regex_engine(pattern: str, flags: RegexFlags):
+    options = re2.Options()
+    options.case_sensitive = not flags.case_insensitive
+    options.one_line = not flags.multiline
+    return re2.compile(pattern, options)
+
+
+expr = jsonata.Jsonata("<JSONata expression>", re2_regex_engine, timeout=1000, stack=500)
+result = expr.evaluate(data)
+```
+
 ## Running Tests
 
 This project uses the repository of the reference implementation as a submodule. This allows referencing the current version of the unit tests. To clone this repository, run:

@@ -72,7 +72,7 @@ class Jsonata:
         # @param timeout Timeout in millis
         # @param maxRecursionDepth Max recursion depth
         #         
-        def set_runtime_bounds(self, timeout: int, max_recursion_depth: int) -> None:
+        def set_runtime_bounds(self, timeout: Optional[int], max_recursion_depth: Optional[int]) -> None:
             timebox.Timebox(self, timeout, max_recursion_depth)
 
         def set_evaluate_entry_callback(self, cb: Callable) -> None:
@@ -1904,12 +1904,17 @@ class Jsonata:
     #     compile JSONata regex literals. Every engine, including the
     #     default, must translate RegexFlags into its own native
     #     representation -- see jsonata.regex_engine.default_regex_engine.
+    # @param {Integer} timeout - max evaluation time in milliseconds, or None
+    #     for no limit. Raises D1012 if exceeded.
+    # @param {Integer} stack - max eval-apply recursion depth, or None for
+    #     no limit. Raises D1011 if exceeded.
     # @returns Evaluated expression
     # @throws jexception.JException An exception if an error occured.
     #
     @staticmethod
-    def jsonata(expression: Optional[str], regex_engine: RegexEngine = default_regex_engine) -> 'Jsonata':
-        return Jsonata(expression, regex_engine)
+    def jsonata(expression: Optional[str], regex_engine: RegexEngine = default_regex_engine,
+               timeout: Optional[int] = None, stack: Optional[int] = None) -> 'Jsonata':
+        return Jsonata(expression, regex_engine, timeout, stack)
 
     #
     # Internal constructor
@@ -1923,9 +1928,14 @@ class Jsonata:
     timestamp: int
     input: Optional[Any]
     regex_engine: RegexEngine
+    timeout: Optional[int]
+    stack: Optional[int]
 
-    def __init__(self, expr: Optional[str], regex_engine: RegexEngine = default_regex_engine) -> None:
+    def __init__(self, expr: Optional[str], regex_engine: RegexEngine = default_regex_engine,
+                timeout: Optional[int] = None, stack: Optional[int] = None) -> None:
         self.regex_engine = regex_engine
+        self.timeout = timeout
+        self.stack = stack
         try:
             self.parser = Jsonata.get_parser()
             self.ast = self.parser.parse(expr, regex_engine)  # , optionsRecover);
@@ -1936,6 +1946,8 @@ class Jsonata:
             # populateMessage(err); // possible side-effects on `err`
             raise err
         self.environment = self.create_frame(Jsonata.static_frame)
+        if timeout is not None or stack is not None:
+            self.environment.set_runtime_bounds(timeout, stack)
 
         self.timestamp = timebox.Timebox.current_milli_time()  # will be overridden on each call to evalute()
 
