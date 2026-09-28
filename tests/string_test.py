@@ -1,4 +1,5 @@
 ﻿import jsonata
+import pytest
 
 
 #
@@ -145,3 +146,16 @@ class TestString:
         assert jsonata.Jsonata("$trim(\" \")").evaluate(None) == ""
         assert jsonata.Jsonata("$trim(\"\")").evaluate(None) == ""
         assert jsonata.Jsonata("$trim(notthere)").evaluate(None) is None
+
+    def test_undefined_args(self):
+        assert jsonata.Jsonata("$substring('abc', $nothing)").evaluate(None) == "abc"
+        assert jsonata.Jsonata("$substring('abc', $nothing, 1)").evaluate(None) == ""
+        assert jsonata.Jsonata("$substring(?, $nothing)('abc')").evaluate(None) == "abc"
+        assert jsonata.Jsonata("$substringAfter('abc', $nothing)").evaluate(None) == "abc"
+        assert jsonata.Jsonata("$pad('abc', $nothing)").evaluate(None) == "abc"
+
+    def test_substring_null_args(self):
+        for expr in ["$substring('abc', null)", "$substring('abc', 1, null)", "$substring('abc', $nothing, null)"]:
+            with pytest.raises(jsonata.JException) as exc_info:
+                jsonata.Jsonata(expr).evaluate(None)
+            assert exc_info.value.error == "T0410"

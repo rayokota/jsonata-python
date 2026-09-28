@@ -230,7 +230,14 @@ class Functions:
         if string is utils.Utils.NULL_VALUE:
             raise jexception.JException("T0410", -1)
 
-        start = int(start) if start is not None else None
+        if start is utils.Utils.NULL_VALUE or length is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
+        # match JS: undefined start returns the whole string, or "" if a length is given
+        if start is None:
+            return string if length is None else ""
+
+        start = int(start)
         length = int(length) if length is not None else None
 
         # not used: var strArray = stringToArray(string)
@@ -338,6 +345,9 @@ class Functions:
         if string is utils.Utils.NULL_VALUE:
             raise jexception.JException("T0410", -1)
 
+        if chars is None:
+            return string
+
         pos = string.find(chars)
         if pos > -1:
             return string[pos + len(chars):]
@@ -442,12 +452,15 @@ class Functions:
         if char is None or not char:
             char = " "
 
+        # match JS: undefined width adds no padding
+        if width is None:
+            return string
+
         # match JS: truncate width to integer
-        if width is not None:
-            try:
-                width = int(width)
-            except Exception:
-                width = 0
+        try:
+            width = int(width)
+        except Exception:
+            width = 0
 
         if width < 0:
             result = Functions.left_pad(string, -width, char)
