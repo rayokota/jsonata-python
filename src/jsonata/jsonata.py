@@ -1643,8 +1643,7 @@ class Jsonata:
         for param in proc.arguments:
             #         proc.arguments.forEach(Object (param, index) {
             arg = args[index] if index < len(args) else None
-            if (arg is None) or (
-                    isinstance(arg, parser.Parser.Symbol) and ("operator" == arg.type and "?" == arg.value)):
+            if isinstance(arg, parser.Parser.Symbol) and ("operator" == arg.type and "?" == arg.value):
                 unbound_args.append(param)
             else:
                 env.bind(str(param.value), arg)
@@ -1671,17 +1670,12 @@ class Jsonata:
 
         # var body = "function($a,$c) { $substring($a,0,$c) }"
 
-        sig_args = []
-        part_args = []
-        i = 0
-        while i < native.get_number_of_args():
-            arg_name = "$" + chr(ord('a') + i)
-            sig_args.append(arg_name)
-            if i >= len(args) or args[i] is None:
-                part_args.append(arg_name)
-            else:
-                part_args.append(args[i])
-            i += 1
+        # leave out trailing args that are missing or undefined, so the native is called
+        # without them and optional params aren't validated against undefined
+        nargs = min(len(args), native.get_number_of_args())
+        while nargs > 0 and args[nargs - 1] is None:
+            nargs -= 1
+        sig_args = ["$" + chr(ord('a') + i) for i in range(nargs)]
 
         body = "function(" + ", ".join(sig_args) + "){"
         body += "$" + native.function_name + "(" + ", ".join(sig_args) + ") }"

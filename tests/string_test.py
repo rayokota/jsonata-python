@@ -145,3 +145,29 @@ class TestString:
         assert jsonata.Jsonata("$trim(\" \")").evaluate(None) == ""
         assert jsonata.Jsonata("$trim(\"\")").evaluate(None) == ""
         assert jsonata.Jsonata("$trim(notthere)").evaluate(None) is None
+
+    def test_match_limit(self):
+        res = jsonata.Jsonata("$match('ababab', /ab/)").evaluate(None)
+        assert res is not None
+        assert [m["index"] for m in res] == [0, 2, 4]
+        assert jsonata.Jsonata("$match('ababab', /ab/, 0)").evaluate(None) is None
+        assert jsonata.Jsonata("$match('ababab', /ab/, 1)").evaluate(None) == {"match": "ab", "index": 0, "groups": []}
+
+        res = jsonata.Jsonata("$match('ababab', /ab/, 2)").evaluate(None)
+        assert res is not None
+        assert [m["index"] for m in res] == [0, 2]
+
+        res = jsonata.Jsonata("$match('ababab', /ab/, 5)").evaluate(None)
+        assert res is not None
+        assert [m["index"] for m in res] == [0, 2, 4]
+
+    def test_partial_application_with_map(self):
+        # Only ? placeholders are unbound, so $map doesn't pass the index as a trailing argument
+        assert jsonata.Jsonata("$map(['abc', 'abc'], $substring(?, 1))").evaluate(None) == ["bc", "bc"]
+        assert jsonata.Jsonata("$map(['ab', 'ab'], $match(?, /ab/)).match").evaluate(None) == ["ab", "ab"]
+
+    def test_partial_application_optional_args(self):
+        # Trailing args that are missing or undefined aren't passed to the native function
+        assert jsonata.Jsonata("$sort(?)([3, 1, 2])").evaluate(None) == [1, 2, 3]
+        assert jsonata.Jsonata("$map([[3, 1, 2], [2, 1]], $sort(?))").evaluate(None) == [[1, 2, 3], [1, 2]]
+        assert jsonata.Jsonata("$sort(?, $nothing)([3, 1, 2])").evaluate(None) == [1, 2, 3]
