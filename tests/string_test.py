@@ -167,7 +167,6 @@ class TestString:
         assert jsonata.Jsonata("$map(['ab', 'ab'], $match(?, /ab/)).match").evaluate(None) == ["ab", "ab"]
 
     def test_partial_application_optional_args(self):
-        # Trailing args that are missing or undefined aren't passed to the native function
+        # Trailing args that weren't supplied aren't passed to the native function
         assert jsonata.Jsonata("$sort(?)([3, 1, 2])").evaluate(None) == [1, 2, 3]
         assert jsonata.Jsonata("$map([[3, 1, 2], [2, 1]], $sort(?))").evaluate(None) == [[1, 2, 3], [1, 2]]
-        assert jsonata.Jsonata("$sort(?, $nothing)([3, 1, 2])").evaluate(None) == [1, 2, 3]

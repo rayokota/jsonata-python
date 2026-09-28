@@ -1670,11 +1670,9 @@ class Jsonata:
 
         # var body = "function($a,$c) { $substring($a,0,$c) }"
 
-        # leave out trailing args that are missing or undefined, so the native is called
+        # leave out trailing args that weren't supplied, so the native is called
         # without them and optional params aren't validated against undefined
         nargs = min(len(args), native.get_number_of_args())
-        while nargs > 0 and args[nargs - 1] is None:
-            nargs -= 1
         sig_args = ["$" + chr(ord('a') + i) for i in range(nargs)]
 
         body = "function(" + ", ".join(sig_args) + "){"
