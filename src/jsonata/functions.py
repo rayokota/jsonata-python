@@ -28,6 +28,7 @@ import datetime
 import decimal
 import functools
 import inspect
+import itertools
 import json
 import math
 import random
@@ -581,10 +582,10 @@ class Functions:
 
         result = utils.Utils.create_sequence()
         matches = Functions.evaluate_matcher(regex, string)
+        if limit is not None:
+            matches = itertools.islice(matches, math.ceil(limit))
 
-        for i, rm in enumerate(matches):
-            if limit is not None and i >= limit:
-                break
+        for rm in matches:
             m = {"match": rm.match, "index": rm.index, "groups": rm.groups}
             # Convert to JSON map:
             result.append(m)

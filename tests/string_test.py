@@ -1,4 +1,5 @@
 ﻿import jsonata
+from jsonata.regex_engine import default_regex_engine
 
 
 #
@@ -160,6 +161,40 @@ class TestString:
         res = jsonata.Jsonata("$match('ababab', /ab/, 5)").evaluate(None)
         assert res is not None
         assert [m["index"] for m in res] == [0, 2, 4]
+
+    def test_match_fractional_limit(self):
+        res = jsonata.Jsonata("$match('ababab', /ab/, 4/2)").evaluate(None)
+        assert res is not None
+        assert [m["index"] for m in res] == [0, 2]
+
+        # Like jsonata-js, matches are returned while the count is less than the limit
+        res = jsonata.Jsonata("$match('ababab', /ab/, 1.5)").evaluate(None)
+        assert res is not None
+        assert [m["index"] for m in res] == [0, 2]
+
+    def test_match_limit_stops_searching(self):
+        searched = []
+
+        class CountingPattern:
+            def __init__(self, pattern):
+                self._pattern = pattern
+
+            def __getattr__(self, name):
+                return getattr(self._pattern, name)
+
+            def finditer(self, string):
+                for m in self._pattern.finditer(string):
+                    searched.append(m.start())
+                    yield m
+
+        def counting_regex_engine(pattern, flags):
+            return CountingPattern(default_regex_engine(pattern, flags))
+
+        # The search stops once the limit is reached
+        for limit, expected in [(0, []), (1, [0]), (2, [0, 2])]:
+            searched.clear()
+            jsonata.Jsonata(f"$match('ababab', /ab/, {limit})", counting_regex_engine).evaluate(None)
+            assert searched == expected
 
     def test_partial_application_with_map(self):
         # Only ? placeholders are unbound, so $map doesn't pass the index as a trailing argument
