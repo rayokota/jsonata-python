@@ -28,6 +28,7 @@ import datetime
 import decimal
 import functools
 import inspect
+import itertools
 import json
 import math
 import random
@@ -36,7 +37,7 @@ import sys
 import unicodedata
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any, AnyStr, Mapping, NoReturn, Optional, Sequence, Callable, Type, Union
+from typing import Any, AnyStr, Mapping, NoReturn, Optional, Sequence, Callable, Iterator, Type, Union
 
 from jsonata import datetimeutils, jexception, parser, utils
 from jsonata.regex_engine import CompiledPattern
@@ -525,8 +526,7 @@ class Functions:
     # @returns {object} - structure that represents the match(es)
     #     
     @staticmethod
-    def evaluate_matcher(matcher: CompiledPattern, string: Optional[str]) -> list[RegexpMatch]:
-        res = []
+    def evaluate_matcher(matcher: CompiledPattern, string: Optional[str]) -> Iterator[RegexpMatch]:
         matches = matcher.finditer(string)
         for m in matches:
             groups = []
@@ -538,8 +538,7 @@ class Functions:
 
             rm = Functions.RegexpMatch(m.group(), m.start(), groups)
             rm.groups = groups
-            res.append(rm)
-        return res
+            yield rm
 
     #
     # Tests if the str contains the token
@@ -565,7 +564,7 @@ class Functions:
             # if (dbg) System.out.println("match = "+matches)
             # result = (typeof matches !== 'undefined')
             # throw new Error("regexp not impl"); //result = false
-            result = bool(matches)
+            result = next(matches, None) is not None
         else:
             raise RuntimeError("unknown type to match: " + str(token))
 
@@ -593,16 +592,13 @@ class Functions:
 
         result = utils.Utils.create_sequence()
         matches = Functions.evaluate_matcher(regex, string)
-        max = sys.maxsize
         if limit is not None:
-            max = limit
+            matches = itertools.islice(matches, math.ceil(limit))
 
-        for i, rm in enumerate(matches):
+        for rm in matches:
             m = {"match": rm.match, "index": rm.index, "groups": rm.groups}
             # Convert to JSON map:
             result.append(m)
-            if i >= max:
-                break
         return result
 
     #
