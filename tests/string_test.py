@@ -154,8 +154,12 @@ class TestString:
         assert jsonata.Jsonata("$substringAfter('abc', $nothing)").evaluate(None) == "abc"
         assert jsonata.Jsonata("$pad('abc', $nothing)").evaluate(None) == "abc"
 
-    def test_substring_null_args(self):
-        for expr in ["$substring('abc', null)", "$substring('abc', 1, null)", "$substring('abc', $nothing, null)"]:
+    def test_null_args(self):
+        for expr in ["$substring('abc', null)", "$substring('abc', 1, null)", "$substring('abc', $nothing, null)",
+                     "$substring($nothing, null)", "$substring($nothing, 1, null)",
+                     "$pad('abc', null)", "$pad('abc', 5, null)", "$pad($nothing, null)",
+                     "$substringBefore('abc', null)", "$substringBefore($nothing, null)",
+                     "$substringAfter('abc', null)", "$substringAfter($nothing, null)"]:
             with pytest.raises(jsonata.JException) as exc_info:
                 jsonata.Jsonata(expr).evaluate(None)
             assert exc_info.value.error == "T0410"
