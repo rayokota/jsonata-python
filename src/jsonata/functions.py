@@ -224,14 +224,18 @@ class Functions:
     #     
     @staticmethod
     def substring(string: Optional[str], start: Optional[float], length: Optional[float]) -> Optional[str]:
+        if string is utils.Utils.NULL_VALUE or start is utils.Utils.NULL_VALUE or length is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # undefined inputs always return undefined
         if string is None:
             return None
 
-        if string is utils.Utils.NULL_VALUE:
-            raise jexception.JException("T0410", -1)
+        # match JS: undefined start returns the whole string, or "" if a length is given
+        if start is None:
+            return string if length is None else ""
 
-        start = int(start) if start is not None else None
+        start = int(start)
         length = int(length) if length is not None else None
 
         # not used: var strArray = stringToArray(string)
@@ -308,12 +312,12 @@ class Functions:
     #     
     @staticmethod
     def substring_before(string: Optional[str], chars: Optional[str]) -> Optional[str]:
+        if string is utils.Utils.NULL_VALUE or chars is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # undefined inputs always return undefined
         if string is None:
             return None
-
-        if string is utils.Utils.NULL_VALUE:
-            raise jexception.JException("T0410", -1)
 
         if chars is None:
             return string
@@ -332,12 +336,15 @@ class Functions:
     #     
     @staticmethod
     def substring_after(string: Optional[str], chars: Optional[str]) -> Optional[str]:
+        if string is utils.Utils.NULL_VALUE or chars is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # undefined inputs always return undefined
         if string is None:
             return None
 
-        if string is utils.Utils.NULL_VALUE:
-            raise jexception.JException("T0410", -1)
+        if chars is None:
+            return string
 
         pos = string.find(chars)
         if pos > -1:
@@ -433,22 +440,25 @@ class Functions:
     #     
     @staticmethod
     def pad(string: Optional[str], width: Optional[int], char: Optional[str]) -> Optional[str]:
+        if string is utils.Utils.NULL_VALUE or width is utils.Utils.NULL_VALUE or char is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # undefined inputs always return undefined
         if string is None:
             return None
 
-        if string is utils.Utils.NULL_VALUE:
-            raise jexception.JException("T0410", -1)
-
         if char is None or not char:
             char = " "
 
+        # match JS: undefined width adds no padding
+        if width is None:
+            return string
+
         # match JS: truncate width to integer
-        if width is not None:
-            try:
-                width = int(width)
-            except Exception:
-                width = 0
+        try:
+            width = int(width)
+        except Exception:
+            width = 0
 
         if width < 0:
             result = Functions.left_pad(string, -width, char)
