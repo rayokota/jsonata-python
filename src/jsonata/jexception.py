@@ -30,17 +30,20 @@ class JException(RuntimeError):
     location: int
     current: Optional[Any]
     expected: Optional[Any]
+    extra: Optional[Any]
 
     type: Optional[str]
 
     # remaining: Sequence[tokenizer.Tokenizer.Token] | None
 
-    def __init__(self, error, location=0, current_token=None, expected=None):
-        super().__init__(JException.msg(error, location, current_token, expected))
+    def __init__(self, error, location=0, current_token=None, expected=None, extra=None):
+        args = (current_token, expected) if extra is None else (current_token, expected, extra)
+        super().__init__(JException.msg(error, location, *args))
         self.error = error
         self.location = location
         self.current = current_token
         self.expected = expected
+        self.extra = extra
 
         self.type = None
         self.remaining = None
@@ -79,7 +82,7 @@ class JException(RuntimeError):
     # @return
     #     
     def get_detailed_error_message(self) -> str:
-        return JException.msg(self.error, self.location, self.current, self.expected, True)
+        return JException.msg(self.error, self.location, self.current, self.expected, self.extra, details=True)
 
     #
     # Generate error message from given error code
@@ -95,23 +98,23 @@ class JException(RuntimeError):
     # @return
     #     
     @staticmethod
-    def msg(error: str, location: int, arg1: Optional[Any], arg2: Optional[Any], details: bool = False) -> str:
+    def msg(error: str, location: int, *args: Any, details: bool = False) -> str:
         message = JException.error_codes.get(error)
 
         if message is None:
             # unknown error code
             return "JSonataException " + str(error) + (
-                " {code=unknown position=" + str(location) + " arg1=" + arg1 + " arg2=" + arg2 + "}" if details else "")
+                " {code=unknown position=" + str(location) + " arg1=" + str(args[0] if len(args) > 0 else None) + " arg2=" + str(args[1] if len(args) > 1 else None) + "}" if details else "")
 
         formatted = message
 
         if formatted == "{{{message}}}":
-            return str(arg1)
+            return str(args[0]) if args else ""
 
         # Replace any {{var}} with format "{}"
         formatted = re.sub("\\{\\{\\w+\\}\\}", "{}", formatted)
 
-        formatted = formatted.format(arg1, arg2)
+        formatted = formatted.format(*args)
 
         if details:
             formatted = formatted + " {code=" + error

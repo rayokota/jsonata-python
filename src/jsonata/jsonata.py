@@ -857,7 +857,7 @@ class Jsonata:
 
             else:
 
-                raise jexception.JException("T2009", 0, lhs, rhs)
+                raise jexception.JException("T2009", 0, lhs, rhs, op)
 
         if op == "<":
             result = lhs < rhs
