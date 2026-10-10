@@ -36,13 +36,14 @@ class JException(RuntimeError):
 
     # remaining: Sequence[tokenizer.Tokenizer.Token] | None
 
-    def __init__(self, error, location=0, *args: Any):
+    def __init__(self, error, location=0, current_token=None, expected=None, extra=None):
+        args = (current_token, expected) if extra is None else (current_token, expected, extra)
         super().__init__(JException.msg(error, location, *args))
         self.error = error
         self.location = location
-        self.current = args[0] if len(args) > 0 else None
-        self.expected = args[1] if len(args) > 1 else None
-        self.extra = args[2] if len(args) > 2 else None
+        self.current = current_token
+        self.expected = expected
+        self.extra = extra
 
         self.type = None
         self.remaining = None
