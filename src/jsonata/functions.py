@@ -148,6 +148,9 @@ class Functions:
         def encode(self, arg):
             if not isinstance(arg, bool) and isinstance(arg, (int, float)):
                 d = decimal.Decimal(arg)
+                # Integers below 1e21 keep all their digits, like JavaScript
+                if d == d.to_integral() and abs(arg) < 1e21:
+                    return str(int(d))
                 res = Functions.remove_exponent(d, decimal.Context(prec=15))
                 return str(res).lower()
 

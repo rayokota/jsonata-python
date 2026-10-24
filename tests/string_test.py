@@ -18,6 +18,14 @@ class TestString:
     def test_number(self):
         assert jsonata.Jsonata("$string(5)").evaluate(None) == "5"
 
+    def test_large_integer(self):
+        # Integers below 1e21 keep all their digits, as in jsonata-js
+        assert jsonata.Jsonata("$string($)").evaluate(5890840712243076) == "5890840712243076"
+        assert jsonata.Jsonata("'id-' & $").evaluate(5890840712243076) == "id-5890840712243076"
+        assert jsonata.Jsonata("$string(1e20)").evaluate(None) == "100000000000000000000"
+        assert jsonata.Jsonata("$string(1e21)").evaluate(None) == "1e+21"
+        assert jsonata.Jsonata("$string(123456789.123456789)").evaluate(None) == "123456789.123457"
+
     def test_array(self):
         assert jsonata.Jsonata("[1..5].$string()").evaluate(None) == ["1", "2", "3", "4", "5"]
 
