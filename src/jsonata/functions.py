@@ -548,8 +548,11 @@ class Functions:
     #     
     @staticmethod
     def contains(string: Optional[str], token: Union[None, str, CompiledPattern]) -> Optional[bool]:
+        if token is utils.Utils.NULL_VALUE:
+            raise jexception.JException("T0410", -1)
+
         # undefined inputs always return undefined
-        if string is None:
+        if string is None or token is None:
             return None
 
         if string is utils.Utils.NULL_VALUE:
@@ -752,11 +755,12 @@ class Functions:
 
     @staticmethod
     def replace(string: Optional[str], pattern: Union[str, CompiledPattern], replacement: Optional[Any], limit: Optional[int]) -> Optional[str]:
-        if string is None:
-            return None
-
-        if string is utils.Utils.NULL_VALUE:
+        if string is utils.Utils.NULL_VALUE or pattern is utils.Utils.NULL_VALUE:
             raise jexception.JException("T0410", -1)
+
+        # undefined inputs always return undefined
+        if string is None or pattern is None:
+            return None
 
         if isinstance(pattern, str):
             if not pattern:
@@ -946,11 +950,12 @@ class Functions:
 
     @staticmethod
     def split(string: Optional[str], pattern: Union[str, Optional[CompiledPattern]], limit: Optional[float]) -> Optional[list[str]]:
-        if string is None:
-            return None
-
-        if string is utils.Utils.NULL_VALUE:
+        if string is utils.Utils.NULL_VALUE or pattern is utils.Utils.NULL_VALUE:
             raise jexception.JException("T0410", -1)
+
+        # undefined inputs always return undefined
+        if string is None or pattern is None:
+            return None
 
         if limit is not None and int(limit) < 0:
             raise jexception.JException("D3020", -1, string)
