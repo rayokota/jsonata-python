@@ -25,6 +25,9 @@ class TestString:
         assert jsonata.Jsonata("$string(1e20)").evaluate(None) == "100000000000000000000"
         assert jsonata.Jsonata("$string(1e21)").evaluate(None) == "1e+21"
         assert jsonata.Jsonata("$string(123456789.123456789)").evaluate(None) == "123456789.123457"
+        # Above 2^53 the digits are those of the shortest decimal for the double, as in JavaScript
+        assert jsonata.Jsonata("$string(1.0000000000000001e18)").evaluate(None) == "1000000000000000100"
+        assert jsonata.Jsonata("$string($)").evaluate(2 ** 60) == "1152921504606847000"
 
     def test_array(self):
         assert jsonata.Jsonata("[1..5].$string()").evaluate(None) == ["1", "2", "3", "4", "5"]
