@@ -11,11 +11,6 @@
       "reason": "formatNumber exponent not implemented"
     },
     {
-      "name": "function-string/case006.json",
-      "alternateResult": "1e+20",
-      "reason": "toString precision should be 15, handled differently by Java Bigdecimal(..., new MathContext(15)"
-    },
-    {
       "name": "function-sort/case009.json",
       "alternateResult": [
         "0406634348",

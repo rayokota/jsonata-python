@@ -18,6 +18,29 @@ class TestString:
     def test_number(self):
         assert jsonata.Jsonata("$string(5)").evaluate(None) == "5"
 
+    def test_large_integer(self):
+        # Integers below 1e21 keep all their digits, as in jsonata-js
+        assert jsonata.Jsonata("$string($)").evaluate(5890840712243076) == "5890840712243076"
+        assert jsonata.Jsonata("'id-' & $").evaluate(5890840712243076) == "id-5890840712243076"
+        assert jsonata.Jsonata("$string(1e20)").evaluate(None) == "100000000000000000000"
+        assert jsonata.Jsonata("$string(1e21)").evaluate(None) == "1e+21"
+        assert jsonata.Jsonata("$string(123456789.123456789)").evaluate(None) == "123456789.123457"
+        # Above 2^53 the digits are those of the shortest decimal for the double, as in JavaScript
+        assert jsonata.Jsonata("$string(1.0000000000000001e18)").evaluate(None) == "1000000000000000100"
+        assert jsonata.Jsonata("$string($)").evaluate(2 ** 60) == "1152921504606847000"
+        # From 1e21 integers have an exponent, but are not rounded either
+        assert jsonata.Jsonata("$string(1.2345678901234568e21)").evaluate(None) == "1.2345678901234568e+21"
+        assert jsonata.Jsonata("$string(-1.2345678901234568e21)").evaluate(None) == "-1.2345678901234568e+21"
+        assert jsonata.Jsonata("$string($)").evaluate(10 ** 21 - 1) == "1e+21"
+
+    def test_rounded_number(self):
+        # Non-integers are rounded to 15 significant digits, with no exponent if that leaves an integer
+        assert jsonata.Jsonata("$string(1.1 * 100)").evaluate(None) == "110"
+        assert jsonata.Jsonata("'total: ' & 2.3 * 100").evaluate(None) == "total: 230"
+        assert jsonata.Jsonata("$string(1e-7)").evaluate(None) == "1e-7"
+        # Halves are rounded up, as toPrecision does
+        assert jsonata.Jsonata("$string(100000000000000.5)").evaluate(None) == "100000000000001"
+
     def test_array(self):
         assert jsonata.Jsonata("[1..5].$string()").evaluate(None) == ["1", "2", "3", "4", "5"]
 

@@ -147,8 +147,22 @@ class Functions:
     class Encoder(json.JSONEncoder):
         def encode(self, arg):
             if not isinstance(arg, bool) and isinstance(arg, (int, float)):
-                d = decimal.Decimal(arg)
-                res = Functions.remove_exponent(d, decimal.Context(prec=15))
+                if abs(arg) <= sys.float_info.max:
+                    f = float(arg)
+                    if not f.is_integer():
+                        # Non-integers are rounded to 15 significant digits, like
+                        # Number(toPrecision(15)) in jsonata-js, which rounds halves up
+                        ctx = decimal.Context(prec=15, rounding=decimal.ROUND_HALF_UP)
+                        f = float(ctx.plus(decimal.Decimal(f)))
+                    # Like JavaScript, write the shortest decimal that reads back as the
+                    # same double, with no exponent for integers below 1e21 (so
+                    # 1.0000000000000001e18 is 1000000000000000100)
+                    d = decimal.Decimal(repr(f))
+                    if f.is_integer() and abs(f) < 1e21:
+                        return str(int(d))
+                    return str(d).lower()
+                # NaN, infinity and integers beyond the range of a double
+                res = Functions.remove_exponent(decimal.Decimal(arg), decimal.Context(prec=15))
                 return str(res).lower()
 
             return super().encode(arg)
