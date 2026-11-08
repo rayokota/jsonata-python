@@ -688,7 +688,8 @@ class Parser:
                             depth += 1
                         sig += tok.value
                     self._outer_instance.advance(">")
-                    self.signature = signature.Signature(sig, "lambda")
+                    # the name reported in signature errors is taken from the call site
+                    self.signature = signature.Signature(sig, None)
                 # parse the function body
                 self._outer_instance.advance("{")
                 self.body = self._outer_instance.expression(0)

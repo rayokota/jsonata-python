@@ -74,7 +74,7 @@ class TestPartial:
         with pytest.raises(jsonata.JException) as exc_info:
             jsonata.Jsonata("substring(?, 1)").evaluate(None)
         assert exc_info.value.error == "T1007"
-        assert str(exc_info.value) == "Attempted to partially apply a non-function. Did you mean ${substring}?"
+        assert str(exc_info.value) == "Attempted to partially apply a non-function. Did you mean $substring?"
 
     # jsonata-java #83: custom functions, with or without a signature
     def test_custom_function(self):

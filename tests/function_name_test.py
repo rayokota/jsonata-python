@@ -77,3 +77,12 @@ class TestFunctionName:
         assert str(exc_info.value) == "Argument 1 of Object f must be an array of n"
         # a builtin keeps its own name
         assert _error("$sum(['a'])", error="T0412").expected == "sum"
+
+    def test_lambda_array_type_error(self):
+        ex = _error("($f := function($x)<a<n>:n>{ $x }; $f(['a']))", error="T0412")
+        assert str(ex) == "Argument 1 of Object f must be an array of n"
+
+    # {{{token}}} placeholders are replaced with the value, like {{token}}
+    def test_triple_brace_placeholder(self):
+        ex = _error("($f := 1; f())", {}, error="T1005")
+        assert str(ex) == "Attempted to invoke a non-function. Did you mean $f?"
