@@ -56,6 +56,24 @@ class TestPartial:
         assert exc_info.value.error == "T0410"
         assert exc_info.value.expected == "substring"
 
+    @pytest.mark.parametrize("expr", ["$uppercase(?)(123)", "$map([123], $uppercase(?))"])
+    def test_number_for_string(self, expr):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata(expr).evaluate(None)
+        assert exc_info.value.error == "T0410"
+        assert str(exc_info.value) == "Argument 1 of Object uppercase does not match Object signature"
+
+    # an AttributeError of a function the native calls is kept
+    def test_function_argument_attribute_error_kept(self):
+        e = jsonata.Jsonata("$map([1], $upper)")
+        e.register_lambda("upper", lambda s: s.upper())
+        with pytest.raises(AttributeError):
+            e.evaluate(None)
+        e = jsonata.Jsonata("$map(?, $upper)([1])")
+        e.register_lambda("upper", lambda s: s.upper())
+        with pytest.raises(AttributeError):
+            e.evaluate(None)
+
     def test_argument_of_wrong_type_index(self):
         with pytest.raises(jsonata.JException) as exc_info:
             jsonata.Jsonata("$substring(?, 'x')('abc')").evaluate(None)

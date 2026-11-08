@@ -1338,6 +1338,10 @@ class Jsonata:
     def _apply_count() -> int:
         return getattr(Jsonata.APPLIES, "count", 0)
 
+    @staticmethod
+    def count_apply() -> None:
+        Jsonata.APPLIES.count = Jsonata._apply_count() + 1
+
     #
     # Returns a per thread instance of this parsed expression.
     # 
@@ -1451,7 +1455,7 @@ class Jsonata:
     #      
     # async 
     def apply(self, proc: Optional[Any], args: Optional[Any], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
-        Jsonata.APPLIES.count = Jsonata._apply_count() + 1
+        Jsonata.count_apply()
         result = self.apply_inner(proc, args, input, environment)
         while functions.Functions.is_lambda(result) and result.thunk:
             # trampoline loop - this gets invoked as a result of tail-call optimization
@@ -1733,12 +1737,13 @@ class Jsonata:
                 raise Jsonata._name_signature_error(jex, Jsonata._native_name(native)) from None
             Jsonata._validate_native_arguments(native, args, proc.input)
             raise Jsonata._name_signature_error(jex, Jsonata._native_name(native)) from None
-        except (TypeError, ValueError) as err:
+        except (TypeError, ValueError, AttributeError) as err:
             if not isinstance(native, Jsonata.JNativeFunction) or Jsonata._apply_count() != applies:
                 # an error of a registered function, or of a function the native called, as in a
                 # direct call
                 raise
-            # an argument the built-in couldn't convert (e.g. a string where a number is expected)
+            # an argument the built-in couldn't handle (e.g. a string where a number is expected,
+            # or a number where a string is expected)
             Jsonata._validate_native_arguments(native, args, proc.input)
             raise jexception.JException("T0410", -1, None, Jsonata._native_name(native)) from err
 

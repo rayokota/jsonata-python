@@ -1638,6 +1638,7 @@ class Functions:
             res = jsonata.Jsonata.CURRENT.jsonata.apply(func, func_args, None,
                                                         jsonata.Jsonata.CURRENT.jsonata.environment)
         else:
+            jsonata.Jsonata.count_apply()
             res = func.call(None, func_args)
         return res
 
