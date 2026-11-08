@@ -230,7 +230,9 @@ class Signature:
         for param in self._params:
             partial_pattern += param.regex
             tester = re.compile(partial_pattern)
-            match_ = tester.fullmatch(bad_sig)
+            # like jsonata-js, the pattern matches a prefix of the signature, the
+            # arguments that are good so far
+            match_ = tester.match(bad_sig)
             if match_ is None:
                 # failed here. Like jsonata-js, the function is named at the call
                 # site (see Jsonata.evaluate_function)

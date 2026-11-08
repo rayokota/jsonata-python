@@ -86,3 +86,15 @@ class TestFunctionName:
     def test_triple_brace_placeholder(self):
         ex = _error("($f := 1; f())", {}, error="T1005")
         assert str(ex) == "Attempted to invoke a non-function. Did you mean $f?"
+
+    # like jsonata-js, the error names the first argument that doesn't match
+    @pytest.mark.parametrize("expr, message", [
+        ("$substring('abc', 'x')", "Argument 2 of Object substring does not match Object signature"),
+        ("$substring('abc', 1, 'x')", "Argument 3 of Object substring does not match Object signature"),
+        ("$substringBefore(1, 2)", "Argument 1 of Object substringBefore does not match Object signature"),
+        ("$join('a', 'b', 'c')", "Argument 3 of Object join does not match Object signature"),
+        ("$replace('a', 'a', 'b', 'x')", "Argument 4 of Object replace does not match Object signature"),
+        ("$lookup({}, 1)", "Argument 2 of Object lookup does not match Object signature"),
+    ])
+    def test_argument_index(self, expr, message):
+        assert str(_error(expr)) == message
