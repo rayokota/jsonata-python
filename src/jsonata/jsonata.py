@@ -1330,6 +1330,13 @@ class Jsonata:
 
     CURRENT = threading.local()
     MUTEX = threading.Lock()
+    # the number of functions applied on this thread, which tells whether a native function
+    # called back into JSONata (see apply_native_function)
+    APPLIES = threading.local()
+
+    @staticmethod
+    def _apply_count() -> int:
+        return getattr(Jsonata.APPLIES, "count", 0)
 
     #
     # Returns a per thread instance of this parsed expression.
@@ -1444,6 +1451,7 @@ class Jsonata:
     #      
     # async 
     def apply(self, proc: Optional[Any], args: Optional[Any], input: Optional[Any], environment: Optional[Frame]) -> Optional[Any]:
+        Jsonata.APPLIES.count = Jsonata._apply_count() + 1
         result = self.apply_inner(proc, args, input, environment)
         while functions.Functions.is_lambda(result) and result.thunk:
             # trampoline loop - this gets invoked as a result of tail-call optimization
@@ -1690,7 +1698,7 @@ class Jsonata:
     # @returns {{lambda: boolean, input: *, environment: {bind, lookup}, arguments: Array, body: *}} Result of partially applying native function
     #      
     def partial_apply_native_function(self, native: Optional[JFunctionCallable], args: Sequence) -> parser.Parser.Symbol:
-        # create a lambda function($a, $b, ...){ _ } whose body is the native function itself, like
+        # create a lambda function($p0, $p1, ...){ _ } whose body is the native function itself, like
         # jsonata-js. Applying it calls the native directly (see apply_native_function), so the function
         # isn't looked up by name and its signature isn't validated again.
         sig_args = self.get_native_function_arguments(native, len(args))
@@ -1714,31 +1722,45 @@ class Jsonata:
         # generate the array of arguments for invoking the function - look them up in the environment
         args = [env.lookup(sig_arg) for sig_arg in proc.native_args]
         native = proc.body
+        applies = Jsonata._apply_count()
         try:
             return native.call(None, args)
-        except Exception as err:
-            # the native is called without validating its signature, so it may get arguments it
-            # can't handle. If the arguments don't match the signature, report a signature error
-            # rather than the native's own error (e.g. a ValueError for a string where a number is
-            # expected), and likewise for an argument the native couldn't convert. Signature errors
-            # name the native, as the call site may be a higher-order function such as $map.
-            name = Jsonata._native_name(native)
-            signature = getattr(native, "signature", None)
-            if signature is not None:
-                # validate the arguments as supplied, without the slots of omitted parameters
-                supplied = list(args)
-                while supplied and supplied[-1] is None:
-                    supplied.pop()
-                try:
-                    signature.validate(supplied, proc.input)
-                except jexception.JException as jex:
-                    raise Jsonata._name_signature_error(jex, name) from None
-            if isinstance(err, jexception.JException):
-                raise Jsonata._name_signature_error(err, name) from None
-            if isinstance(err, (TypeError, ValueError)):
-                # an argument the native couldn't convert, though the signature can't tell which
-                raise jexception.JException("T0410", -1, None, name) from err
-            raise
+        except jexception.JException as jex:
+            if Jsonata._apply_count() != applies:
+                # raised by a function the native called, such as the function argument of $map,
+                # so not an error of the native's own arguments. It is kept, but an unnamed
+                # signature error is named after the native, as in a direct call.
+                raise Jsonata._name_signature_error(jex, Jsonata._native_name(native)) from None
+            Jsonata._validate_native_arguments(native, args, proc.input)
+            raise Jsonata._name_signature_error(jex, Jsonata._native_name(native)) from None
+        except (TypeError, ValueError) as err:
+            if not isinstance(native, Jsonata.JNativeFunction) or Jsonata._apply_count() != applies:
+                # an error of a registered function, or of a function the native called, as in a
+                # direct call
+                raise
+            # an argument the built-in couldn't convert (e.g. a string where a number is expected)
+            Jsonata._validate_native_arguments(native, args, proc.input)
+            raise jexception.JException("T0410", -1, None, Jsonata._native_name(native)) from err
+
+    #
+    # The native is called without validating its signature, so it may get arguments it can't
+    # handle. When it fails, this raises a signature error if the arguments don't match the
+    # signature. Signature errors name the native, as the call site may be a higher-order function
+    # such as $map.
+    #
+    @staticmethod
+    def _validate_native_arguments(native: Any, args: list, input: Optional[Any]) -> None:
+        signature = getattr(native, "signature", None)
+        if signature is None:
+            return
+        # validate the arguments as supplied, without the slots of omitted parameters
+        supplied = list(args)
+        while supplied and supplied[-1] is None:
+            supplied.pop()
+        try:
+            signature.validate(supplied, input)
+        except jexception.JException as jex:
+            raise Jsonata._name_signature_error(jex, Jsonata._native_name(native)) from None
 
     @staticmethod
     def _native_name(native: Any) -> Optional[str]:
@@ -1760,13 +1782,13 @@ class Jsonata:
     # @returns {Array} Native function argument names
     #      
     def get_native_function_arguments(self, func: Optional[JFunctionCallable], nsupplied: int) -> list[str]:
-        # Python: use a, b, c, ... for the parameters. Like jsonata-js, every declared parameter gets a
+        # Python: use p0, p1, p2, ... for the parameters. Like jsonata-js, every declared parameter gets a
         # slot, so parameters that weren't supplied are passed as None. A function whose number of
         # parameters is unknown takes the arguments supplied.
         nargs = func.get_number_of_args() if hasattr(func, "get_number_of_args") else None
         if nargs is None:
             nargs = nsupplied
-        return [chr(ord('a') + i) for i in range(nargs)]
+        return ["p" + str(i) for i in range(nargs)]
 
     #
     # Creates a Object definition

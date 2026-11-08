@@ -67,6 +67,32 @@ class TestPartial:
             jsonata.Jsonata("$match(?, /b/, -1)('abc')").evaluate(None)
         assert exc_info.value.error == "D3040"
 
+    # errors of a function the native calls are kept, though $each was given an array that doesn't
+    # match its signature
+    @pytest.mark.parametrize("expr, error", [
+        ("[5,6] ~> $each(?, function($v){ $error('oops') })", "D3137"),
+        ("$each(?, function($v){ $assert(false, 'boom') })([5,6])", "D3141")])
+    def test_function_argument_error_kept(self, expr, error):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata(expr).evaluate(None)
+        assert exc_info.value.error == error
+
+    # errors of a registered function are kept, as in a direct call
+    def test_registered_function_error_kept(self):
+        def parse_int(s):
+            return int(s)
+
+        for expr in ["$parseInt('x')", "$parseInt(?)('x')"]:
+            e = jsonata.Jsonata(expr)
+            e.register_lambda("parseInt", parse_int)
+            with pytest.raises(ValueError):
+                e.evaluate(None)
+
+    # a missing required argument is passed as None, like in jsonata-js
+    def test_missing_required_args(self):
+        assert jsonata.Jsonata("$substring(?)('abc')").evaluate(None) == "abc"
+        assert jsonata.Jsonata("$pad(?)('abc')").evaluate(None) == "abc"
+
     # an unnamed signature error of a function argument is named after the native calling it, as
     # when it is called directly
     @pytest.mark.parametrize("expr", [
@@ -141,6 +167,13 @@ class TestPartial:
         expr = jsonata.Jsonata("$add(1, 2) ~> $add(?, 3)")
         expr.register_lambda("add", lambda *args: sum(args))
         assert expr.evaluate(None) == 6
+
+    # every parameter of the partial gets a valid name, however many there are
+    def test_lambda_with_many_args(self):
+        args = ", ".join(str(i) for i in range(1, 31))
+        expr = jsonata.Jsonata("$add(?, " + args + ")(100)")
+        expr.register_lambda("add", lambda *args: sum(args))
+        assert expr.evaluate(None) == 100 + sum(range(1, 31))
 
     # the partial calls the function itself, not a function looked up by name, so a function bound
     # only in the frame passed to evaluate() can be partially applied
