@@ -1819,7 +1819,15 @@ class Functions:
         if arg is None:
             return None
 
-        return {k: v for obj in arg for k, v in obj.items()}
+        result = {}
+        for obj in arg:
+            if isinstance(obj, list):
+                # like JS "for (var prop in obj)", an array is merged with its indexes as keys.
+                # This can happen where the signature is not validated, e.g. $merge(?)
+                result.update((str(i), item) for i, item in enumerate(obj))
+            elif isinstance(obj, Mapping):
+                result.update(obj)
+        return result
 
     #
     # Reverses the order of items in an array
@@ -1847,12 +1855,15 @@ class Functions:
     # @returns {Array} - the resultant array
     #     
     @staticmethod
-    def each(obj: Optional[Mapping], func: Any) -> Optional[list]:
+    def each(obj: Union[Mapping, Sequence, None], func: Any) -> Optional[list]:
         if obj is None:
             return None
 
+        # like JS "for (var key in obj)", an array is iterated with its indexes as (string) keys.
+        # This can happen where the signature is not validated, e.g. $each(?, ...)
+        items = ((str(i), item) for i, item in enumerate(obj)) if isinstance(obj, list) else obj.items()
         result = (res for res in (Functions.func_apply(func, Functions.hof_func_args(func, value, key, obj))
-                                  for key, value in obj.items()) if res is not None)
+                                  for key, value in items) if res is not None)
         return utils.Utils.create_sequence_from_iter(result)
 
     #

@@ -221,8 +221,7 @@ class Signature:
         self._signature = regex_str
         return self._regex
 
-    def throw_validation_error(self, bad_args: Optional[Sequence], bad_sig: Optional[str],
-                               function_name: Optional[str]) -> NoReturn:
+    def throw_validation_error(self, bad_args: Optional[Sequence], bad_sig: Optional[str]) -> NoReturn:
         # to figure out where this went wrong we need apply each component of the
         # regex to each argument until we get to the one that fails to match
         partial_pattern = "^"
@@ -233,12 +232,13 @@ class Signature:
             tester = re.compile(partial_pattern)
             match_ = tester.fullmatch(bad_sig)
             if match_ is None:
-                # failed here
-                raise jexception.JException("T0410", -1, (good_to + 1), function_name)
+                # failed here. Like jsonata-js, the function is named at the call
+                # site (see Jsonata.evaluate_function)
+                raise jexception.JException("T0410", -1, (good_to + 1))
             good_to = match_.end()
         # if it got this far, it's probably because of extraneous arguments (we
         # haven't added the trailing '$' in the regex yet.
-        raise jexception.JException("T0410", -1, (good_to + 1), function_name)
+        raise jexception.JException("T0410", -1, (good_to + 1))
 
     def validate(self, args: Any, context: Optional[Any]) -> Optional[Any]:
         supplied_sig = ""
@@ -310,7 +310,7 @@ class Signature:
                             arg_index += 1
                 index += 1
             return validated_args
-        self.throw_validation_error(args, supplied_sig, self.function_name)
+        self.throw_validation_error(args, supplied_sig)
 
     def get_number_of_args(self) -> int:
         return len(self._params)

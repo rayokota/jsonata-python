@@ -142,3 +142,29 @@ class TestNullSafety:
 
         res = evaluate_jsonata("[$]", [jsonata.Utils.NULL_VALUE, jsonata.Utils.NULL_VALUE], None)
         assert res == [None, None]
+
+    def test_convert_nulls_does_not_modify_input(self):
+        lst = [jsonata.Utils.NULL_VALUE, 1]
+        obj = {"p": lst, "q": [2, 3]}
+        res = jsonata.Utils.convert_nulls(obj)
+        assert res == {"p": [None, 1], "q": [2, 3]}
+        assert lst == [jsonata.Utils.NULL_VALUE, 1]
+        assert obj["p"] is lst
+        # lists and dicts without a NULL_VALUE are not copied
+        assert res["q"] is obj["q"]
+        unchanged = {"a": [1, {"b": 2}]}
+        assert jsonata.Utils.convert_nulls(unchanged) is unchanged
+
+    def test_convert_nulls_keeps_sequence_flags(self):
+        seq = jsonata.Utils.create_sequence(jsonata.Utils.NULL_VALUE)
+        seq.keep_singleton = True
+        res = jsonata.Utils.convert_nulls(seq)
+        assert res == [None]
+        assert isinstance(res, jsonata.Utils.JList) and res.sequence and res.keep_singleton
+        assert seq == [jsonata.Utils.NULL_VALUE]
+
+    def test_nested_evaluate_in_custom_function_keeps_json_null(self):
+        # the nested evaluate converts NULL_VALUE in its result, which is the outer expression's data
+        expr = jsonata.Jsonata("( $t := {'p':[null, 1]}; $echo($t); $t.p.$type($) )")
+        expr.register_lambda("echo", lambda x: jsonata.Jsonata("$").evaluate(x))
+        assert expr.evaluate(None) == ["null", "number"]

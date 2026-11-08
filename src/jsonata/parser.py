@@ -111,7 +111,10 @@ class Parser:
         # Procedure:
         procedure: 'Optional[Parser.Symbol]'
         arguments: 'Optional[MutableSequence[Parser.Symbol]]'
-        body: 'Optional[Parser.Symbol]'
+        # a Symbol, or a function (e.g. a JFunction) for a partially applied native function
+        body: 'Optional[Any]'
+        # the parameter names of a partially applied native function, in order
+        native_args: 'Optional[list[str]]'
         predicate: 'Optional[MutableSequence[Parser.Symbol]]'
         stages: 'Optional[MutableSequence[Parser.Symbol]]'
         input: Optional[Any]
@@ -198,6 +201,7 @@ class Parser:
             self.procedure = None
             self.arguments = None
             self.body = None
+            self.native_args = None
             self.predicate = None
             self.stages = None
             self.input = None
