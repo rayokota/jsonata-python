@@ -1713,7 +1713,45 @@ class Jsonata:
     def apply_native_function(self, proc: parser.Parser.Symbol, env: Frame) -> Optional[Any]:
         # generate the array of arguments for invoking the function - look them up in the environment
         args = [env.lookup(sig_arg) for sig_arg in proc.native_args]
-        return proc.body.call(None, args)
+        native = proc.body
+        try:
+            return native.call(None, args)
+        except Exception as err:
+            # the native is called without validating its signature, so it may get arguments it
+            # can't handle. If the arguments don't match the signature, report a signature error
+            # rather than the native's own error (e.g. a ValueError for a string where a number is
+            # expected), and likewise for an argument the native couldn't convert. Signature errors
+            # name the native, as the call site may be a higher-order function such as $map.
+            name = Jsonata._native_name(native)
+            signature = getattr(native, "signature", None)
+            if signature is not None:
+                # validate the arguments as supplied, without the slots of omitted parameters
+                supplied = list(args)
+                while supplied and supplied[-1] is None:
+                    supplied.pop()
+                try:
+                    signature.validate(supplied, proc.input)
+                except jexception.JException as jex:
+                    raise Jsonata._name_signature_error(jex, name) from None
+            if isinstance(err, jexception.JException):
+                raise Jsonata._name_signature_error(err, name) from None
+            if isinstance(err, (TypeError, ValueError)):
+                # an argument the native couldn't convert, though the signature can't tell which
+                raise jexception.JException("T0410", -1, None, name) from err
+            raise
+
+    @staticmethod
+    def _native_name(native: Any) -> Optional[str]:
+        signature = getattr(native, "signature", None)
+        return signature.function_name if signature is not None else None
+
+    # adds the name of the function to an unnamed signature error
+    @staticmethod
+    def _name_signature_error(jex: jexception.JException, name: Optional[str]) -> jexception.JException:
+        if jex.error in ("T0410", "T0412") and jex.expected is None and name:
+            named = jexception.JException(jex.error, jex.location, jex.current, name, jex.extra)
+            return named.with_traceback(jex.__traceback__)
+        return jex
 
     #
     # Get native function arguments

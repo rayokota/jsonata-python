@@ -43,6 +43,40 @@ class TestPartial:
         assert jsonata.Jsonata("{'systems': 'asd2'}.$map($, $append(?))").evaluate(None) == {"systems": "asd2"}
         assert jsonata.Jsonata("$map($, $append(?))").evaluate({"systems": "asd"}) == {"systems": "asd"}
 
+    # the native is called without validating its signature, but arguments it can't handle are
+    # still reported as a signature error, named after the native rather than the higher-order
+    # function calling it
+    @pytest.mark.parametrize("expr", [
+        "$substring(?, 1)(123)", "$map([1, 2], $substring(?, 1))",
+        "$substring(?, 'x')('abc')", "$map(['abc'], $substring(?, 'x'))",
+        "$substring(?, null)('abc')", "$map(['abc'], $substring(?, null))"])
+    def test_argument_of_wrong_type(self, expr):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata(expr).evaluate(None)
+        assert exc_info.value.error == "T0410"
+        assert exc_info.value.expected == "substring"
+
+    def test_argument_of_wrong_type_index(self):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata("$substring(?, 'x')('abc')").evaluate(None)
+        assert str(exc_info.value) == "Argument 2 of Object substring does not match Object signature"
+
+    # errors of arguments that match the signature are kept
+    def test_native_error_for_matching_arguments(self):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata("$match(?, /b/, -1)('abc')").evaluate(None)
+        assert exc_info.value.error == "D3040"
+
+    # an unnamed signature error of a function argument is named after the native calling it, as
+    # when it is called directly
+    @pytest.mark.parametrize("expr", [
+        "$map(['a'], function($x)<n:n>{ $x })", "$map(?, function($x)<n:n>{ $x })(['a'])"])
+    def test_function_argument_error(self, expr):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata(expr).evaluate(None)
+        assert exc_info.value.error == "T0410"
+        assert exc_info.value.expected == "map"
+
     def test_missing_args_bound(self):
         assert jsonata.Jsonata("$substring(?, 1)('hello')").evaluate(None) == "ello"
 
