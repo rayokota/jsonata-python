@@ -111,10 +111,16 @@ class JException(RuntimeError):
         if formatted == "{{{message}}}":
             return str(args[0]) if args else ""
 
-        # Replace any {{var}} with format "{}"
-        formatted = re.sub("\\{\\{\\w+\\}\\}", "{}", formatted)
+        # Replace each {{var}} or {{{var}}} with the next argument, in order. Like
+        # jsonata-js, a missing argument reads "undefined" (e.g. a signature error
+        # for a function that wasn't called by name).
+        values = iter(args)
 
-        formatted = formatted.format(*args)
+        def replace(_match: re.Match) -> str:
+            value = next(values, None)
+            return "undefined" if value is None else str(value)
+
+        formatted = re.sub("\\{\\{\\{\\w+\\}\\}\\}|\\{\\{\\w+\\}\\}", replace, formatted)
 
         if details:
             formatted = formatted + " {code=" + error

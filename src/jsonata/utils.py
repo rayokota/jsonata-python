@@ -20,8 +20,9 @@
 #   Licensed under the Apache License, Version 2.0 (the "License")
 #
 
+import copy
 import math
-from typing import Any, MutableMapping, MutableSequence, Optional, Iterable
+from typing import Any, Optional, Iterable
 
 from jsonata import jexception
 
@@ -167,30 +168,31 @@ class Utils:
     def convert_value(val: Optional[Any]) -> Optional[Any]:
         return val if val is not Utils.NULL_VALUE else None
 
+    #
+    # Converts all occurrences of NULL_VALUE in the given object to None.
+    #
+    # The given object is not modified. Dicts and lists that contain a NULL_VALUE
+    # (directly or nested) are copied; all other dicts and lists are returned as is,
+    # so the result may share structure with the input.
+    #
     @staticmethod
-    def convert_dict_nulls(res: MutableMapping[str, Any]) -> None:
-        for key, val in res.items():
-            v = Utils.convert_value(val)
-            if v is not val:
-                res[key] = v
-            Utils.recurse(val)
-
-    @staticmethod
-    def convert_list_nulls(res: MutableSequence[Any]) -> None:
-        for i, val in enumerate(res):
-            v = Utils.convert_value(val)
-            if v is not val:
-                res[i] = v
-            Utils.recurse(val)
-
-    @staticmethod
-    def recurse(val: Optional[Any]) -> None:
+    def convert_nulls(val: Optional[Any]) -> Optional[Any]:
         if isinstance(val, dict):
-            Utils.convert_dict_nulls(val)
+            copied = None
+            for key, v in val.items():
+                converted = Utils.convert_nulls(v)
+                if converted is not v:
+                    if copied is None:
+                        copied = copy.copy(val)
+                    copied[key] = converted
+            return copied if copied is not None else val
         if isinstance(val, list):
-            Utils.convert_list_nulls(val)
-
-    @staticmethod
-    def convert_nulls(res: Optional[Any]) -> Optional[Any]:
-        Utils.recurse(res)
-        return Utils.convert_value(res)
+            copied = None
+            for i, v in enumerate(val):
+                converted = Utils.convert_nulls(v)
+                if converted is not v:
+                    if copied is None:
+                        copied = copy.copy(val)
+                    copied[i] = converted
+            return copied if copied is not None else val
+        return Utils.convert_value(val)
