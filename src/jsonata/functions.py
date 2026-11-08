@@ -1638,8 +1638,11 @@ class Functions:
             res = jsonata.Jsonata.CURRENT.jsonata.apply(func, func_args, None,
                                                         jsonata.Jsonata.CURRENT.jsonata.environment)
         else:
+            # counted once func is known to be callable, so an invalid function argument is
+            # reported as an error of the native's arguments (see Jsonata.apply_native_function)
+            call = func.call
             jsonata.Jsonata.count_apply()
-            res = func.call(None, func_args)
+            res = call(None, func_args)
         return res
 
     #

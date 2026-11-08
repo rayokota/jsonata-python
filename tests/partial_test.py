@@ -56,6 +56,12 @@ class TestPartial:
         assert exc_info.value.error == "T0410"
         assert exc_info.value.expected == "substring"
 
+    # a function argument that isn't a function
+    def test_invalid_function_argument(self):
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata("$sort(?, 42)([1, 2])").evaluate(None)
+        assert str(exc_info.value) == "Argument 2 of Object sort does not match Object signature"
+
     @pytest.mark.parametrize("expr", ["$uppercase(?)(123)", "$map([123], $uppercase(?))"])
     def test_number_for_string(self, expr):
         with pytest.raises(jsonata.JException) as exc_info:
