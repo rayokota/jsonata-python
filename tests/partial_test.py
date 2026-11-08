@@ -87,6 +87,17 @@ class TestPartial:
         expr.register_function("add", jsonata.Jsonata.JFunction(Add(), None))
         assert expr.evaluate(None) == 6
 
+    # like a direct call, the partial passes every declared parameter, omitted ones as None
+    def test_custom_function_optional_args(self):
+        class Args(jsonata.Jsonata.JFunctionCallable):
+            def call(self, input, args):
+                return [args[0], args[1]]
+
+        for expression in ["$f(5)", "$f(?)(5)", "$map([5], $f(?))"]:
+            expr = jsonata.Jsonata(expression)
+            expr.register_function("f", jsonata.Jsonata.JFunction(Args(), "<nn?:a>"))
+            assert expr.evaluate(None) == [5, None], expression
+
     def test_lambda(self):
         expr = jsonata.Jsonata("$add(1, 2) ~> $add(?, 3)")
         expr.register_lambda("add", lambda a, b: a + b)

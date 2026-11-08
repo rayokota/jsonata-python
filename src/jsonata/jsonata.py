@@ -1722,11 +1722,12 @@ class Jsonata:
     # @returns {Array} Native function argument names
     #      
     def get_native_function_arguments(self, func: Optional[JFunctionCallable], nsupplied: int) -> list[str]:
-        # Python: use a, b, c, ... for the parameters. Trailing parameters that weren't supplied are
-        # left out, so the native is called without them. A function whose number of parameters is
-        # unknown takes the arguments supplied.
+        # Python: use a, b, c, ... for the parameters. Like jsonata-js, every declared parameter gets a
+        # slot, so parameters that weren't supplied are passed as None. A function whose number of
+        # parameters is unknown takes the arguments supplied.
         nargs = func.get_number_of_args() if hasattr(func, "get_number_of_args") else None
-        nargs = nsupplied if nargs is None else min(nsupplied, nargs)
+        if nargs is None:
+            nargs = nsupplied
         return [chr(ord('a') + i) for i in range(nargs)]
 
     #
