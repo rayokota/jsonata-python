@@ -17,5 +17,6 @@ venv/
 .idea
 .venv
 tests/gen
+uv.lock
 
 .claude
