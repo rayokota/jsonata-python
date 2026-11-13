@@ -210,7 +210,8 @@ class Utils:
             super().__init__()
             self.a = left
             self.b = right
-            self.size = self.b - self.a + 1
+            # b is exclusive (see __iter__)
+            self.size = self.b - self.a
 
         def __len__(self):
             return self.size
