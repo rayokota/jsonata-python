@@ -116,6 +116,8 @@ untrusted expressions, configure these guardrails (see the JS reference implemen
 - **Stack overflow** — the `stack` parameter caps the depth of the eval-apply cycle. Exceeding it raises `D1011`.
 - **Excessive execution time** — the `timeout` parameter (in milliseconds) catches tail-recursive infinite loops that
   `stack` can't. Exceeding it raises `D1012`.
+- **Excessive sequence length** — the `sequence` parameter caps the length of any sequence the expression creates,
+  including intermediate sequences, to protect against memory exhaustion. Exceeding it raises `D2015`.
 - **Rogue regular expressions** — the `regex_engine` parameter lets you swap in a linear-time engine (e.g.
   [`google-re2`](https://pypi.org/project/google-re2/)) to protect against [ReDoS](https://en.wikipedia.org/wiki/ReDoS),
   since the `timeout` guardrail can't interrupt a regex match in progress.

@@ -22,6 +22,8 @@
 
 import copy
 import math
+import threading
+from collections.abc import Sized
 from typing import Any, Optional, Iterable
 
 from jsonata import jexception
@@ -72,9 +74,33 @@ class Utils:
 
     NONE = object()
 
+    # the max sequence length guardrail of the evaluation running on this thread
+    # (see Jsonata.evaluate)
+    GUARDRAILS = threading.local()
+
+    @staticmethod
+    def get_max_sequence_length() -> Optional[int]:
+        return getattr(Utils.GUARDRAILS, "sequence", None)
+
+    #
+    # Sets the max sequence length for evaluations on this thread
+    # @param sequence - the max sequence length, or None for no limit
+    # @returns the previous max sequence length
+    #
+    @staticmethod
+    def set_max_sequence_length(sequence: Optional[int]) -> Optional[int]:
+        prev = Utils.get_max_sequence_length()
+        Utils.GUARDRAILS.sequence = sequence
+        return prev
+
     @staticmethod
     def create_sequence(el: Optional[Any] = NONE) -> list:
-        if el is not Utils.NONE:
+        max_length = Utils.get_max_sequence_length()
+        if max_length is not None:
+            sequence = Utils.BoundedJList(max_length)
+            if el is not Utils.NONE:
+                sequence.append(el)
+        elif el is not Utils.NONE:
             sequence = Utils.JList([el])
         else:
             sequence = Utils.JList()
@@ -83,9 +109,24 @@ class Utils:
 
     @staticmethod
     def create_sequence_from_iter(it: Iterable) -> list:
-        sequence = Utils.JList(it)
+        max_length = Utils.get_max_sequence_length()
+        if max_length is not None:
+            sequence = Utils.BoundedJList(max_length)
+            sequence.extend(it)
+        else:
+            sequence = Utils.JList(it)
         sequence.sequence = True
         return sequence
+
+    #
+    # Raises D2015 if a sequence of the given length would exceed the max
+    # sequence length guardrail
+    #
+    @staticmethod
+    def check_sequence_length(length: int) -> None:
+        max_length = Utils.get_max_sequence_length()
+        if max_length is not None and length > max_length:
+            raise jexception.JException("D2015", -1, length)
 
     @staticmethod
     def is_deep_equal(lhs: Optional[Any], rhs: Optional[Any]) -> bool:
@@ -124,6 +165,41 @@ class Utils:
             self.tuple_stream = False
             self.keep_singleton = False
             self.cons = False
+
+    #
+    # A sequence that raises D2015 when it grows beyond max_length items
+    #
+    class BoundedJList(JList):
+        max_length: int
+
+        def __init__(self, max_length: int):
+            super().__init__()
+            self.max_length = max_length
+
+        def _check(self, count: int) -> None:
+            if len(self) + count > self.max_length:
+                raise jexception.JException("D2015", -1, self.max_length)
+
+        def append(self, item) -> None:
+            self._check(1)
+            super().append(item)
+
+        def insert(self, index, item) -> None:
+            self._check(1)
+            super().insert(index, item)
+
+        def extend(self, items) -> None:
+            if isinstance(items, Sized):
+                self._check(len(items))
+                super().extend(items)
+            else:
+                # don't materialize an unbounded iterable before checking
+                for item in items:
+                    self.append(item)
+
+        def __iadd__(self, items):
+            self.extend(items)
+            return self
 
     class RangeList(list):
         a: int

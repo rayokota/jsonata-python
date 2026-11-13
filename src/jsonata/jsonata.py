@@ -1069,6 +1069,7 @@ class Jsonata:
         size = rhs - lhs + 1
         if size > 1e7:
             raise jexception.JException("D2014", -1, size)
+        utils.Utils.check_sequence_length(size)
 
         return utils.Utils.RangeList(lhs, rhs + 1)
 
@@ -1982,13 +1983,17 @@ class Jsonata:
     #     for no limit. Raises D1012 if exceeded.
     # @param {Integer} stack - max eval-apply recursion depth, or None for
     #     no limit. Raises D1011 if exceeded.
+    # @param {Integer} sequence - max length of any sequence (including
+    #     intermediate sequences) created during evaluation, or None for no
+    #     limit. Raises D2015 if exceeded.
     # @returns Evaluated expression
     # @throws jexception.JException An exception if an error occured.
     #
     @staticmethod
     def jsonata(expression: Optional[str], regex_engine: RegexEngine = default_regex_engine,
-               timeout: Optional[int] = None, stack: Optional[int] = None) -> 'Jsonata':
-        return Jsonata(expression, regex_engine, timeout, stack)
+               timeout: Optional[int] = None, stack: Optional[int] = None,
+               sequence: Optional[int] = None) -> 'Jsonata':
+        return Jsonata(expression, regex_engine, timeout, stack, sequence)
 
     #
     # Internal constructor
@@ -2004,12 +2009,15 @@ class Jsonata:
     regex_engine: RegexEngine
     timeout: Optional[int]
     stack: Optional[int]
+    sequence: Optional[int]
 
     def __init__(self, expr: Optional[str], regex_engine: RegexEngine = default_regex_engine,
-                timeout: Optional[int] = None, stack: Optional[int] = None) -> None:
+                timeout: Optional[int] = None, stack: Optional[int] = None,
+                sequence: Optional[int] = None) -> None:
         self.regex_engine = regex_engine
         self.timeout = timeout
         self.stack = stack
+        self.sequence = sequence
         try:
             self.parser = Jsonata.get_parser()
             self.ast = self.parser.parse(expr, regex_engine)  # , optionsRecover);
@@ -2099,27 +2107,34 @@ class Jsonata:
         self.timestamp = timebox.Timebox.current_milli_time()
         # exec_env.timestamp = timestamp
 
-        # if the input is a JSON array, then wrap it in a singleton sequence so it gets treated as a single input
-        if (isinstance(input, list)) and not utils.Utils.is_sequence(input):
-            input = utils.Utils.create_sequence(input)
-            input.outer_wrapper = True
-
-        if self.validate_input:
-            functions.Functions.validate_input(input)
-
-        it = None
+        # apply this expression's max sequence length to the sequences created on
+        # this thread while it evaluates, then restore the limit of any enclosing
+        # evaluation (e.g. when a custom function evaluates another expression)
+        prev_sequence = utils.Utils.set_max_sequence_length(self.sequence)
         try:
-            it = self.eval(self.ast, input, exec_env)
-            #  if (typeof callback === "function") {
-            #      callback(null, it)
-            #  }
-            if self.output_convert_nulls:
-                it = utils.Utils.convert_nulls(it)
-            return it
-        except Exception as err:
-            # insert error message into structure
-            self.populate_message(err)  # possible side-effects on `err`
-            raise err
+            # if the input is a JSON array, then wrap it in a singleton sequence so it gets treated as a single input
+            if (isinstance(input, list)) and not utils.Utils.is_sequence(input):
+                input = utils.Utils.create_sequence(input)
+                input.outer_wrapper = True
+
+            if self.validate_input:
+                functions.Functions.validate_input(input)
+
+            it = None
+            try:
+                it = self.eval(self.ast, input, exec_env)
+                #  if (typeof callback === "function") {
+                #      callback(null, it)
+                #  }
+                if self.output_convert_nulls:
+                    it = utils.Utils.convert_nulls(it)
+                return it
+            except Exception as err:
+                # insert error message into structure
+                self.populate_message(err)  # possible side-effects on `err`
+                raise err
+        finally:
+            utils.Utils.set_max_sequence_length(prev_sequence)
 
     def assign(self, name: str, value: Optional[Any]) -> None:
         self.environment.bind(name, value)

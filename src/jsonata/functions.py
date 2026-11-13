@@ -2052,6 +2052,8 @@ class Functions:
         if not (isinstance(arg2, list)):
             arg2 = utils.Utils.JList([arg2])
 
+        utils.Utils.check_sequence_length(len(arg1) + len(arg2))
+
         arg1 = utils.Utils.JList(arg1)  # create a new copy!
         arg1.extend(arg2)
         return arg1
