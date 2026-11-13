@@ -296,6 +296,13 @@ class TestString:
         # $eval wraps any error raised while evaluating its expression in D3121
         assert self._sequence_guardrail_error("$eval('[0..100].([0..100]) ~> $count()')", 1000) == "D3121"
 
+    def test_sequence_guardrail_does_not_bound_results(self):
+        # The bound only applies while the expression is being evaluated, so a
+        # returned sequence can be changed freely
+        result = jsonata.Jsonata("*", sequence=2).evaluate({"a": 1, "b": 2})
+        result.append(3)
+        assert result == [1, 2, 3]
+
     def test_sequence_guardrail_is_restored_after_evaluate(self):
         # The bound only applies to the evaluation of the expression it was
         # configured on, not to later evaluations on the same thread

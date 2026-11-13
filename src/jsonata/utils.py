@@ -97,7 +97,7 @@ class Utils:
     def create_sequence(el: Optional[Any] = NONE) -> list:
         max_length = Utils.get_max_sequence_length()
         if max_length is not None:
-            sequence = Utils.BoundedJList(max_length)
+            sequence = Utils.BoundedJList()
             if el is not Utils.NONE:
                 sequence.append(el)
         elif el is not Utils.NONE:
@@ -111,7 +111,7 @@ class Utils:
     def create_sequence_from_iter(it: Iterable) -> list:
         max_length = Utils.get_max_sequence_length()
         if max_length is not None:
-            sequence = Utils.BoundedJList(max_length)
+            sequence = Utils.BoundedJList()
             sequence.extend(it)
         else:
             sequence = Utils.JList(it)
@@ -167,18 +167,16 @@ class Utils:
             self.cons = False
 
     #
-    # A sequence that raises D2015 when it grows beyond max_length items
+    # A sequence created while a max sequence length is in effect. It raises
+    # D2015 when it grows beyond the max sequence length of the evaluation in
+    # progress on this thread, so once evaluation is over (e.g. when it is
+    # returned as a result) it can be changed freely
     #
     class BoundedJList(JList):
-        max_length: int
-
-        def __init__(self, max_length: int):
-            super().__init__()
-            self.max_length = max_length
-
         def _check(self, count: int) -> None:
-            if len(self) + count > self.max_length:
-                raise jexception.JException("D2015", -1, self.max_length)
+            max_length = Utils.get_max_sequence_length()
+            if max_length is not None and len(self) + count > max_length:
+                raise jexception.JException("D2015", -1, max_length)
 
         def append(self, item) -> None:
             self._check(1)
