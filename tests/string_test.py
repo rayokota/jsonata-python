@@ -254,3 +254,57 @@ class TestString:
         # Trailing args that weren't supplied aren't passed to the native function
         assert jsonata.Jsonata("$sort(?)([3, 1, 2])").evaluate(None) == [1, 2, 3]
         assert jsonata.Jsonata("$map([[3, 1, 2], [2, 1]], $sort(?))").evaluate(None) == [[1, 2, 3], [1, 2]]
+
+    @staticmethod
+    def _sequence_guardrail_error(expression, sequence, input=None):
+        # Returns the error code the expression raised with the given `sequence` bound
+        with pytest.raises(jsonata.JException) as exc_info:
+            jsonata.Jsonata(expression, sequence=sequence).evaluate(input)
+        return exc_info.value.error
+
+    def test_sequence_guardrail_stops_large_ranges(self):
+        assert self._sequence_guardrail_error("[0..1001]", 1000) == "D2015"
+
+    def test_sequence_guardrail_stops_large_intermediate_sequences(self):
+        assert self._sequence_guardrail_error("[0..100].([0..100]) ~> $count()", 1000) == "D2015"
+
+    def test_sequence_guardrail_stops_appending_large_sequences(self):
+        assert self._sequence_guardrail_error("$append([0..600], [0..600]) ~> $count()", 1000) == "D2015"
+
+    def test_sequence_guardrail_stops_large_wildcard_results(self):
+        # $append's result keeps the bound, so the wildcard's accumulator stays
+        # bounded after appending an array value
+        assert self._sequence_guardrail_error("* ~> $count()", 2, {"a": [1, 2], "b": 3}) == "D2015"
+
+    def test_sequence_guardrail_stops_large_descendant_results(self):
+        assert self._sequence_guardrail_error("** ~> $count()", 2, {"a": 1, "b": 2}) == "D2015"
+
+    def test_sequence_guardrail_stops_large_tuple_streams(self):
+        # The tuples are discarded by the filter, but are still bounded while
+        # they're built
+        input = {"a": list(range(101)), "b": list(range(101))}
+        assert self._sequence_guardrail_error("a@$x.b@$y[false]", 1000, input) == "D2015"
+
+    def test_sequence_guardrail_allows_exact_limit_range(self):
+        assert jsonata.Jsonata("[0..2]", sequence=3).evaluate(None) == [0, 1, 2]
+
+    def test_sequence_guardrail_allows_sequences_within_limit(self):
+        assert jsonata.Jsonata("[0..30].([0..30]) ~> $count()", sequence=1000).evaluate(None) == 961
+        assert jsonata.Jsonata("$append([0..499], [0..499]) ~> $count()", sequence=1000).evaluate(None) == 1000
+
+    def test_sequence_guardrail_propagates_through_eval(self):
+        # $eval wraps any error raised while evaluating its expression in D3121
+        assert self._sequence_guardrail_error("$eval('[0..100].([0..100]) ~> $count()')", 1000) == "D3121"
+
+    def test_sequence_guardrail_does_not_bound_results(self):
+        # The bound only applies while the expression is being evaluated, so a
+        # returned sequence can be changed freely
+        result = jsonata.Jsonata("*", sequence=2).evaluate({"a": 1, "b": 2})
+        result.append(3)
+        assert result == [1, 2, 3]
+
+    def test_sequence_guardrail_is_restored_after_evaluate(self):
+        # The bound only applies to the evaluation of the expression it was
+        # configured on, not to later evaluations on the same thread
+        assert self._sequence_guardrail_error("[0..100].([0..100]) ~> $count()", 1000) == "D2015"
+        assert jsonata.Jsonata("[0..100].([0..100]) ~> $count()").evaluate(None) == 10201

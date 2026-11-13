@@ -2052,9 +2052,17 @@ class Functions:
         if not (isinstance(arg2, list)):
             arg2 = utils.Utils.JList([arg2])
 
-        arg1 = utils.Utils.JList(arg1)  # create a new copy!
-        arg1.extend(arg2)
-        return arg1
+        utils.Utils.check_sequence_length(len(arg1) + len(arg2))
+
+        # create a new copy! It stays bounded by the max sequence length (if
+        # any), since callers such as evaluate_wildcard keep growing the result
+        if utils.Utils.get_max_sequence_length() is not None:
+            result = utils.Utils.BoundedJList()
+            result.extend(arg1)
+        else:
+            result = utils.Utils.JList(arg1)
+        result.extend(arg2)
+        return result
 
     @staticmethod
     def is_lambda(result: Optional[Any]) -> bool:
